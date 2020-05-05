@@ -1,0 +1,178 @@
+/**
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * SaintPetersburg implementation : © <Your name here> <Your email address here>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ *
+ * saintpetersburg.css
+ *
+ * SaintPetersburg stylesheet
+ *
+ */
+
+/*
+    This is the CSS stylesheet of your game User Interface.
+    
+    Styles defined on this file will be applied to the HTML elements you define in your
+    HTML template (saintpetersburg_saintpetersburg.tpl), and to HTML elements you create dynamically
+    (in saintpetersburg.js).
+    
+    Usually, you are using CSS to:
+    
+    1°) define the overall layout of your game
+        (ex: place the board on the top left, place player's hand beside, place the deck on the right, ...).
+
+    2°) create your CSS-sprites:
+        All images of your games should be gathered into a small number of image files. Then, using
+        background-image and background-position CSS properties, you create HTML blocks that can 
+        display these images correctly (see example below).
+    
+    3°) ... anything else:
+        It is really easy to add and remove CSS classes dynamically from your Javascript with
+        dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class
+        (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why,
+        very often, using CSS classes for the logic of your user interface allow you to do complex
+        thing easily.
+        
+        
+     Note: on the production platform, this file will be compressed and comments will be removed.
+           Consequently, don't hesitate to put as many comments as necessary.
+*/
+
+
+/* Note: you must not use any @import directive */
+
+
+/********* You can start writing your CSS below this line: **********/
+
+
+/*
+    Example of CSS sprites (a black token and a white token, 20x20px each, embedded in the same "tokens.png" 40x20px image):
+
+    .white_token {
+        background-image: url('img/tokens.png');
+        background-position: 0px 0px;
+    }
+    .black_token {
+        background-image: url('img/tokens.png');
+        background-position: -20px 0px;
+    }
+    .token {
+        width: 20px;
+        height: 20px;
+        background-repeat: none;
+    }
+*/
+
+#board {
+	width: 1012px;
+	height: 342px;
+	background-image: url('img/board.jpg');
+	position: relative;
+}
+
+.square {
+	width: 96px;
+	height: 150px;
+	position: absolute;
+	z-index: 99;
+}
+
+.possibleMove
+{
+	background-color: white;
+	opacity: 0.2;
+	filter: alpha(opacity=20); /* IE8 */
+	cursor: pointer;
+}
+
+.card {
+    position: absolute;
+    width: 96px;
+    height: 150px;
+    background-image: url('img/cards.jpg');
+}
+
+.selected {
+    border-width: 1px;
+}
+
+.rubleicon {
+    width: 45px;
+    height: 24px;
+    background-image: url('img/ruble.jpg');
+}
+
+/*
+.rubleicon > span {
+ position:absolute;
+ right:-6px;
+ font-size:18px
+}
+*/
+
+.stp_board {
+    display: inline-block;
+}
+
+.nolinebreak {
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.cardicon {
+    width: 15px;
+    height: 24px;
+    background-image: url('img/cardicon.jpg');
+}
+
+.cardback {
+    position: relative;
+    width: 30px;
+    height: 48px;
+    background-image: url('img/cardbacks.jpg');
+}
+
+.deck {
+    margin: 10px 30px 10px 10px;
+}
+
+.token {
+    display: inline-block;
+    width: 28px;
+    height: 32px;
+    background-image: url('img/tokens.png');
+}
+
+.token_Worker {
+    background-position: 0px 0px;
+}
+
+.token_Building {
+    background-position: -28px 0px;
+}
+
+.token_Aristocrat {
+    background-position: -59px 0px;
+}
+
+.token_Trading {
+    background-position: -90px 0px;
+}
+
+.activecard {
+ position:absolute;
+ top:10px;
+ left:28px;
+ width:60px;
+ text-align:center;
+ font-size:60%;
+ font-weight:bold;
+ background-color:white;
+ display:block;
+ cursor:pointer;
+}
