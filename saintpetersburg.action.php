@@ -108,11 +108,32 @@ class action_saintpetersburg extends APP_GameAction
 	self::ajaxResponse();
     }
 
-    public function discard()
+    public function drawObservatoryCard()
     {
 	self::setAjaxMode();
-	$card_id = self::getArg("card_id", AT_posint, true);
-	$result = $this->game->discard($card_id);
+        $deck = self::getArg("deck", AT_alphanum, true);
+	$result = $this->game->drawObservatoryCard($deck);
+	self::ajaxResponse();
+    }
+
+    public function obsBuy()
+    {
+	self::setAjaxMode();
+	$result = $this->game->obsBuy();
+	self::ajaxResponse();
+    }
+
+    public function obsAdd()
+    {
+	self::setAjaxMode();
+	$result = $this->game->obsAdd();
+	self::ajaxResponse();
+    }
+
+    public function obsDiscard()
+    {
+	self::setAjaxMode();
+	$result = $this->game->obsDiscard();
 	self::ajaxResponse();
     }
 

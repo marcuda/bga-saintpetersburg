@@ -516,12 +516,9 @@ class SaintPetersburg extends Table
 	if (count($cards) != 1)
 	    throw new feException("Impossible move");
 
-	foreach ($cards as $card)
-	{
-	    $card_id = $card['id'];
-	    self::setGameStateValue("selected_card", $card_id);
-	    self::setGameStateValue("selected_row", $row);
-	}
+        $card = array_shift($cards);
+	self::setGameStateValue("selected_card", $card['id']);
+	self::setGameStateValue("selected_row", $row);
 
 	$this->gamestate->nextState('selectCard');
     }
@@ -800,7 +797,107 @@ class SaintPetersburg extends Table
 
         $this->gamestate->nextState("useObservatory");
     }
+
+    function drawObservatoryCard($deck)
+    {
+        self::checkAction('drawObservatoryCard');
+
+        $num_cards = $this->cards->countCardInLocation($deck);
+        if ($num_cards == 0) {
+            throw new BgaUserException(self::_("Card stack is empty"));
+        } else if ($num_cards == 1) {
+            throw new BgaUserException(self::_("Cannot draw the last card"));
+        }
+
+        $player_id = self::getActivePlayerId();
+        $card = $this->cards->pickCardForLocation($deck, 'obs_tmp', $player_id);
+        if ($card == null)
+            throw new feException("Impossible Observatory draw");
+
+        $this->gamestate->nextState("drawCard");
+    }
     
+    function obsBuy()
+    {
+	self::checkAction('buyCard');
+
+        $player_id = self::getActivePlayerId();
+        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
+        if ($cards == null || count($cards) != 1)
+            throw new feException("Impossible Observatory buy");
+
+        $card = array_shift($cards);
+
+        /* TODO
+	if ($this->isTrading($this->cards->getCard($card_id))) {
+	    $this->gamestate->nextState('tradeCard');
+	    return;
+	}
+         */
+
+	$card_cost = $this->getCardCost($card['id'], 0);
+
+	$rubles = self::dbGetRubles($player_id);
+	if ($card_cost > $rubles)
+	    throw new BgaUserException(self::_("You do not have enough rubles"));
+
+	$dest = 'table';
+	$notif = 'buyCard';
+	$msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
+	$this->cardAction($card['id'], 99, $card_cost, $dest, $notif, $msg);
+	$this->gamestate->nextState('buyCard');
+    }
+
+    function obsAdd()
+    {
+	self::checkAction('addCard');
+
+        $player_id = self::getActivePlayerId();
+        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
+        if ($cards == null || count($cards) != 1)
+            throw new feException("Impossible Observatory add");
+
+        $card = array_shift($cards);
+
+	$hand = $this->cards->getPLayerHand($player_id);
+
+	$max_hand = 3;
+	// Check if player owns the warehouse
+	$warehouse = $this->cards->getCardsOfTypeInLocation(
+	    PHASE_BUILDING, CARD_WAREHOUSE, 'table', $player_id);
+	if (count($warehouse) == 1) {
+	    $max_hand++;
+	}
+
+	if (count($hand) == $max_hand) {
+	    throw new BgaUserException(self::_("Your hand is full"));
+	} else if (count($hand) > $max_hand) {
+	    throw new feException("Impossible hand size");
+	}
+
+	$dest = 'hand';
+	$notif = 'addCard';
+	$msg = clienttranslate('${player_name} adds ${card_name} to their hand');
+	$this->cardAction($card['id'], 99, 0, $dest, $notif, $msg);
+	$this->gamestate->nextState('addCard');
+    }
+
+    function obsDiscard()
+    {
+        self::checkAction('discard');
+
+        $player_id = self::getActivePlayerId();
+        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
+        if ($cards == null || count($cards) != 1)
+            throw new feException("Impossible Observatory add");
+
+        $card = array_shift($cards);
+        $this->cards->playCard($card['id']);
+        //TODO: notify
+	self::setGameStateValue("num_pass", 0);
+        $this->gamestate->nextState('discard');
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Game state arguments
 ////////////
@@ -829,9 +926,23 @@ class SaintPetersburg extends Table
 	);
     }
 
-    function argUsePub()
+    function argChooseObservatory()
     {
-	return array();
+        // Send card drawn with Observatory
+        $player_id = self::getActivePlayerId();
+        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
+        if ($cards == null || count($cards) != 1)
+            throw new feException("Impossible Observatory recall");
+
+        $card = array_shift($cards);
+        $card_info = $this->card_types[$card['type_arg']];
+        $cost = $this->getCardCost($card['id'], 0);
+        return array(
+            'player_id' => $player_id,
+            'card' => $card,
+            'card_name' => $card_info['card_name'],
+            'cost' => $cost
+        );
     }
 
 //////////////////////////////////////////////////////////////////////////////
