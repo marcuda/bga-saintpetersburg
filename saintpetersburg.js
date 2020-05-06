@@ -90,6 +90,7 @@ function (dojo, declare) {
 	    for (var deck in gamedatas.decks) {
 		if (deck.startsWith('deck_')) {
 		    $(deck).textContent = gamedatas.decks[deck];
+                    dojo.connect($(deck), 'onclick', this, 'onDeckClicked');
 		}
 	    }
 
@@ -144,6 +145,9 @@ function (dojo, declare) {
 		    break;
                 case 'useObservatory':
                     dojo.query('.deck').addClass('possibleMove');
+                    break;
+                case 'chooseObservatory':
+                    this.showObservatoryChoice(args.args);
                     break;
             }
         },
@@ -211,6 +215,15 @@ function (dojo, declare) {
                     case 'useObservatory':
 			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
+                    case 'chooseObservatory':
+                        console.log('choose but1');
+			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onObsBuyCard");
+                        console.log('choose but2');
+			this.addActionButton("button_2", _("Add to hand"), "onObsAddCard");
+                        console.log('choose but3');
+			this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
+                        console.log('done');
+                        break;
                 }
             }
         },        
@@ -241,10 +254,14 @@ function (dojo, declare) {
 	{
             if (card_type_id == 25) {
                 // Observatory
-                var id = card_id.split('_');
-                id = id[id.length - 1];
-                dojo.place(this.format_block('jstpl_card_content', {id:id}), card_div.id);
-                dojo.connect($('card_content_' + id), 'onclick', this, 'onClickObservatory');
+                var player_id = parseInt(card_div.id.split('_')[1]);
+                if (player_id == this.player_id) {
+                    // Active player
+                    var id = card_id.split('_');
+                    id = id[id.length - 1];
+                    dojo.place(this.format_block('jstpl_card_content', {id:id}), card_div.id);
+                    dojo.connect($('card_content_' + id), 'onclick', this, 'onClickObservatory');
+                }
             }
 	},
 
@@ -317,6 +334,31 @@ function (dojo, declare) {
 		}).play();
 	    });
 	},
+
+        showObservatoryChoice: function (args)
+        {
+	    // Sprite index
+            var idx = args.card.type_arg;
+	    var y = Math.trunc(idx / this.playerHand.image_items_per_row);
+	    var x = idx - (y * this.playerHand.image_items_per_row);
+
+	    x *= this.cardwidth
+	    y *= this.cardheight
+
+	    // Board position
+            var deck = 'deck_' + args.card.type;
+
+	    dojo.place(this.format_block('jstpl_card', {
+		x:x,
+		y:y,
+		row: 99,
+		col: 99
+	    }), 'cards');
+
+	    this.placeOnObject('card_99_99', deck);
+            dojo.addClass('card_99_99', 'selected');
+	    this.slideToObject('card_99_99', 'board').play();
+        },
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -472,6 +514,52 @@ function (dojo, declare) {
 		"/saintpetersburg/saintpetersburg/useObservatory.html",
 		{card_id: card_id}, this, function (result) {});
         },
+
+        onDeckClicked: function (evt)
+        {
+            dojo.stopEvent(evt);
+            if (!this.checkAction('drawObservatoryCard'))
+                return;
+
+            var deck = evt.currentTarget.id;
+            this.ajaxcall(
+		"/saintpetersburg/saintpetersburg/drawObservatoryCard.html",
+		{deck: deck}, this, function (result) {});
+        },
+
+	onObsAddCard: function (evt)
+	{
+	    dojo.stopEvent(evt);
+	    if (!this.checkAction('addCard'))
+		return;
+
+	    this.ajaxcall(
+		"/saintpetersburg/saintpetersburg/obsAdd.html",
+		{}, this, function (result) {});
+	},
+
+	onObsBuyCard: function (evt)
+	{
+	    dojo.stopEvent(evt);
+	    if (!this.checkAction('buyCard'))
+		return;
+
+	    this.ajaxcall(
+		"/saintpetersburg/saintpetersburg/obsBuy.html",
+		{}, this, function (result) {});
+	},
+
+        onObsDiscardCard: function (evt)
+        {
+            dojo.stopEvent(evt);
+            if (!this.checkAction('discard'))
+                return;
+
+	    this.ajaxcall(
+		"/saintpetersburg/saintpetersburg/obsDiscard.html",
+		{}, this, function (result) {});
+        },
+
         
 
         ///////////////////////////////////////////////////
@@ -514,11 +602,17 @@ function (dojo, declare) {
 	    console.log('buy card notif');
 	    var row = notif.args.card_row;
 	    var col = 7 - notif.args.card_loc;
+            var src = 'square_' + col + '_' + row;
+
+            if (row == 99) {
+                // Observatory pick
+                col = 99;
+                src = 'board';
+            }
 
 	    dojo.destroy('card_' + col + '_' + row);
 	    this.player_tables[notif.args.player_id].addToStockWithId(
-		notif.args.card_idx, notif.args.card_id,
-		'square_' + col + '_' + row);
+		notif.args.card_idx, notif.args.card_id, src);
 	    if (this.player_id == notif.args.player_id) {
 		this.rubles.incValue(-notif.args.card_cost);
 	    }
@@ -530,11 +624,18 @@ function (dojo, declare) {
 	    console.log(notif);
 	    var row = notif.args.card_row;
 	    var col = 7 - notif.args.card_loc;
+            var src = 'square_' + col + '_' + row;
+
+            if (row == 99) {
+                // Observatory pick
+                col = 99;
+                src = 'board';
+            }
+
 	    if (this.player_id == notif.args.player_id) {
 		dojo.destroy('card_' + col + '_' + row);
 		this.playerHand.addToStockWithId(
-		    notif.args.card_idx, notif.args.card_id,
-		    'square_' + col + '_' + row);
+		    notif.args.card_idx, notif.args.card_id, src);
 	    } else {
 		var anim = this.slideToObject('card_' + col + '_' + row,
 		    'player_board_' + notif.args.player_id);

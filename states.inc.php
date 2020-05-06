@@ -149,10 +149,10 @@ $machinestates = array(
 
     STATE_USE_OBSERVATORY => array(
 	"name" => "useObservatory",
-	"description" => clienttranslate('Observatory: ${actplayer} must choose a deck to draw from'),
-	"descriptionmyturn" => clienttranslate('Observatory: ${you} must choose a deck to draw from'),
+	"description" => clienttranslate('Observatory: ${actplayer} must choose a stack to draw from'),
+	"descriptionmyturn" => clienttranslate('Observatory: ${you} must choose a stack to draw from'),
 	"type" => "activeplayer",
-	"possibleactions" => array("drawCard", "cancel"),
+	"possibleactions" => array("drawObservatoryCard", "cancel"),
 	"transitions" => array(
 	    "drawCard" => STATE_OBSERVATORY_CHOICE,
             "cancel" => STATE_PLAYER_TURN,
@@ -161,10 +161,11 @@ $machinestates = array(
     ),
 
     STATE_OBSERVATORY_CHOICE => array(
-	"name" => "useObservatory",
-	"description" => clienttranslate('Observatory: ${actplayer} must choose a deck to draw from'),
-	"descriptionmyturn" => clienttranslate('Observatory: ${you} must choose a deck to draw from'),
+	"name" => "chooseObservatory",
+	"description" => clienttranslate('${card_name}: ${actplayer} must play or discard'),
+	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must play or discard'),
 	"type" => "activeplayer",
+        "args" => "argChooseObservatory",
 	"possibleactions" => array("buyCard", "addCard", "discard"),
 	"transitions" => array(
             "buyCard" => STATE_NEXT_PLAYER,
