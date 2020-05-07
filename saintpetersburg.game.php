@@ -662,7 +662,11 @@ class SaintPetersburg extends Table
 	    //play
 	    $card_row = -1; // signal client card is in hand
 	    $msg = clienttranslate('${player_name} plays ${card_name} from their hand, displacing ${trade_name}, for ${card_cost} Ruble(s)');
-	} else {
+        } else if ($card['location'] == 'obs_tmp') {
+            //observatory
+            $card_row = 99; // signal client card is observatory pick
+	    $msg = clienttranslate('${player_name} buys ${card_name}, displacing ${trade_name}, for ${card_cost} Ruble(s)');
+        } else {
 	    //buy
 	    $msg = clienttranslate('${player_name} buys ${card_name}, displacing ${trade_name}, for ${card_cost} Ruble(s)');
 	}
@@ -850,12 +854,12 @@ class SaintPetersburg extends Table
 
         $card = array_shift($cards);
 
-        /* TODO trading
-	if ($this->isTrading($this->cards->getCard($card_id))) {
+	if ($this->isTrading($card)) {
+	    self::setGameStateValue("selected_card", $card['id']);
+	    self::setGameStateValue("selected_row", 0);
 	    $this->gamestate->nextState('tradeCard');
 	    return;
 	}
-         */
 
 	$card_cost = $this->getCardCost($card['id'], 0);
 

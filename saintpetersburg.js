@@ -150,6 +150,10 @@ function (dojo, declare) {
                 case 'chooseObservatory':
                     this.showObservatoryChoice(args.args);
                     break;
+                case 'tradeObservatory':
+		    this.playerHand.setSelectionMode(0);
+		    this.playerTable.setSelectionMode(1);
+		    break;
             }
         },
 
@@ -182,6 +186,10 @@ function (dojo, declare) {
                 case 'useObservatory':
                     dojo.query('.deck').removeClass('possibleMove');
                     break;
+		case 'tradeObservatory':
+		    this.playerHand.setSelectionMode(1);
+		    this.playerTable.setSelectionMode(0);
+		    break;
             }               
         }, 
 
@@ -221,6 +229,9 @@ function (dojo, declare) {
 			this.addActionButton("button_2", _("Add to hand"), "onObsAddCard");
 			this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
                         break;
+                    case 'tradeObservatory':
+			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
+			break;
                 }
             }
         },        
@@ -343,7 +354,14 @@ function (dojo, declare) {
 	    x *= this.cardwidth
 	    y *= this.cardheight
 
-	    // Board position
+            var card_id = 'card_99_99';
+            if ($(card_id)) {
+                // Card already exists on board
+                // Player must have cancelled last action
+                return;
+            }
+
+	    // Deck selection
             var deck = $('deck_' + args.card.type);
 	    var cards = parseInt(deck.textContent);
 	    deck.textContent = cards - 1;
@@ -355,9 +373,9 @@ function (dojo, declare) {
 		col: 99
 	    }), 'cards');
 
-	    this.placeOnObject('card_99_99', deck.id);
-            dojo.addClass('card_99_99', 'selected');
-	    this.slideToObject('card_99_99', 'board').play();
+	    this.placeOnObject(card_id, deck.id);
+            dojo.addClass(card_id, 'selected');
+	    this.slideToObject(card_id, 'board').play();
         },
 
         ///////////////////////////////////////////////////
@@ -705,6 +723,11 @@ function (dojo, declare) {
 
 		// Decrement hand counter
 		this.player_hands[notif.args.player_id].incValue(-1);
+	    } else if (row == 99) {
+                // Observatory pick
+		dojo.destroy('card_99_99');
+		this.player_tables[notif.args.player_id].addToStockWithId(
+		    notif.args.card_idx, notif.args.card_id, 'board');
 	    } else {
 		// Buy from board
 		var col = 7 - notif.args.card_loc;
