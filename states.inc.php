@@ -61,6 +61,7 @@ if (!defined("STATE_END_GAME")) {
     define("STATE_USE_PUB",     16);
     define("STATE_USE_OBSERVATORY", 17);
     define("STATE_OBSERVATORY_CHOICE", 18);
+    define("STATE_OBSERVATORY_TRADE", 19);
     define("STATE_END_GAME", 99);
 }
  
@@ -111,13 +112,12 @@ $machinestates = array(
 
     STATE_TRADE_CARD => array(
 	"name" => "tradeCard",
-	"description" => clienttranslate('${card}: ${actplayer} must choose a card to replace'),
-	"descriptionmyturn" => clienttranslate('${card}: ${you} must choose a card to replace (base cost: ${cost})'),
+	"description" => clienttranslate('${card}: ${actplayer} must choose a card to displace'),
+	"descriptionmyturn" => clienttranslate('${card}: ${you} must choose a card to displace (base cost: ${cost})'),
 	"type" => "activeplayer",
 	"args" => "argSelectCard",
-	"possibleactions" => array("buyTradeCard", "tradeCard", "cancel"),
+	"possibleactions" => array("tradeCard", "cancel"),
 	"transitions" => array(
-	    "buyTradeCard" => STATE_NEXT_PLAYER,
 	    "tradeCard" => STATE_NEXT_PLAYER,
 	    "cancel" => STATE_PLAYER_TURN,
 	    "zombiePass" => STATE_NEXT_PLAYER
@@ -169,8 +169,23 @@ $machinestates = array(
 	"possibleactions" => array("buyCard", "addCard", "discard"),
 	"transitions" => array(
             "buyCard" => STATE_NEXT_PLAYER,
+            "tradeCard" => STATE_OBSERVATORY_TRADE,
             "addCard" => STATE_NEXT_PLAYER,
             "discard" => STATE_NEXT_PLAYER,
+	    "zombiePass" => STATE_NEXT_PLAYER
+	)
+    ),
+
+    STATE_OBSERVATORY_TRADE => array(
+	"name" => "tradeObservatory",
+	"description" => clienttranslate('${card}: ${actplayer} must choose a card to displace'),
+	"descriptionmyturn" => clienttranslate('${card}: ${you} must choose a card to displace (base cost: ${cost})'),
+	"type" => "activeplayer",
+	"args" => "argSelectCard",
+	"possibleactions" => array("tradeCard", "cancel"),
+	"transitions" => array(
+	    "tradeCard" => STATE_NEXT_PLAYER,
+	    "cancel" => STATE_OBSERVATORY_CHOICE,
 	    "zombiePass" => STATE_NEXT_PLAYER
 	)
     ),
