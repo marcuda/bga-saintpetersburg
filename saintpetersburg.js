@@ -37,6 +37,7 @@ function (dojo, declare) {
 	    this.player_hands = [];
 	    this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading'];
 	    this.pub_points = 0;
+            this.current_phase = 'Worker';
         },
         
         /*
@@ -216,13 +217,9 @@ function (dojo, declare) {
 			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
                     case 'chooseObservatory':
-                        console.log('choose but1');
 			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onObsBuyCard");
-                        console.log('choose but2');
 			this.addActionButton("button_2", _("Add to hand"), "onObsAddCard");
-                        console.log('choose but3');
 			this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
-                        console.log('done');
                         break;
                 }
             }
@@ -265,7 +262,7 @@ function (dojo, declare) {
             }
 	},
 
-	addCardOnBoard: function (row, col, idx)
+	addCardOnBoard: function (row, col, idx, src='board')
 	{
 	    // Sprite index
 	    var y = Math.trunc(idx / this.playerHand.image_items_per_row);
@@ -285,7 +282,7 @@ function (dojo, declare) {
 		col: col
 	    }), 'cards');
 
-	    this.placeOnObject('card_'+col+'_'+row, 'board');
+	    this.placeOnObject('card_'+col+'_'+row, src);
 	    this.slideToObject('card_'+col+'_'+row, 'square_'+col+'_'+row).play();
 	},
 
@@ -305,6 +302,7 @@ function (dojo, declare) {
 
 	setPhase: function (phase)
 	{
+            this.current_phase = phase;
 	    var transform;
 	    dojo.forEach(
 		['transform', 'WebkitTransform', 'msTransform',
@@ -346,7 +344,9 @@ function (dojo, declare) {
 	    y *= this.cardheight
 
 	    // Board position
-            var deck = 'deck_' + args.card.type;
+            var deck = $('deck_' + args.card.type);
+	    var cards = parseInt(deck.textContent);
+	    deck.textContent = cards - 1;
 
 	    dojo.place(this.format_block('jstpl_card', {
 		x:x,
@@ -355,7 +355,7 @@ function (dojo, declare) {
 		col: 99
 	    }), 'cards');
 
-	    this.placeOnObject('card_99_99', deck);
+	    this.placeOnObject('card_99_99', deck.id);
             dojo.addClass('card_99_99', 'selected');
 	    this.slideToObject('card_99_99', 'board').play();
         },
@@ -509,6 +509,10 @@ function (dojo, declare) {
             if (!this.checkAction('useObservatory'))
                 return;
 
+            if (this.current_phase != this.phases[1])
+                // Not building phase, can't use
+                return;
+
 	    var card_id = evt.currentTarget.id.split('_')[2];
             this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/useObservatory.html",
@@ -600,6 +604,8 @@ function (dojo, declare) {
 	notif_buyCard: function (notif)
 	{
 	    console.log('buy card notif');
+            console.log(notif);
+
 	    var row = notif.args.card_row;
 	    var col = 7 - notif.args.card_loc;
             var src = 'square_' + col + '_' + row;
@@ -622,6 +628,7 @@ function (dojo, declare) {
 	{
 	    console.log('add card notif');
 	    console.log(notif);
+
 	    var row = notif.args.card_row;
 	    var col = 7 - notif.args.card_loc;
             var src = 'square_' + col + '_' + row;
@@ -765,20 +772,20 @@ function (dojo, declare) {
 
 	    var draw = 0;
 	    for (var i in notif.args.cards) {
-		this.addCardOnBoard(0, i, notif.args.cards[i]);
+		this.addCardOnBoard(0, i, notif.args.cards[i], 'deck_' + notif.args.phase);
 		draw++;
 	    }
 
 	    var deck = $('deck_' + notif.args.phase);
 	    var cards = parseInt(deck.textContent);
-	    console.log('NEXT PHASE: ' + deck + ' => ' + cards);
-	    console.log('DRAW ' + draw);
 	    deck.textContent = cards - draw;
-	    console.log('NEXT PHASE: ' + deck + ' => ' + deck.textConent); 
 	},
 
 	notif_newScores: function (notif)
 	{
+	    console.log('notif new scores');
+	    console.log(notif);
+
 	    for(var player_id in notif.args.scores)
 	    {
 		var newScore = notif.args.scores[player_id];
@@ -794,8 +801,14 @@ function (dojo, declare) {
 	    for (var i in notif.args.cards) {
 		var card = notif.args.cards[i];
 		var row = card.row;
-		var col = 7 - card.col;
-		var anim = this.slideToObject('card_'+col+'_'+row, 'board');
+                if (row == 99) {
+                    // Observatory pick
+                    var col = 99;
+                } else {
+                    // Reverse order
+		    var col = 7 - card.col;
+                }
+		var anim = this.slideToObject('card_'+col+'_'+row, 'deck_Worker'); // TODO - discard pile
 		dojo.connect(anim, 'onEnd', function (node) {
 		    dojo.destroy(node);
 		});
