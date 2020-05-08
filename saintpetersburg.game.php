@@ -839,7 +839,6 @@ class SaintPetersburg extends Table
 	    ));
 	}
 	
-	//TODO: verify this works for multiple
 	$this->gamestate->setPlayerNonMultiactive($player_id, 'nextPhase');
     }
 
@@ -961,11 +960,10 @@ class SaintPetersburg extends Table
 	    $max_hand++;
 	}
 
-	if (count($hand) == $max_hand) {
+	if (count($hand) >= $max_hand) {
+            // Allow for more (i.e. 4) cards which can happen if
+            // Warehouse is played, used, and then displaced
 	    throw new BgaUserException(self::_("Your hand is full"));
-	} else if (count($hand) > $max_hand) {
-            //TODO: what if player upgrades warehouse with 4 cards?
-	    throw new feException("Impossible hand size");
 	}
 
 	$dest = 'hand';
