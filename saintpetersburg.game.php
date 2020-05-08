@@ -390,6 +390,19 @@ class SaintPetersburg extends Table
 	    $cards = $this->cards->getCardsInLocation('table', $player_id);
 	    foreach ($cards as $card) {
 		if ($this->isCardType($card, $phase)) {
+                    if ($card['type_arg'] == CARD_OBSERVATORY) {
+                        // Observatory - do not score if used
+                        if ($card['id'] == self::getGameStateValue('observatory_0_id') {
+                            $used = self::getGameStateValue('observatory_0_used');
+                        } else if ($card['id'] == self::getGameStateValue('observatory_1_id')) {
+                            $used = self::getGameStateValue('observatory_1_used');
+                        } else {
+                            throw new feException("Impossible Observatory ID");
+                        }
+
+                        if ($used) continue;
+                    }
+
 		    $card_info = $this->getCardInfo($card);
 		    $points += $card_info['card_points'];
 		    $rubles += $card_info['card_rubles'];
@@ -399,8 +412,6 @@ class SaintPetersburg extends Table
 		    } else if ($card['type_arg'] == CARD_MARIINSKIJ_THEATER) {
 			$theater = true;
 		    }
-
-                    //TODO do NOT score obs if used
 		}
 
 		if ($this->isWorker($card)) {
