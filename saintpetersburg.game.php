@@ -219,6 +219,15 @@ class SaintPetersburg extends Table
 	$result['rubles'] = self::dbGetRubles($current_player_id);
 
 	$result['decks'] = $this->cards->countCardsInLocations();
+
+        $obs = array();
+        for ($i=0; $i<2; $i++) {
+            $obs[] = array(
+                'id' => self::getGameStateValue('observatory_' . $i . '_id'),
+                'used' => self::getGameStateValue('observatory_' . $i . '_used'),
+            );
+        }
+        $result['observatory'] = $obs;
   
         return $result;
     }
@@ -862,7 +871,7 @@ class SaintPetersburg extends Table
         if ($num_cards == 0) {
             throw new BgaUserException(self::_("Card stack is empty"));
         } else if ($num_cards == 1) {
-            throw new BgaUserException(self::_("Cannot draw the last card"));
+            throw new BgaUserException(self::_("May not draw the last card"));
         }
 
         $player_id = self::getActivePlayerId();
@@ -1102,14 +1111,8 @@ class SaintPetersburg extends Table
             // Reset any used Observatory cards
             self::setGameStateValue('observatory_0_used', 0);
             self::setGameStateValue('observatory_1_used', 0);
-            $obs1 = self::getGameStateValue('observatory_0_id');
-            $obs2 = self::getGameStateValue('observatory_1_id');
 
-            self::notifyAllPlayers('newRound', "", array(
-                'tokens' => $tokens,
-                'obs_id1' => $obs1,
-                'obs_id2' => $obs2
-            ));
+            self::notifyAllPlayers('newRound', "", array('tokens' => $tokens));
 	}
 
 	// Move all cards on board as far right as possible
