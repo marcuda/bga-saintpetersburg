@@ -114,6 +114,16 @@ function (dojo, declare) {
 		this.addCardOnBoard(1, card.location_arg, card.type_arg);
 	    }
 
+            // Observatory status
+            for (var i in gamedatas.observatory) {
+                var card = gamedatas.observatory[i];
+                console.log(card);
+                if (card.used == 1) {
+                    dojo.style('card_content_' + card.id + '_active', 'display', 'none');
+                    dojo.style('card_content_' + card.id + '_mask', 'display', 'block');
+                }
+            }
+
 	    dojo.query('.square').connect('onclick', this, 'onSelectCard');
 
             // Setup game notifications to handle (see "setupNotifications" method below)
@@ -263,12 +273,12 @@ function (dojo, declare) {
             if (card_type_id == 25) {
                 // Observatory
                 var player_id = parseInt(card_div.id.split('_')[1]);
+                var id = card_id.split('_');
+                id = id[id.length - 1];
+                dojo.place(this.format_block('jstpl_card_content', {id:id}), card_div.id);
                 if (player_id == this.player_id) {
                     // Active player
-                    var id = card_id.split('_');
-                    id = id[id.length - 1];
-                    dojo.place(this.format_block('jstpl_card_content', {id:id}), card_div.id);
-                    dojo.connect($('card_content_' + id), 'onclick', this, 'onClickObservatory');
+                    dojo.connect($('card_content_' + id + '_active'), 'onclick', this, 'onClickObservatory');
                 }
             }
 	},
@@ -361,7 +371,9 @@ function (dojo, declare) {
                 return;
             }
 
-            // TODO disable Observatory
+            // Disable Observatory
+            dojo.style('card_content_' + args.obs_id + '_mask', 'display', 'block');
+            dojo.style('card_content_' + args.obs_id + '_active', 'display', 'none');
 
 	    // Deck selection
             var deck = $('deck_' + args.card.type);
@@ -704,7 +716,7 @@ function (dojo, declare) {
 
 	    // Remove displaced card
 	    this.player_tables[notif.args.player_id].removeFromStockById(
-		notif.args.trade_id, 'board');
+		notif.args.trade_id, 'deck_Worker'); //TODO discard pile
 
 	    // Add trading card from correct place
 	    var row = notif.args.card_row;
@@ -848,7 +860,8 @@ function (dojo, declare) {
 
 	    this.setTokens(notif.args.tokens);
 
-            //TODO reset observatory notif.args.obs_id1 and id2
+            dojo.query('.maskcard').style('display', 'none');
+            dojo.query('.activecard').style('display', 'block');
 	},
 
 	notif_buyPoints: function (notif)

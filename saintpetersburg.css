@@ -81,6 +81,16 @@
 	z-index: 99;
 }
 
+.maskcard
+{
+    width: 96px;
+    height: 150px;
+    background-color: white;
+    opacity: 0.5;
+    filter: alpha(opacity=20); /* IE8 */
+    display: none;
+}
+
 .possibleMove
 {
 	background-color: white;
