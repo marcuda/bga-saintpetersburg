@@ -45,6 +45,8 @@ if (!defined("CARD_PUB")) {
     // Card locations
     define("TOP_ROW", "board_top");
     define("BOTTOM_ROW", "board_bottom");
+    define("ROW_HAND", -1);
+    define("ROW_OBSERVATORY", 99);
 }
 
 /*
