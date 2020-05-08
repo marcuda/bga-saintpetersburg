@@ -361,6 +361,8 @@ function (dojo, declare) {
                 return;
             }
 
+            // TODO disable Observatory
+
 	    // Deck selection
             var deck = $('deck_' + args.card.type);
 	    var cards = parseInt(deck.textContent);
@@ -615,7 +617,7 @@ function (dojo, declare) {
 	    this.notifqueue.setSynchronous('nextPhase', 1000);
 	    dojo.subscribe('newScores', this, 'notif_newScores');
 	    dojo.subscribe('lastRound', this, 'notif_lastRound');
-	    dojo.subscribe('rotateTokens', this, 'notif_rotateTokens');
+	    dojo.subscribe('newRound', this, 'notif_newRound');
 	    dojo.subscribe('buyPoints', this, 'notif_buyPoints');
         },  
         
@@ -839,11 +841,14 @@ function (dojo, declare) {
 	    }
 	},
 
-	notif_rotateTokens: function (notif)
+	notif_newRound: function (notif)
 	{
-	    console.log('notif rotate tokens');
+	    console.log('notif new round');
 	    console.log(notif);
+
 	    this.setTokens(notif.args.tokens);
+
+            //TODO reset observatory notif.args.obs_id1 and id2
 	},
 
 	notif_buyPoints: function (notif)

@@ -33,15 +33,20 @@ class SaintPetersburg extends Table
 	    parent::__construct();
         
 	    self::initGameStateLabels(array(
-		"starting_player_" . PHASE_WORKER => 10,
-		"starting_player_" . PHASE_BUILDING => 11,
-		"starting_player_" . PHASE_ARISTOCRAT => 12,
-		"starting_player_" . PHASE_TRADING => 13,
-		"selected_card" => 14,
-		"selected_row" => 15,
-		"num_pass" => 16,
-		"current_phase" => 17,
-		"last_round" => 18,
+		"starting_player_" . PHASE_WORKER => 10,     // player_id holding Worker token (stone)
+		"starting_player_" . PHASE_BUILDING => 11,   // player_id holding Building token
+		"starting_player_" . PHASE_ARISTOCRAT => 12, // player_id holding Aristocrat token
+		"starting_player_" . PHASE_TRADING => 13,    // player_id holding Trading token
+		"selected_card" => 14,        // card_id of player selected card
+		"selected_row" => 15,         // board row (or other location as specified) of player selected card
+		"num_pass" => 16,             // number of players that have consecutively passed in this phase
+		"current_phase" => 17,        // current phase number, always increasing
+		"last_round" => 18,           // 1 if the end state has been triggered in the current round
+                "observatory_0_id" => 19,      // card_id of first Observatory card
+                "observatory_1_id" => 20,      // card_id of second Observatory card
+                "observatory_0_used" => 21,    // 1 if first Observatory has been used this round
+                "observatory_1_used" => 22,    // 1 if second Observatory has been used this round
+                "activated_observatory" => 23, // index (0/1) of Observatory being actively used
 	    ));        
 
 	    $this->cards = self::getNew("module.common.deck");
@@ -138,6 +143,16 @@ class SaintPetersburg extends Table
 	    $this->cards->moveCards(array_column($cards, 'id'), 'deck_' . $phase);
 	    $this->cards->shuffle('deck_' . $phase);
 	}
+
+        // Initialize globals to handle Observatory use
+        $obs = $this->cards->getCardsOfType(PHASE_BUILDING, CARD_OBSERVATORY);
+        $i = 0;
+        foreach ($obs as $card) {
+	    self::setGameStateInitialValue("observatory_" . $i . "_id", $card['id']);
+	    self::setGameStateInitialValue("observatory_" . $i . "_used", 0);
+            $i++;
+        }
+	self::setGameStateInitialValue("activated_observatory", -1);
 
 	// Starting draw based on number of players
 	if ($num_players == 2) {
@@ -648,6 +663,15 @@ class SaintPetersburg extends Table
 	    throw new BgaUserException(self::_("Wrong type of card to displace with trading"));
 	}
 
+        // Check if trading used Observatory
+        if ($trade_card['type_arg'] == CARD_OBSERVATORY) {
+            for ($i=0; $i<2; $i++) {
+                $obs_id = self::getGameStateValue('observatory_' . $i . '_id');
+                if ($obs_id == $trade_id && self::getGameStateValue('observatory_' . $i . '_used'))
+                    throw new BgaUserException(self::_("You may not displace an Observatory after using it"));
+            }
+        }
+
 	// Compute cost and ensure player can pay it
 	$card_cost = $this->getCardCost($card_id, $card_row, $trade_id);
 	$player_id = self::getActivePlayerId();
@@ -660,11 +684,11 @@ class SaintPetersburg extends Table
 	$card_loc = $card['location_arg'];
 	if ($card['location'] == 'hand') {
 	    //play
-	    $card_row = -1; // signal client card is in hand
+	    $card_row = ROW_HAND; // signal client card is in hand
 	    $msg = clienttranslate('${player_name} plays ${card_name} from their hand, displacing ${trade_name}, for ${card_cost} Ruble(s)');
         } else if ($card['location'] == 'obs_tmp') {
             //observatory
-            $card_row = 99; // signal client card is observatory pick
+            $card_row = ROW_OBSERVATORY; // signal client card is observatory pick
 	    $msg = clienttranslate('${player_name} buys ${card_name}, displacing ${trade_name}, for ${card_cost} Ruble(s)');
         } else {
 	    //buy
@@ -694,6 +718,7 @@ class SaintPetersburg extends Table
 	// Reset card selection and pass counter globals
 	self::setGameStateValue("selected_card", -1);
 	self::setGameStateValue("selected_row", -1);
+	self::setGameStateValue("activated_observatory", -1);
 	self::setGameStateValue("num_pass", 0);
 
 	$this->gamestate->nextState('tradeCard');
@@ -723,6 +748,7 @@ class SaintPetersburg extends Table
 	// Reset card selection and pass counter globals
 	self::setGameStateValue("selected_card", -1);
 	self::setGameStateValue("selected_row", -1);
+	self::setGameStateValue("activated_observatory", -1);
 	self::setGameStateValue("num_pass", 0);
     }
 
@@ -799,18 +825,27 @@ class SaintPetersburg extends Table
         // 1. the card exists and is the observatory,
         // 2. it is owned by the player
         // 3. it is the building phase
-        // TODO: rework this, throws error when shouldn't be clickable
         $player_id = self::getActivePlayerId();
         $card = $this->cards->getCard($card_id);
 	$phase = self::getGameStateValue('current_phase') % 4;
         if ($card == null || $card['type_arg'] != CARD_OBSERVATORY ||
-            $card['location_arg'] != $player_id || $card['location'] != 'table' || 
-            $this->phases[$phase] != PHASE_BUILDING)
+            $card['location_arg'] != $player_id || $card['location'] != 'table')
         {
             throw new feException("Invalid Observatory play");
         }
 
-        //TODO only use once per round, and cannot be upgrade after use
+        if (self::getGameStateValue('observatory_0_id') == $card_id) {
+            $used = self::getGameStateValue('observatory_0_used');
+	    self::setGameStateValue("activated_observatory", 0);
+        } else if (self::getGameStateValue('observatory_1_id') == $card_id) {
+            $used = self::getGameStateValue('observatory_1_used');
+	    self::setGameStateValue("activated_observatory", 1);
+        } else {
+            throw new feException("Error handling Observatory card $card_id");
+        }
+
+        if ($used || $this->phases[$phase] != PHASE_BUILDING)
+            throw new BgaUserException(self::_("You may not use the Observatory right now"));
 
         $this->gamestate->nextState("useObservatory");
     }
@@ -818,6 +853,10 @@ class SaintPetersburg extends Table
     function drawObservatoryCard($deck)
     {
         self::checkAction('drawObservatoryCard');
+
+	$obs_id = self::getGameStateValue("activated_observatory");
+        if ($obs_id != 0 && $obs_id != 1)
+            throw new feException("Impossible Obseratory draw");
 
         $num_cards = $this->cards->countCardInLocation($deck);
         if ($num_cards == 0) {
@@ -840,6 +879,7 @@ class SaintPetersburg extends Table
             'phase' => $phase
         ));
 
+        self::setGameStateValue('observatory_' . $obs_id . '_used', 1);
         $this->gamestate->nextState("drawCard");
     }
     
@@ -870,7 +910,7 @@ class SaintPetersburg extends Table
 	$dest = 'table';
 	$notif = 'buyCard';
 	$msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
-	$this->cardAction($card['id'], 99, $card_cost, $dest, $notif, $msg);
+	$this->cardAction($card['id'], ROW_OBSERVATORY, $card_cost, $dest, $notif, $msg);
 	$this->gamestate->nextState('buyCard');
     }
 
@@ -905,7 +945,7 @@ class SaintPetersburg extends Table
 	$dest = 'hand';
 	$notif = 'addCard';
 	$msg = clienttranslate('${player_name} adds ${card_name} to their hand');
-	$this->cardAction($card['id'], 99, 0, $dest, $notif, $msg);
+	$this->cardAction($card['id'], ROW_OBSERVATORY, 0, $dest, $notif, $msg);
 	$this->gamestate->nextState('addCard');
     }
 
@@ -923,7 +963,7 @@ class SaintPetersburg extends Table
 
         // Reuse end round discard notif arg
         $location = array();
-        $location[] = array('row' => 99);
+        $location[] = array('row' => ROW_OBSERVATORY);
 
         $msg = clienttranslate('${player_name} discards ${card_name}');
 	self::notifyAllPlayers('discard', $msg, array(
@@ -932,6 +972,7 @@ class SaintPetersburg extends Table
 	    'cards' => $location
 	));
 
+	self::setGameStateValue("activated_observatory", -1);
 	self::setGameStateValue("num_pass", 0);
         $this->gamestate->nextState('discard');
     }
@@ -975,11 +1016,13 @@ class SaintPetersburg extends Table
         $card = array_shift($cards);
         $card_info = $this->getCardInfo($card);
         $cost = $this->getCardCost($card['id'], 0);
+	$obs_id = self::getGameStateValue("activated_observatory");
         return array(
             'player_id' => $player_id,
             'card' => $card,
             'card_name' => $card_info['card_name'],
-            'cost' => $cost
+            'cost' => $cost,
+            'obs_id' => self::getGameStateValue('observatory_' . $obs_id . '_id')
         );
     }
 
@@ -1056,7 +1099,17 @@ class SaintPetersburg extends Table
 		$tokens[$token_phase] = $next_player[$player_id];
 	    }
 
-	    self::notifyAllPlayers('rotateTokens', "", array('tokens' => $tokens));
+            // Reset any used Observatory cards
+            self::setGameStateValue('observatory_0_used', 0);
+            self::setGameStateValue('observatory_1_used', 0);
+            $obs1 = self::getGameStateValue('observatory_0_id');
+            $obs2 = self::getGameStateValue('observatory_1_id');
+
+            self::notifyAllPlayers('newRound', "", array(
+                'tokens' => $tokens,
+                'obs_id1' => $obs1,
+                'obs_id2' => $obs2
+            ));
 	}
 
 	// Move all cards on board as far right as possible
