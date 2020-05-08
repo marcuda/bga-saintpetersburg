@@ -399,6 +399,8 @@ class SaintPetersburg extends Table
 		    } else if ($card['type_arg'] == CARD_MARIINSKIJ_THEATER) {
 			$theater = true;
 		    }
+
+                    //TODO do NOT score obs if used
 		}
 
 		if ($this->isWorker($card)) {
@@ -434,7 +436,10 @@ class SaintPetersburg extends Table
 
     function finalScoring()
     {
+	self::notifyAllPlayers('message', clienttranslate('Final round scoring...'), array());
+
 	$players = self::loadPlayersBasicInfos();
+        $scores = array();
 	foreach ($players as $player_id => $player) {
 	    $table = $this->cards->getCardsInLocation('table', $player_id);
 	    $aristocrats = array();
@@ -455,9 +460,7 @@ class SaintPetersburg extends Table
 
 	    self::dbIncScore($player_id, $points_ari);
 	    self::dbIncScore($player_id, $points_rubles);
-	    self::dbIncScore($player_id, $points_hand);
-
-	    self::notifyAllPlayers('message', clienttranslate('Final round scoring...'), array());
+	    $scores[$player_id] = self::dbIncScore($player_id, $points_hand);
 
 	    $msg = clienttranslate('${player_name} earns ${points_ari} point(s) for ${num_ari} aristocrat type(s), ${points_rubles} point(s) for ${num_rubles} Ruble(s), and loses ${points_hand} points for ${num_hand} card(s) in hand');
 	    self::notifyAllPlayers('message', $msg, array(
@@ -469,7 +472,10 @@ class SaintPetersburg extends Table
 		'points_hand' => $points_hand,
 		'num_hand' => $num_hand,
 	    ));
+
 	}
+
+	self::notifyAllPlayers('newScores', "", array('scores' => $scores));
     }
 
 
