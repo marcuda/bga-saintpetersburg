@@ -621,7 +621,7 @@ function (dojo, declare) {
 	    dojo.subscribe('shiftRight', this, 'notif_shiftRight');
 	    this.notifqueue.setSynchronous('shiftRight', 1000);
 	    dojo.subscribe('shiftDown', this, 'notif_shiftDown');
-	    this.notifqueue.setSynchronous('shiftDown', 1000);
+	    this.notifqueue.setSynchronous('shiftDown', 500);
 	    dojo.subscribe('discard', this, 'notif_discard');
 	    this.notifqueue.setSynchronous('discard', 1000);
 	    dojo.subscribe('scorePhase', this, 'notif_scorePhase');
