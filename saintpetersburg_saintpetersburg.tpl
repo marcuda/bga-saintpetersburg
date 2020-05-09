@@ -11,10 +11,10 @@
 -->
 
 <div id="decks" style="display: flex;">
-    <div id="deck_Worker" class="cardback deck" style="background-position: 0px 0px;">31</div>
-    <div id="deck_Building" class="cardback deck" style="background-position: -30px 0px;">28</div>
-    <div id="deck_Aristocrat" class="cardback deck" style="background-position: -60px 0px;">27</div>
-    <div id="deck_Trading" class="cardback deck" style="background-position: -90px 0px;">30</div>
+    <div id="deck_Worker" class="cardback deck" style="background-position: 0px 0px;">0</div>
+    <div id="deck_Building" class="cardback deck" style="background-position: -30px 0px;">0</div>
+    <div id="deck_Aristocrat" class="cardback deck" style="background-position: -60px 0px;">0</div>
+    <div id="deck_Trading" class="cardback deck" style="background-position: -90px 0px;">0</div>
 </div>
 
 <div id="board">

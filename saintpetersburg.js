@@ -117,7 +117,6 @@ function (dojo, declare) {
             // Observatory status
             for (var i in gamedatas.observatory) {
                 var card = gamedatas.observatory[i];
-                console.log(card);
                 if (card.used == 1) {
                     dojo.style('card_content_' + card.id + '_active', 'display', 'none');
                     dojo.style('card_content_' + card.id + '_mask', 'display', 'block');
