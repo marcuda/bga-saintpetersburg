@@ -225,6 +225,7 @@ class SaintPetersburg extends Table
 	$result['rubles'] = self::dbGetRubles($current_player_id);
 
 	$result['decks'] = $this->cards->countCardsInLocations();
+        $result['card_types'] = $this->card_types;
 
         $obs = array();
         for ($i=0; $i<2; $i++) {
