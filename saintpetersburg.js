@@ -38,6 +38,8 @@ function (dojo, declare) {
 	    this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading'];
 	    this.pub_points = 0;
             this.current_phase = 'Worker';
+            this.card_types = null;
+            this.card_art_row_size = 11;
         },
         
         /*
@@ -56,6 +58,8 @@ function (dojo, declare) {
         setup: function (gamedatas)
         {
             console.log("Starting game setup");
+
+            this.card_types = gamedatas.card_types;
             
             // Setting up player boards
             for(var player_id in gamedatas.players) {
@@ -98,6 +102,7 @@ function (dojo, declare) {
 	    // Cards
 	    // Hand
 	    this.playerHand = this.createCardStock('myhand', 1);
+	    this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
 	    for (var i in gamedatas.hand) {
 		var card = gamedatas.hand[i];
 		this.playerHand.addToStockWithId(card.type_arg, card.id);
@@ -122,8 +127,6 @@ function (dojo, declare) {
                     dojo.style('card_content_' + card.id + '_mask', 'display', 'block');
                 }
             }
-
-	    dojo.query('.square').connect('onclick', this, 'onSelectCard');
 
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
@@ -259,7 +262,7 @@ function (dojo, declare) {
 	{
 	    var board = new ebg.stock();
 	    board.create(this, $(elem), this.cardwidth, this.cardheight);
-	    board.image_items_per_row = 11;
+	    board.image_items_per_row = this.card_art_row_size;
 	    for (var i = 0; i < 66; i++) {
 		board.addItemType(i, i, g_gamethemeurl+'img/cards.jpg', i);
 	    }
@@ -269,7 +272,9 @@ function (dojo, declare) {
 
 	setupNewCard: function (card_div, card_type_id, card_id)
 	{
-            if (card_type_id == 25) {
+            this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id));
+
+            if (card_type_id == 25 && card_div.id.substring(0, 6) != 'myhand') {
                 // Observatory
                 var player_id = parseInt(card_div.id.split('_')[1]);
                 var id = card_id.split('_');
@@ -282,11 +287,62 @@ function (dojo, declare) {
             }
 	},
 
+        getCardTooltip: function (card_type_id)
+        {
+            var card = dojo.clone(this.card_types[card_type_id]);
+
+            card.card_name = _(card.card_name);
+
+	    card.artx = this.cardwidth * (card_type_id % this.card_art_row_size);
+	    card.arty = this.cardheight * Math.floor(card_type_id / this.card_art_row_size);
+
+            if (card.card_type == "Worker") {
+                card.card_type = _("Worker") + " (" + _(card.card_worker_type) + ")";
+            } else if (card.card_type == "Trading") {
+                card.card_type = _(card.card_trade_type) + " (" + _("Trading card");
+                if (card.card_trade_type == "Worker") {
+                    card.card_type += " - " + _(card.card_worker_type);
+                }
+                card.card_type += ")";
+            } else {
+                card.card_type = _(card.card_type);
+            }
+
+            card.card_nbr_label = _("Cards in play");
+
+            var txt = "<p>" + _("Cost") + ": " + card.card_cost + "</p>";
+            if (card.card_rubles > 0) {
+                txt += "<p>+" + card.card_rubles + " " + _("rubles") + "</p>";
+            }
+            if (card.card_points > 0) {
+                txt += "<p>+" + card.card_points + " " + _("points") + "</p>";
+            }
+
+            if (typeof card.card_text != "undefined") {
+                txt += "<p>" + _(card.card_text) + "</p>";
+            }
+            card.card_text = txt;
+
+            return this.format_block("jstpl_card_tooltip", card);
+        },
+
+        resetTooltip: function (old_id, new_id)
+        {
+            // XXX 
+            // This manipulates BGA Tooltip API rather than recreating it from scratch
+            // Potentially an issue with furture API changes...
+            if (this.tooltips[new_id]) {
+                this.tooltips[new_id].destroy();
+            }
+            this.tooltips[new_id] = this.tooltips[old_id];
+            this.tooltips[old_id] = null;
+        },
+            
 	addCardOnBoard: function (row, col, idx, src='board')
 	{
 	    // Sprite index
-	    var y = Math.trunc(idx / this.playerHand.image_items_per_row);
-	    var x = idx - (y * this.playerHand.image_items_per_row);
+	    var y = Math.trunc(idx / this.card_art_row_size);
+	    var x = idx - (y * this.card_art_row_size);
 
 	    x *= this.cardwidth
 	    y *= this.cardheight
@@ -295,6 +351,9 @@ function (dojo, declare) {
 	    col = 7 - col; // row of 8, first position far right
 
 	    console.log('adding card type '+idx+' at x,y '+col+','+row);
+
+            var card_div = 'card_' + col + '_' + row;
+
 	    dojo.place(this.format_block('jstpl_card', {
 		x:x,
 		y:y,
@@ -302,8 +361,11 @@ function (dojo, declare) {
 		col: col
 	    }), 'cards');
 
-	    this.placeOnObject('card_'+col+'_'+row, src);
-	    this.slideToObject('card_'+col+'_'+row, 'square_'+col+'_'+row).play();
+	    this.placeOnObject(card_div, src);
+	    this.slideToObject(card_div, 'square_'+col+'_'+row).play();
+
+            this.addTooltipHtml(card_div, this.getCardTooltip(idx));
+	    dojo.connect($(card_div), 'onclick', this, 'onSelectCard');
 	},
 
 	setTokens: function (tokens)
@@ -357,8 +419,8 @@ function (dojo, declare) {
         {
 	    // Sprite index
             var idx = args.card.type_arg;
-	    var y = Math.trunc(idx / this.playerHand.image_items_per_row);
-	    var x = idx - (y * this.playerHand.image_items_per_row);
+	    var y = Math.trunc(idx / this.card_art_row_size);
+	    var x = idx - (y * this.card_art_row_size);
 
 	    x *= this.cardwidth
 	    y *= this.cardheight
@@ -389,6 +451,7 @@ function (dojo, declare) {
 	    this.placeOnObject(card_id, deck.id);
             dojo.addClass(card_id, 'selected');
 	    this.slideToObject(card_id, 'board').play();
+            this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg));
         },
 
         ///////////////////////////////////////////////////
@@ -770,6 +833,7 @@ function (dojo, declare) {
 		    this.slideToObject('card_'+old_col+'_'+row, 'square_'+new_col+'_'+row).play();
 		    // Update card DOM id for new position
 		    dojo.attr('card_'+old_col+'_'+row, 'id', 'card_'+new_col+'_'+row);
+                    this.resetTooltip('card_'+old_col+'_'+row, 'card_'+new_col+'_'+row);
 		}
 	    }
 
@@ -786,6 +850,7 @@ function (dojo, declare) {
 		this.slideToObject('card_'+col+'_0', 'square_'+col+'_1').play();
 		// Update card DOM id for new position
 		dojo.attr('card_'+col+'_0', 'id', 'card_'+col+'_1');
+                this.resetTooltip('card_'+col+'_0', 'card_'+col+'_1');
 	    }
 	},
 

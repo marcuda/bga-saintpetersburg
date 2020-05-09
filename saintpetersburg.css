@@ -78,7 +78,6 @@
 	width: 96px;
 	height: 150px;
 	position: absolute;
-	z-index: 99;
 }
 
 .maskcard
@@ -187,4 +186,19 @@
  background-color:white;
  display:block;
  cursor:pointer;
+}
+
+.cardart {
+ display:inline-block;
+ background-image:url('img/cards.jpg');
+ width:96px;
+ height:150px;
+ margin:10px;
+ border:4px solid black;
+ border-radius:10px
+}
+
+.cardtooltip {
+ text-align:left;
+ max-width:300px
 }

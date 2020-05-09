@@ -35,12 +35,12 @@ if (!defined("CARD_PUB")) {
     define("PHASE_ARISTOCRAT", "Aristocrat");
     define("PHASE_TRADING", "Trading");
 
-    define("WORKER_ALL", 0);
-    define("WORKER_WOOD", 1);
-    define("WORKER_GOLD", 2);
-    define("WORKER_WOOL", 3);
-    define("WORKER_FUR", 4);
-    define("WORKER_SHIP", 5);
+    define("WORKER_ALL", "Any");
+    define("WORKER_WOOD", "Wood");
+    define("WORKER_GOLD", "Gold");
+    define("WORKER_WOOL", "Wool");
+    define("WORKER_FUR", "Fur");
+    define("WORKER_SHIP", "Shipping");
 
     // Card locations
     define("TOP_ROW", "board_top");
@@ -120,7 +120,8 @@ $this->card_types = array(
 	"card_value" => 8,
 	"card_rubles" => 3,
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "Czar Peter can be displaced by any green trading card"
     ),
     CARD_PUB => array( 
 	"card_name" => "Pub",
@@ -129,10 +130,11 @@ $this->card_types = array(
 	"card_cost" => 1,
 	"card_value" => 1,
 	"card_rubles" => 0,
-	"card_points" => 0,//TODO can buy up to 5 points for 2 rubles each
-	"card_nbr" => 2
+	"card_points" => 0,
+        "card_nbr" => 2,
+        "card_text" => "After scoring, you may buy up to 5 points for 2 rubles each"
     ),
-    CARD_WAREHOUSE => array( // hand size +1
+    CARD_WAREHOUSE => array(
 	"card_name" => "Warehouse",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -140,7 +142,8 @@ $this->card_types = array(
 	"card_value" => 2,
 	"card_rubles" => 0,
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "You can hold up to 4 cards in your hand"
     ),
     24 => array( 
 	"card_name" => "Potjomkin's Village",
@@ -150,17 +153,19 @@ $this->card_types = array(
 	"card_value" => 6,
 	"card_rubles" => 0,
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "Costs 2 rubles to buy but worth 6 when displaced by a trading card"
     ),
     CARD_OBSERVATORY => array( 
-	"card_name" => "Observatory", //TODO special ability to draw one card
+	"card_name" => "Observatory",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 6,
 	"card_value" => 6,
 	"card_rubles" => 0,
-	"card_points" => 1,//TODO no score if used
-	"card_nbr" => 2
+	"card_points" => 1,
+        "card_nbr" => 2,
+        "card_text" => "During blue actions you may draw the top-most card from any stack (it may not be the last card). You must then either buy the card, add it to your hand, or discard it. The Observatory then cannot be scored or used until the next round."
     ),
     26 => array( 
 	"card_name" => "Market",
@@ -310,7 +315,8 @@ $this->card_types = array(
 	"card_cost" => 4,
 	"card_rubles" => 3,
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "Blue building cards cost you 1 less ruble to buy"
     ),
     CARD_GOLD_SMELTER => array( 
 	"card_name" => "Gold Smelter",
@@ -320,7 +326,8 @@ $this->card_types = array(
 	"card_cost" => 6,
 	"card_rubles" => 3,
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "Red aristocrat cards cost you 1 less ruble to buy"
     ),
     13 => array( 
 	"card_name" => "Weaving Mill",
@@ -359,7 +366,8 @@ $this->card_types = array(
 	"card_cost" => 10,
 	"card_rubles" => 0, // 1 per aristocrat
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "+1 ruble per red aristocrat in your play area"
     ),
     34 => array( 
 	"card_name" => "Bank",
@@ -503,7 +511,8 @@ $this->card_types = array(
 	"card_cost" => 17,
 	"card_rubles" => 0, // 1 per worker
 	"card_points" => 0,
-	"card_nbr" => 1
+        "card_nbr" => 1,
+        "card_text" => "+1 ruble per green worker in your play area"
     ),
     62 => array( 
 	"card_name" => "Admiral",
