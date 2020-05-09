@@ -933,6 +933,8 @@ function (dojo, declare) {
 	    console.log('notif buy points');
 	    console.log(notif);
 
+            this.scoreCtrl[notif.args.player_id].incValue(notif.args.points);
+
 	    if (notif.args.player_id == this.player_id) {
 		this.rubles.incValue(-notif.args.cost);
 	    }
