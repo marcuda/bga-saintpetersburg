@@ -51,6 +51,12 @@ class SaintPetersburg extends Table
 
 	    $this->cards = self::getNew("module.common.deck");
 	    $this->cards->init("card");
+            $this->deck_size = array( // full stack sizes for progression
+                PHASE_WORKER => 31,
+                PHASE_BUILDING => 28,
+                PHASE_ARISTOCRAT => 27,
+                PHASE_TRADING => 30
+            );
 
 	    $this->phases = array(
 		PHASE_WORKER,
@@ -244,9 +250,27 @@ class SaintPetersburg extends Table
     */
     function getGameProgression()
     {
-        // TODO: compute and return the game progression
+        // Game ends after round where any stack is emptied
+        // Set progress to inverse of percent left in smallest stack,
+        // plus count each phase in the round as 3%
+        $val = 0;
 
-        return 0;
+        // Find percentage of smallest stack
+        $counts = $this->cards->countCardsInLocations();
+        foreach ($this->phases as $phase) {
+            if (key_exists('deck_' . $phase, $counts)) {
+                $percent = $counts['deck_' . $phase] / $this->deck_size[$phase];
+                $val = max($val, 100 * (1 - $percent));
+            } else {
+                // Stack is empty
+                $val = 100;
+            }
+        }
+
+        $val -= 9; // allow room for phases
+        $val += 3 * (self::getGameStateValue('current_phase') % 4); // 3% each phase
+
+        return $val;
     }
 
 
@@ -392,7 +416,7 @@ class SaintPetersburg extends Table
 		if ($this->isCardType($card, $phase)) {
                     if ($card['type_arg'] == CARD_OBSERVATORY) {
                         // Observatory - do not score if used
-                        if ($card['id'] == self::getGameStateValue('observatory_0_id') {
+                        if ($card['id'] == self::getGameStateValue('observatory_0_id')) {
                             $used = self::getGameStateValue('observatory_0_used');
                         } else if ($card['id'] == self::getGameStateValue('observatory_1_id')) {
                             $used = self::getGameStateValue('observatory_1_used');
