@@ -61,8 +61,8 @@ var jstpl_card_content = '<div id="card_content_${id}">' +
                             '<div id="card_content_${id}_active" class="activecard"><a href="#">Activate</a></div>' +
                          '</div>';
 var jstpl_player_board = '<div class="stp_board">' +
-	                     '<div id="rubleicon_p${id}" class="rubleicon nolinebreak"><span id="rublecount_p${id}">?</span></div>&nbsp' + 
-	                     '<div id="cardicon_p${id}" class="cardback nolinebreak" style="background-position: -90px 0px;"><span id="handcount_p${id}">0</span></div>&nbsp' + 
+	                     '<div id="rubleicon_p${id}" class="rubleicon nolinebreak"><span id="rublecount_p${id}" class="iconspan"></span></div>&nbsp' + 
+	                     '<div id="cardicon_p${id}" class="cardback nolinebreak" style="background-position: -90px 0px;"><span id="handcount_p${id}" class="iconspan">0</span></div>&nbsp' + 
 	                     '<div id="token_p${id}" class="token token_worker"></div>&nbsp' + 
 	                     '<div id="token2_p${id}" class="token token_building"></div>&nbsp' + 
                          '</div>';

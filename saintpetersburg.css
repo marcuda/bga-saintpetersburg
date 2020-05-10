@@ -122,15 +122,21 @@
     width: 45px;
     height: 24px;
     background-image: url('img/ruble.jpg');
+    margin: 0 0 15px 0;
 }
 
-/*
-.rubleicon > span {
- position:absolute;
- right:-6px;
- font-size:18px
+.iconspan {
+    color: black;
+    text-shadow: -1px 0 white,
+    0 1px white,
+    1px 0 white,
+    0 -1px white;
+    font-size: 18px;
+    font-weight: bold;
+    vertical-align: middle;
+    display:inline-block;
+    padding: 20px;
 }
-*/
 
 .stp_board {
     display: inline-block;
