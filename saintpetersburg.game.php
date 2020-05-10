@@ -417,15 +417,8 @@ class SaintPetersburg extends Table
 		if ($this->isCardType($card, $phase)) {
                     if ($card['type_arg'] == CARD_OBSERVATORY) {
                         // Observatory - do not score if used
-                        if ($card['id'] == self::getGameStateValue('observatory_0_id')) {
-                            $used = self::getGameStateValue('observatory_0_used');
-                        } else if ($card['id'] == self::getGameStateValue('observatory_1_id')) {
-                            $used = self::getGameStateValue('observatory_1_used');
-                        } else {
-                            throw new feException("Impossible Observatory ID");
-                        }
-
-                        if ($used) continue;
+                        $obs = $this->getObservatory($card['id']);
+                        if ($obs['used']) continue;
                     }
 
 		    $card_info = $this->getCardInfo($card);
@@ -514,7 +507,6 @@ class SaintPetersburg extends Table
 	self::notifyAllPlayers('newScores', "", array('scores' => $scores));
     }
 
-
     function shiftCardsRight()
     {
 	$num_cards = 0;
@@ -575,6 +567,22 @@ class SaintPetersburg extends Table
 	self::notifyAllPlayers('discard', "", array(
 	    'cards' => $discard
 	));
+    }
+
+    function getObservatory($card_id)
+    {
+        if ($card_id == self::getGameStateValue('observatory_0_id')) {
+            $id = 0;
+        } else if ($card_id == self::getGameStateValue('observatory_1_id')) {
+            $id = 1;
+        } else {
+            throw new feException("Invalid Observatory ID");
+        }
+
+        return array(
+            'id' => $id,
+            'used' => self::getGameStateValue('observatory_' . $id . '_used')
+        );
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -716,11 +724,9 @@ class SaintPetersburg extends Table
 
         // Check if trading used Observatory
         if ($trade_card['type_arg'] == CARD_OBSERVATORY) {
-            for ($i=0; $i<2; $i++) {
-                $obs_id = self::getGameStateValue('observatory_' . $i . '_id');
-                if ($obs_id == $trade_id && self::getGameStateValue('observatory_' . $i . '_used'))
-                    throw new BgaUserException(self::_("You may not displace an Observatory after using it"));
-            }
+            $obs = $this->getObservatory($trade_id);
+            if ($obs['used'])
+                throw new BgaUserException(self::_("You may not displace an Observatory after using it"));
         }
 
 	// Compute cost and ensure player can pay it
@@ -884,19 +890,11 @@ class SaintPetersburg extends Table
             throw new feException("Invalid Observatory play");
         }
 
-        if (self::getGameStateValue('observatory_0_id') == $card_id) {
-            $used = self::getGameStateValue('observatory_0_used');
-	    self::setGameStateValue("activated_observatory", 0);
-        } else if (self::getGameStateValue('observatory_1_id') == $card_id) {
-            $used = self::getGameStateValue('observatory_1_used');
-	    self::setGameStateValue("activated_observatory", 1);
-        } else {
-            throw new feException("Error handling Observatory card $card_id");
-        }
-
-        if ($used || $this->phases[$phase] != PHASE_BUILDING)
+        $obs = $this->getObservatory($card_id);
+        if ($obs['used'] || $this->phases[$phase] != PHASE_BUILDING)
             throw new BgaUserException(self::_("You may not use the Observatory right now"));
 
+        self::setGameStateValue("activated_observatory", $obs['id']);
         $this->gamestate->nextState("useObservatory");
     }
 
@@ -1075,6 +1073,8 @@ class SaintPetersburg extends Table
 
         $trades = array();
         $player_id = self::getActivePlayerId();
+	$rubles = self::dbGetRubles($player_id);
+        $has_trade = false;
 
         if ($card_info['card_type'] == PHASE_TRADING) {
 	    $cards = $this->cards->getCardsInLocation('table', $player_id);
@@ -1089,8 +1089,29 @@ class SaintPetersburg extends Table
                 {
                     continue; // Not correct worker type
                 }
+                if ($p_card['type_arg'] == CARD_OBSERVATORY) {
+                    $obs = $this->getObservatory($p_card['id']);
+                    if ($obs['used']) {
+                        continue; // Observatory card has been used
+                    }
+                }
+
+                $has_trade = true; // At least one valid card, ignoring cost
+
+                if ($cost - $p_info['card_value'] > $rubles) {
+                    continue; // Not enough value/rubles
+                }
 
                 $trades[] = $p_card['id'];
+            }
+
+            // Must have valid card and enough rubles to make trade
+            if (count($trades) == 0) {
+                if ($has_trade) {
+                    throw new BgaUserException(self::_('You do not have enough rubles to trade'));
+                } else {
+                    throw new BgaUserException(self::_('You do not have any valid cards to trade'));
+                }
             }
         }
 
