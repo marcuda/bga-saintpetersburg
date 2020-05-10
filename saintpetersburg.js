@@ -151,13 +151,15 @@ function (dojo, declare) {
 		    break;
 		case 'selectCard':
 		    this.playerHand.setSelectionMode(0);
+                    this.setSelections(args.args);
 		    break;
 		case 'tradeCard':
 		    this.playerHand.setSelectionMode(0);
 		    this.playerTable.setSelectionMode(1);
+                    this.setSelections(args.args);
 		    break;
                 case 'useObservatory':
-                    dojo.query('.deck').addClass('possibleMove');
+                    dojo.query('.deck').addClass('selectable');
                     break;
                 case 'chooseObservatory':
                     this.showObservatoryChoice(args.args);
@@ -165,6 +167,7 @@ function (dojo, declare) {
                 case 'tradeObservatory':
 		    this.playerHand.setSelectionMode(0);
 		    this.playerTable.setSelectionMode(1);
+                    this.setSelections(args.args);
 		    break;
             }
         },
@@ -190,17 +193,23 @@ function (dojo, declare) {
            */
 		case 'selectCard':
 		    this.playerHand.setSelectionMode(1);
+                    dojo.query('.selected').removeClass('selected');
+                    dojo.query('.selectable').removeClass('selectable');
 		    break;
 		case 'tradeCard':
 		    this.playerHand.setSelectionMode(1);
 		    this.playerTable.setSelectionMode(0);
+                    dojo.query('.selected').removeClass('selected');
+                    dojo.query('.selectable').removeClass('selectable');
 		    break;
                 case 'useObservatory':
-                    dojo.query('.deck').removeClass('possibleMove');
+                    dojo.query('.deck').removeClass('selectable');
                     break;
 		case 'tradeObservatory':
 		    this.playerHand.setSelectionMode(1);
 		    this.playerTable.setSelectionMode(0);
+                    dojo.query('.selected').removeClass('selected');
+                    dojo.query('.selectable').removeClass('selectable');
 		    break;
             }               
         }, 
@@ -415,6 +424,48 @@ function (dojo, declare) {
 	    });
 	},
 
+        setSelections: function (args)
+        {
+            if (args.player_id != this.player_id) {
+                // Not active player
+                return;
+            }
+
+            console.log(args);
+
+            // Highlight selected card
+            // In hand?
+            var div = this.playerHand.getItemDivId(args.card_id);
+            if (!$(div)) {
+                // Not hand. Board?
+		var col = 7 - args.col;
+                div = 'card_' + col + '_' + args.row;
+	    } else {
+                // Select stock item, otherwise won't show
+                this.playerHand.selectItem(args.card_id);
+            }
+
+            if (!$(div)) {
+                // No, must be from Observatory pick
+                div = 'card_99_99';
+	    }
+            if (!$(div)) {
+                // How did we get here?
+                alert("ERROR: Impossible selection");
+                return;
+            }
+
+            console.log('PLAYER SELECT ' + args.col + ',' + args.row + ' => ' + div);
+
+            dojo.addClass(div, 'selected');
+
+            // Highlight trade options
+            for (var i in args.trades) {
+                div = this.player_tables[args.player_id].getItemDivId(args.trades[i]);
+                dojo.addClass(div, 'selectable');
+            }
+        },
+
         showObservatoryChoice: function (args)
         {
 	    // Sprite index
@@ -429,6 +480,7 @@ function (dojo, declare) {
             if ($(card_id)) {
                 // Card already exists on board
                 // Player must have cancelled last action
+                dojo.addClass(card_id, 'selected');
                 return;
             }
 

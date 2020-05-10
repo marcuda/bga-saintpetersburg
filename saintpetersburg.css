@@ -106,9 +106,16 @@
 }
 
 .selected {
-    border-width: 3px;
-    border-style: solid;
-    border-color: red;
+    border: 3px solid red ! important;
+}
+
+.selectable {
+    border: 3px solid blue ! important;
+    cursor: pointer;
+}
+
+.stockitem_select {
+    border: 3px solid red ! important;
 }
 
 .rubleicon {
