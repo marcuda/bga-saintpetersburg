@@ -1046,11 +1046,62 @@ class SaintPetersburg extends Table
 
 	// Get card details and adjusted cost
 	$card = $this->cards->getCard($card_id);
-	$card_name = $this->getCardInfo($card)['card_name'];
 	$cost = $this->getCardCost($card_id, $card_row);
+	$card_info = $this->getCardInfo($card);
+
 	return array(
-	    'card' => $card_name,
-	    'cost' => $cost
+	    'card_name' => $card_info['card_name'],
+            'cost' => $cost,
+            'player_id' => self::getActivePlayerId(),
+            'card_id' => $card['id'],
+            'row' => $card_row,
+            'col' => $card['location_arg']
+	);
+    }
+
+    function argTradeCard()
+    {
+	// Selected card location are global variables
+	$card_id = self::getGameStateValue("selected_card");
+	$card_row = self::getGameStateValue("selected_row");
+	if ($card_id < 0 || $card_row < 0)
+	    //throw new feException("Impossible state");
+	    return array();
+
+	// Get card details and adjusted cost
+	$card = $this->cards->getCard($card_id);
+	$cost = $this->getCardCost($card_id, $card_row);
+	$card_info = $this->getCardInfo($card);
+
+        $trades = array();
+        $player_id = self::getActivePlayerId();
+
+        if ($card_info['card_type'] == PHASE_TRADING) {
+	    $cards = $this->cards->getCardsInLocation('table', $player_id);
+            foreach ($cards as $p_card) {
+                $p_info = $this->getCardInfo($p_card);
+                if ($card_info['card_trade_type'] != $p_info['card_type']) {
+                    continue; // Not correct trading type
+                }
+                if ($card_info['card_trade_type'] == PHASE_WORKER &&
+                    $card_info['card_worker_type'] != $p_info['card_worker_type'] &&
+                    $p_info['card_worker_type'] != WORKER_ALL)
+                {
+                    continue; // Not correct worker type
+                }
+
+                $trades[] = $p_card['id'];
+            }
+        }
+
+	return array(
+	    'card_name' => $card_info['card_name'],
+            'cost' => $cost,
+            'player_id' => $player_id,
+            'card_id' => $card['id'],
+            'row' => $card_row,
+            'col' => $card['location_arg'],
+            'trades' => $trades
 	);
     }
 
