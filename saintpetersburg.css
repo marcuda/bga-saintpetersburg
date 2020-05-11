@@ -166,10 +166,13 @@
 }
 
 .token {
+    position: relative;
     display: inline-block;
-    width: 28px;
+    width: 32px;
     height: 32px;
+    z-index: 99;
     background-image: url('img/tokens.png');
+    background-position: -128px 0px; /* empty */
 }
 
 .token_Worker {
@@ -177,15 +180,15 @@
 }
 
 .token_Building {
-    background-position: -28px 0px;
+    background-position: -32px 0px;
 }
 
 .token_Aristocrat {
-    background-position: -59px 0px;
+    background-position: -64px 0px;
 }
 
 .token_Trading {
-    background-position: -90px 0px;
+    background-position: -96px 0px;
 }
 
 .activecard {

@@ -90,7 +90,7 @@ function (dojo, declare) {
 	    this.playerTable = this.player_tables[this.player_id];
             dojo.connect(this.playerTable, 'onChangeSelection', this, 'onPlayerTableSelectionChanged' );
 
-	    this.setTokens(gamedatas.tokens);
+	    this.setTokens(gamedatas.tokens, false);
 	    this.setPhase(gamedatas.phase);
 	    for (var deck in gamedatas.decks) {
 		if (deck.startsWith('deck_')) {
@@ -377,18 +377,43 @@ function (dojo, declare) {
 	    dojo.connect($(card_div), 'onclick', this, 'onSelectCard');
 	},
 
-	setTokens: function (tokens)
+	setTokens: function (tokens, animate)
 	{
-	    dojo.query('.token').removeClass();
-	    for (var phase in tokens) {
-		var el = 'token_p' + tokens[phase];
-		if (dojo.hasClass(el, 'token')) {
-		    el = 'token2_p' + tokens[phase];
-		}
+            var delay = 1000; // 1s animation
+            var players = {};
 
-		dojo.addClass(el, 'token');
-		dojo.addClass(el, 'token_' + phase);
-	    }
+            // Clear tokens
+            dojo.query('.token').removeClass('token_Worker token_Building token_Aristocrat token_Trading');
+
+            for (var phase in tokens) {
+                // Determine current and next player for each token
+                var token = tokens[phase];
+                if (players[token.next]) {
+                    var curr = 'token2_p' + token.current;
+                    var next = 'token2_p' + token.next;
+                } else {
+                    var curr = 'token_p' + token.current;
+                    var next = 'token_p' + token.next;
+                    players[token.next] = true;
+                }
+
+                if (animate) {
+                    // Use temp object to show tokens rotating
+                    var tmp = '<div id="tmp_token_'+phase+'" class="token token_'+phase+'"></div>';
+                    this.slideTemporaryObject(tmp, 'token_wrap_p' + token.current, curr, next, delay, 0);
+                } else {
+                    // Immediately switch token to next player
+                    dojo.addClass(next, 'token_' + phase);
+                }
+            }
+
+            if (animate) {
+                // Call this function again without animation to set permenant token icons
+                // A bit overly complicated but animation callbacks were not working
+                setTimeout(dojo.hitch(this, function() {
+                    this.setTokens(tokens, false);
+                }), delay);
+            }
 	},
 
 	setPhase: function (phase)
@@ -974,7 +999,7 @@ function (dojo, declare) {
 	    console.log('notif new round');
 	    console.log(notif);
 
-	    this.setTokens(notif.args.tokens);
+	    this.setTokens(notif.args.tokens, true);
 
             dojo.query('.maskcard').style('display', 'none');
             dojo.query('.activecard').style('display', 'block');
