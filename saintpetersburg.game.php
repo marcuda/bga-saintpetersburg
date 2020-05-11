@@ -213,7 +213,13 @@ class SaintPetersburg extends Table
 	$tokens = array();
 	foreach ($this->phases as $token_phase) {
 	    $token = "starting_player_" . $token_phase;
-	    $tokens[$token_phase] = self::getGameStateValue($token);
+	    $token_player = self::getGameStateValue($token);
+            // Client expects two elements here as same input is used for new round logic.
+            // In this case we don't have (or need) that information so set both to current.
+            $tokens[$token_phase] = array(
+                'current' => $token_player,
+                'next' => $token_player
+            );
 	}
 	$result['tokens'] = $tokens;
 
@@ -1217,7 +1223,10 @@ class SaintPetersburg extends Table
 		$token = "starting_player_" . $token_phase;
 		$player_id = self::getGameStateValue($token);
 		self::setGameStateValue($token, $next_player[$player_id]);
-		$tokens[$token_phase] = $next_player[$player_id];
+                $tokens[$token_phase] = array(
+                    'current' => $player_id,
+                    'next' => $next_player[$player_id]
+                );
 	    }
 
             // Reset any used Observatory cards
