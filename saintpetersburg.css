@@ -159,11 +159,15 @@
     background-image: url('img/cardicon.png');
 }
 
-.cardback {
+.deck {
     position: absolute;
     width: 70px;
     height: 112px;
     background-image: url('img/cardbacks_big.jpg');
+}
+
+.emptydeck {
+    background: rgba(200,0,0,0.4);
 }
 
 .deckcount {
