@@ -21,13 +21,13 @@
 
 if (!defined("CARD_PUB")) {
     // Special card types
-    define("CARD_CARPENTER_WORKSHOP", 11);
-    define("CARD_GOLD_SMELTER", 12);
-    define("CARD_PUB", 22);
-    define("CARD_WAREHOUSE", 23);
-    define("CARD_OBSERVATORY", 25);
-    define("CARD_MARIINSKIJ_THEATER", 33);
-    define("CARD_TAX_MAN", 61);
+    define("CARD_CARPENTER_WORKSHOP", 6);
+    define("CARD_GOLD_SMELTER", 7);
+    define("CARD_PUB", 11);
+    define("CARD_WAREHOUSE", 12);
+    define("CARD_OBSERVATORY", 15);
+    define("CARD_MARIINSKIJ_THEATER", 22);
+    define("CARD_TAX_MAN", 45);
 
     // Phases/types
     define("PHASE_WORKER", "Worker");
@@ -145,7 +145,7 @@ $this->card_types = array(
         "card_nbr" => 1,
         "card_text" => "You can hold up to 4 cards in your hand"
     ),
-    24 => array( 
+    13 => array( 
 	"card_name" => "Potjomkin's Village",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -155,6 +155,16 @@ $this->card_types = array(
 	"card_points" => 0,
         "card_nbr" => 1,
         "card_text" => "Costs 2 rubles to buy but worth 6 when displaced by a trading card"
+    ),
+    14 => array( 
+	"card_name" => "Market",
+	"card_type" => PHASE_BUILDING,
+	"card_trade_type" => 6,
+	"card_cost" => 5,
+	"card_value" => 5,
+	"card_rubles" => 0,
+	"card_points" => 1,
+	"card_nbr" => 5
     ),
     CARD_OBSERVATORY => array( 
 	"card_name" => "Observatory",
@@ -167,17 +177,7 @@ $this->card_types = array(
         "card_nbr" => 2,
         "card_text" => "During blue actions you may draw the top-most card from any stack (it may not be the last card). You must then either buy the card, add it to your hand, or discard it. The Observatory then cannot be scored or used until the next round."
     ),
-    26 => array( 
-	"card_name" => "Market",
-	"card_type" => PHASE_BUILDING,
-	"card_trade_type" => 6,
-	"card_cost" => 5,
-	"card_value" => 5,
-	"card_rubles" => 0,
-	"card_points" => 1,
-	"card_nbr" => 5
-    ),
-    27 => array( 
+    16 => array( 
 	"card_name" => "Customs House",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
@@ -187,7 +187,7 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 5
     ),
-    28 => array( 
+    17 => array( 
 	"card_name" => "Firehouse",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
@@ -197,7 +197,7 @@ $this->card_types = array(
 	"card_points" => 3,
 	"card_nbr" => 3
     ),
-    29 => array( 
+    18 => array( 
 	"card_name" => "Hospital",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
@@ -207,7 +207,7 @@ $this->card_types = array(
 	"card_points" => 4,
 	"card_nbr" => 3
     ),
-    30 => array( 
+    19 => array( 
 	"card_name" => "Library",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
@@ -217,7 +217,7 @@ $this->card_types = array(
 	"card_points" => 5,
 	"card_nbr" => 3
     ),
-    31 => array( 
+    20 => array( 
 	"card_name" => "Theater",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
@@ -227,7 +227,7 @@ $this->card_types = array(
 	"card_points" => 6,
 	"card_nbr" => 2
     ),
-    32 => array( 
+    21 => array( 
 	"card_name" => "Academy",
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
@@ -237,7 +237,7 @@ $this->card_types = array(
 	"card_points" => 7,
 	"card_nbr" => 1
     ),
-    44 => array( 
+    32 => array( 
 	"card_name" => "Author",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -247,7 +247,7 @@ $this->card_types = array(
 	"card_points" => 0,
 	"card_nbr" => 6
     ),
-    45 => array( 
+    33 => array( 
 	"card_name" => "Administrator",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -257,7 +257,7 @@ $this->card_types = array(
 	"card_points" => 0,
 	"card_nbr" => 5
     ),
-    46 => array( 
+    34 => array( 
 	"card_name" => "Warehouse Manager",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -267,7 +267,7 @@ $this->card_types = array(
 	"card_points" => 0,
 	"card_nbr" => 5
     ),
-    47 => array( 
+    35 => array( 
 	"card_name" => "Secretary",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -277,7 +277,7 @@ $this->card_types = array(
 	"card_points" => 0,
 	"card_nbr" => 4
     ),
-    48 => array( 
+    36 => array( 
 	"card_name" => "Controller",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -287,7 +287,7 @@ $this->card_types = array(
 	"card_points" => 1,
 	"card_nbr" => 3
     ),
-    49 => array( 
+    37 => array( 
 	"card_name" => "Judge",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -297,7 +297,7 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 2
     ),
-    50 => array( 
+    38 => array( 
 	"card_name" => "Mistress of Ceremonies",
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
@@ -329,7 +329,7 @@ $this->card_types = array(
         "card_nbr" => 1,
         "card_text" => "Red aristocrat cards cost you 1 less ruble to buy"
     ),
-    13 => array( 
+    8 => array( 
 	"card_name" => "Weaving Mill",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
@@ -339,7 +339,7 @@ $this->card_types = array(
 	"card_points" => 0,
 	"card_nbr" => 2
     ),
-    14 => array( 
+    9 => array( 
 	"card_name" => "Fur Shop",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
@@ -349,7 +349,7 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 3
     ),
-    15 => array( 
+    10 => array( 
 	"card_name" => "Wharf",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
@@ -369,7 +369,7 @@ $this->card_types = array(
         "card_nbr" => 1,
         "card_text" => "+1 ruble per red aristocrat in your play area"
     ),
-    34 => array( 
+    23 => array( 
 	"card_name" => "Bank",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -378,7 +378,7 @@ $this->card_types = array(
 	"card_points" => 1,
 	"card_nbr" => 1
     ),
-    35 => array( 
+    24 => array( 
 	"card_name" => "Peterhof",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -387,7 +387,7 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 1
     ),
-    36 => array( 
+    25 => array( 
 	"card_name" => "St Isaac's Cathedral",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -396,7 +396,7 @@ $this->card_types = array(
 	"card_points" => 3,
 	"card_nbr" => 1
     ),
-    37 => array( 
+    26 => array( 
 	"card_name" => "Harbor",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -405,7 +405,7 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 1
     ),
-    38 => array( 
+    27 => array( 
 	"card_name" => "Church of the Resurrection of Jesus Christ",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -414,7 +414,7 @@ $this->card_types = array(
 	"card_points" => 4,
 	"card_nbr" => 1
     ),
-    39 => array( 
+    28 => array( 
 	"card_name" => "Catherine the Great Palace",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -423,7 +423,7 @@ $this->card_types = array(
 	"card_points" => 5,
 	"card_nbr" => 1
     ),
-    40 => array( 
+    29 => array( 
 	"card_name" => "Smolny Cathedral",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -432,7 +432,7 @@ $this->card_types = array(
 	"card_points" => 3,
 	"card_nbr" => 1
     ),
-    41 => array( 
+    30 => array( 
 	"card_name" => "Hermitage",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -441,7 +441,7 @@ $this->card_types = array(
 	"card_points" => 4,
 	"card_nbr" => 1
     ),
-    42 => array( 
+    31 => array( 
 	"card_name" => "Winter Palace",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
@@ -450,7 +450,7 @@ $this->card_types = array(
 	"card_points" => 5,
 	"card_nbr" => 1
     ),
-    55 => array( 
+    39 => array( 
 	"card_name" => "Pope",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -459,16 +459,7 @@ $this->card_types = array(
 	"card_points" => 1,
 	"card_nbr" => 1
     ),
-    56 => array( 
-	"card_name" => "Weapon Master",
-	"card_type" => PHASE_TRADING,
-	"card_trade_type" => PHASE_ARISTOCRAT,
-	"card_cost" => 8,
-	"card_rubles" => 4,
-	"card_points" => 0,
-	"card_nbr" => 1
-    ),
-    57 => array( 
+    40 => array( 
 	"card_name" => "Chamber Maid",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -477,7 +468,16 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 1
     ),
-    58 => array( 
+    41 => array( 
+	"card_name" => "Weapon Master",
+	"card_type" => PHASE_TRADING,
+	"card_trade_type" => PHASE_ARISTOCRAT,
+	"card_cost" => 8,
+	"card_rubles" => 4,
+	"card_points" => 0,
+	"card_nbr" => 1
+    ),
+    42 => array( 
 	"card_name" => "Builder",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -486,7 +486,7 @@ $this->card_types = array(
 	"card_points" => 0,
 	"card_nbr" => 1
     ),
-    59 => array( 
+    43 => array( 
 	"card_name" => "Senator",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -495,7 +495,7 @@ $this->card_types = array(
 	"card_points" => 2,
 	"card_nbr" => 1
     ),
-    60 => array( 
+    44 => array( 
 	"card_name" => "Patriarch",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -514,7 +514,7 @@ $this->card_types = array(
         "card_nbr" => 1,
         "card_text" => "+1 ruble per green worker in your play area"
     ),
-    62 => array( 
+    46 => array( 
 	"card_name" => "Admiral",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -523,7 +523,7 @@ $this->card_types = array(
 	"card_points" => 3,
 	"card_nbr" => 1
     ),
-    63 => array( 
+    47 => array( 
 	"card_name" => "Minister of Foreign Affairs",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
@@ -532,7 +532,7 @@ $this->card_types = array(
 	"card_points" => 4,
 	"card_nbr" => 1
     ),
-    64 => array( 
+    48 => array( 
 	"card_name" => "Czar",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,

@@ -29,8 +29,10 @@ function (dojo, declare) {
             // Here, you can init the global variables of your user interface
 	    this.playerHand = null;
 	    this.playerTable = null;
-	    this.cardwidth = 96;
-	    this.cardheight = 150;
+	    this.cardwidth = 70;
+	    this.cardheight = 112;
+	    this.cardwidth_big = 96;
+	    this.cardheight_big = 150;
 	    this.boardwidth = 8;
 	    this.rubles = new ebg.counter();
 	    this.player_tables = [];
@@ -39,7 +41,7 @@ function (dojo, declare) {
 	    this.pub_points = 0;
             this.current_phase = 'Worker';
             this.card_types = null;
-            this.card_art_row_size = 11;
+            this.card_art_row_size = 10;
         },
         
         /*
@@ -283,7 +285,7 @@ function (dojo, declare) {
 	{
             this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id));
 
-            if (card_type_id == 25 && card_div.id.substring(0, 6) != 'myhand') {
+            if (card_type_id == 15 && card_div.id.substring(0, 6) != 'myhand') {
                 // Observatory
                 var player_id = parseInt(card_div.id.split('_')[1]);
                 var id = card_id.split('_');
@@ -302,8 +304,8 @@ function (dojo, declare) {
 
             card.card_name = _(card.card_name);
 
-	    card.artx = this.cardwidth * (card_type_id % this.card_art_row_size);
-	    card.arty = this.cardheight * Math.floor(card_type_id / this.card_art_row_size);
+	    card.artx = this.cardwidth_big * (card_type_id % this.card_art_row_size);
+	    card.arty = this.cardheight_big * Math.floor(card_type_id / this.card_art_row_size);
 
             if (card.card_type == "Worker") {
                 card.card_type = _("Worker") + " (" + _(card.card_worker_type) + ")";
@@ -855,7 +857,7 @@ function (dojo, declare) {
 
 	    // Remove displaced card
 	    this.player_tables[notif.args.player_id].removeFromStockById(
-		notif.args.trade_id, 'deck_Worker'); //TODO discard pile
+		notif.args.trade_id, 'discard_pile');
 
 	    // Add trading card from correct place
 	    var row = notif.args.card_row;
@@ -986,7 +988,7 @@ function (dojo, declare) {
                     // Reverse order
 		    var col = 7 - card.col;
                 }
-		var anim = this.slideToObject('card_'+col+'_'+row, 'deck_Worker'); // TODO - discard pile
+		var anim = this.slideToObject('card_'+col+'_'+row, 'discard_pile');
 		dojo.connect(anim, 'onEnd', function (node) {
 		    dojo.destroy(node);
 		});
