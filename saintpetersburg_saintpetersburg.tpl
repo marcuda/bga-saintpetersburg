@@ -13,10 +13,10 @@
 <div id="board">
     <div id="discard_pile" class="discard"></div>
     <div id="decks">
-        <div id="deck_Worker" class="cardback" style="left: 185px; top: 40px; background-position: 0px 0px;"></div>
-        <div id="deck_Building" class="cardback" style="left: 327px; top: 40px; background-position: -70px 0px;"></div>
-        <div id="deck_Aristocrat" class="cardback" style="left: 473px; top: 40px; background-position: -140px 0px;"></div>
-        <div id="deck_Trading" class="cardback" style="left: 617px; top: 40px; background-position: -210px 0px;"></div>
+        <div id="deck_Worker" class="deck" style="left: 185px; top: 40px; background-position: 0px 0px;"></div>
+        <div id="deck_Building" class="deck" style="left: 327px; top: 40px; background-position: -70px 0px;"></div>
+        <div id="deck_Aristocrat" class="deck" style="left: 473px; top: 40px; background-position: -140px 0px;"></div>
+        <div id="deck_Trading" class="deck" style="left: 617px; top: 40px; background-position: -210px 0px;"></div>
         <div id="deck_counts" class="deckcount">
 	    <span id="count_Worker" style="left: 230px; top: 128px">0</span>
 	    <span id="count_Building" style="left: 372px; top: 128px">0</span>

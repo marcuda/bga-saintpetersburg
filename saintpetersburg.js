@@ -104,6 +104,18 @@ function (dojo, declare) {
                     this.deck_counters[phase].setValue(gamedatas.decks[deck]);
                 }
 	    }
+            for (var i in this.phases) {
+                var phase = this.phases[i];
+                if (this.deck_counters[phase] == undefined) {
+                    // No counter created means deck is empty
+                    dojo.addClass('deck_' + phase, 'emptydeck')
+                    dojo.style('count_' + phase, 'color', 'red');
+                    // Counter shouldn't be needed but create it just in case
+                    this.deck_counters[phase] = new ebg.counter();
+                    this.deck_counters[phase].create('count_' + phase);
+                    this.deck_counters[phase].setValue(0);
+                }
+            }
 
 	    // Cards
 	    // Hand
@@ -529,7 +541,7 @@ function (dojo, declare) {
 		col: 99
 	    }), 'cards');
 
-	    this.placeOnObject(card_id, deck.id);
+	    this.placeOnObject(card_id, 'deck_' + args.card.type);
             dojo.addClass(card_id, 'selected');
 	    this.slideToObject(card_id, 'board').play();
             this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg));
@@ -959,6 +971,10 @@ function (dojo, declare) {
 	    }
 
             this.deck_counters[notif.args.phase].incValue(-draw);
+            if (this.deck_counters[notif.args.phase].getValue() == 0) {
+                dojo.addClass('deck_' + notif.args.phase, 'emptydeck')
+                dojo.style('count_' + notif.args.phase, 'color', 'red');
+            }
 	},
 
 	notif_newScores: function (notif)
