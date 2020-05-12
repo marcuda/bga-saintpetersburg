@@ -42,6 +42,7 @@ function (dojo, declare) {
             this.current_phase = 'Worker';
             this.card_types = null;
             this.card_art_row_size = 10;
+            this.deck_counters = [];
         },
         
         /*
@@ -96,9 +97,12 @@ function (dojo, declare) {
 	    this.setPhase(gamedatas.phase);
 	    for (var deck in gamedatas.decks) {
 		if (deck.startsWith('deck_')) {
-		    $(deck).textContent = gamedatas.decks[deck];
                     dojo.connect($(deck), 'onclick', this, 'onDeckClicked');
-		}
+                    var phase = deck.split('_')[1];
+                    this.deck_counters[phase] = new ebg.counter();
+                    this.deck_counters[phase].create('count_' + phase);
+                    this.deck_counters[phase].setValue(gamedatas.decks[deck]);
+                }
 	    }
 
 	    // Cards
@@ -516,9 +520,7 @@ function (dojo, declare) {
             dojo.style('card_content_' + args.obs_id + '_active', 'display', 'none');
 
 	    // Deck selection
-            var deck = $('deck_' + args.card.type);
-	    var cards = parseInt(deck.textContent);
-	    deck.textContent = cards - 1;
+            this.deck_counters[args.card.type].incValue(-1);
 
 	    dojo.place(this.format_block('jstpl_card', {
 		x:x,
@@ -956,9 +958,7 @@ function (dojo, declare) {
 		draw++;
 	    }
 
-	    var deck = $('deck_' + notif.args.phase);
-	    var cards = parseInt(deck.textContent);
-	    deck.textContent = cards - draw;
+            this.deck_counters[notif.args.phase].incValue(-draw);
 	},
 
 	notif_newScores: function (notif)

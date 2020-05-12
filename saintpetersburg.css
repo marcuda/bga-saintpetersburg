@@ -160,14 +160,23 @@
 }
 
 .cardback {
-    position: relative;
+    position: absolute;
     width: 70px;
     height: 112px;
     background-image: url('img/cardbacks_big.jpg');
 }
 
-.deck {
-    margin: 10px 30px 10px 10px;
+.deckcount {
+    color: black;
+    text-shadow: -1px 0 white,
+    0 1px white,
+    1px 0 white,
+    0 -1px white;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.deckcount > span {
     position: absolute;
 }
 
