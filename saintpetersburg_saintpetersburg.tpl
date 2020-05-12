@@ -10,14 +10,15 @@
 -------
 -->
 
-<div id="decks" style="display: flex;">
-    <div id="deck_Worker" class="cardback deck" style="background-position: 0px 0px;">0</div>
-    <div id="deck_Building" class="cardback deck" style="background-position: -30px 0px;">0</div>
-    <div id="deck_Aristocrat" class="cardback deck" style="background-position: -60px 0px;">0</div>
-    <div id="deck_Trading" class="cardback deck" style="background-position: -90px 0px;">0</div>
-</div>
-
 <div id="board">
+    <div id="discard_pile" class="discard"></div>
+    <div id="decks">
+        <div id="deck_Worker" class="cardback deck" style="left: 175px; top: 30px; background-position: 0px 0px;">0</div>
+        <div id="deck_Building" class="cardback deck" style="left: 317px; top: 30px; background-position: -70px 0px;">0</div>
+        <div id="deck_Aristocrat" class="cardback deck" style="left: 463px; top: 30px; background-position: -140px 0px;">0</div>
+        <div id="deck_Trading" class="cardback deck" style="left: 607px; top: 30px; background-position: -210px 0px;">0</div>
+    </div>
+
 	<!-- BEGIN square -->
 	<div id="square_{X}_{Y}" class="square" style="left: {LEFT}px; top: {TOP}px;"></div>
 	<!-- END square -->
@@ -62,7 +63,7 @@ var jstpl_card_content = '<div id="card_content_${id}">' +
                          '</div>';
 var jstpl_player_board = '<div class="stp_board">' +
 	                     '<div id="rubleicon_p${id}" class="rubleicon nolinebreak"><span id="rublecount_p${id}" class="iconspan"></span></div>&nbsp' + 
-	                     '<div id="cardicon_p${id}" class="cardback nolinebreak" style="background-position: -90px 0px;"><span id="handcount_p${id}" class="iconspan">0</span></div>&nbsp' + 
+	                     '<div id="cardicon_p${id}" class="cardicon nolinebreak"><span id="handcount_p${id}" class="iconspan">0</span></div>&nbsp' + 
                              '<div id="token_wrap_p${id}" style="display: inline-block">' +
 	                        '<div id="token_p${id}" class="token"></div>&nbsp' +
 	                        '<div id="token2_p${id}" class="token"></div>&nbsp' +

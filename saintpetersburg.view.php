@@ -41,8 +41,8 @@
 
         $this->page->begin_block("saintpetersburg_saintpetersburg", "square");
 
-	$hor_scale = 128.4;
-	$ver_scale = 172.0;
+	$hor_scale = 90;
+	$ver_scale = 120;
 	for ($x=0; $x<8; $x++)
 	{
 		for ($y=0; $y<2; $y++)
@@ -50,8 +50,8 @@
 			$this->page->insert_block("square", array(
 				'X' => $x,
 				'Y' => $y,
-				'LEFT' => round(($x) * $hor_scale + 10),
-				'TOP' => round(($y) * $ver_scale + 10)
+				'LEFT' => round(($x) * $hor_scale + 20),
+				'TOP' => round(($y) * $ver_scale + 232)
 			));
 		}
 	}
