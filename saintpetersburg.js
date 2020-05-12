@@ -39,7 +39,7 @@ function (dojo, declare) {
 	    this.player_hands = [];
 	    this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading'];
 	    this.pub_points = 0;
-            this.current_phase = 'Worker';
+            this.current_phase = '';
             this.card_types = null;
             this.card_art_row_size = 10;
             this.deck_counters = [];
@@ -75,6 +75,7 @@ function (dojo, declare) {
 		hand_counter.create('handcount_p' + player_id);
 		hand_counter.setValue(gamedatas.player_hands[player_id]);
 		this.player_hands[player_id] = hand_counter;
+                this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
 
 		this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0);
 	        this.player_tables[player_id].onItemCreate = dojo.hitch(this, 'setupNewCard');
@@ -87,7 +88,10 @@ function (dojo, declare) {
 		if (player_id == this.player_id) {
 		    this.rubles.create('rublecount_p' + this.player_id);
 		    this.rubles.setValue(gamedatas.rubles);
-		}
+                    this.addTooltip('rublecount_p' + player_id, _("Number of rubles"), "");
+		} else {
+                    this.addTooltip('rublecount_p' + player_id, _("Number of rubles (secret)"), "");
+                }
             }
 
 	    this.playerTable = this.player_tables[this.player_id];
@@ -102,6 +106,7 @@ function (dojo, declare) {
                     this.deck_counters[phase] = new ebg.counter();
                     this.deck_counters[phase].create('count_' + phase);
                     this.deck_counters[phase].setValue(gamedatas.decks[deck]);
+                    this.setDeckTooltip(phase, gamedatas.decks[deck]);
                 }
 	    }
             for (var i in this.phases) {
@@ -110,6 +115,7 @@ function (dojo, declare) {
                     // No counter created means deck is empty
                     dojo.addClass('deck_' + phase, 'emptydeck')
                     dojo.style('count_' + phase, 'color', 'red');
+                    this.setDeckTooltip(phase, 0);
                     // Counter shouldn't be needed but create it just in case
                     this.deck_counters[phase] = new ebg.counter();
                     this.deck_counters[phase].create('count_' + phase);
@@ -422,6 +428,7 @@ function (dojo, declare) {
                 } else {
                     // Immediately switch token to next player
                     dojo.addClass(next, 'token_' + phase);
+                    this.addTooltip(next, _("Starting player for " + phase + " phase"), "");
                 }
             }
 
@@ -436,7 +443,11 @@ function (dojo, declare) {
 
 	setPhase: function (phase)
 	{
+            var prev_phase = this.current_phase;
             this.current_phase = phase;
+            if (prev_phase != '') {
+                this.setDeckTooltip(prev_phase, this.deck_counters[prev_phase].getValue());
+            }
 	    var transform;
 	    dojo.forEach(
 		['transform', 'WebkitTransform', 'msTransform',
@@ -532,7 +543,8 @@ function (dojo, declare) {
             dojo.style('card_content_' + args.obs_id + '_active', 'display', 'none');
 
 	    // Deck selection
-            this.deck_counters[args.card.type].incValue(-1);
+            var num_cards = this.deck_counters[args.card.type].incValue(-1);
+            this.setDeckTooltip(args.card.type, num_cards);
 
 	    dojo.place(this.format_block('jstpl_card', {
 		x:x,
@@ -545,6 +557,24 @@ function (dojo, declare) {
             dojo.addClass(card_id, 'selected');
 	    this.slideToObject(card_id, 'board').play();
             this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg));
+        },
+
+        setDeckTooltip: function (phase, cards)
+        {
+            var txt = "";
+            if (phase == this.current_phase) {
+                txt += "<b>Current phase:</b> ";
+            }
+
+            txt += phase + " stack ";
+
+            if (cards == 0) {
+                txt += "is empty meaning game will end soon";
+            } else {
+                txt += "has " + cards + " cards";
+            }
+
+            this.addTooltip('deck_' + phase, _(txt), "");
         },
 
         ///////////////////////////////////////////////////
@@ -963,16 +993,18 @@ function (dojo, declare) {
 	    console.log(notif);
 
 	    this.setPhase(notif.args.phase);
+            var deck = 'deck_' + notif.args.phase;
 
 	    var draw = 0;
 	    for (var i in notif.args.cards) {
-		this.addCardOnBoard(0, i, notif.args.cards[i], 'deck_' + notif.args.phase);
+		this.addCardOnBoard(0, i, notif.args.cards[i], deck);
 		draw++;
 	    }
 
-            this.deck_counters[notif.args.phase].incValue(-draw);
-            if (this.deck_counters[notif.args.phase].getValue() == 0) {
-                dojo.addClass('deck_' + notif.args.phase, 'emptydeck')
+            var num_cards = this.deck_counters[notif.args.phase].incValue(-draw);
+            this.setDeckTooltip(notif.args.phase, num_cards);
+            if (num_cards == 0) {
+                dojo.addClass(deck, 'emptydeck')
                 dojo.style('count_' + notif.args.phase, 'color', 'red');
             }
 	},
