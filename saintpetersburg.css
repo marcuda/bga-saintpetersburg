@@ -111,6 +111,7 @@
     width: 70px;
     height: 112px;
     background-image: url('img/cards.jpg');
+    cursor: pointer;
 }
 
 .selected {
