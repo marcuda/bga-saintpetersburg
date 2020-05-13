@@ -591,6 +591,87 @@ class SaintPetersburg extends Table
         );
     }
 
+    function isHandFull($player_id)
+    {
+        $max_hand = 3;
+	$warehouse = $this->cards->getCardsOfTypeInLocation(
+	    PHASE_BUILDING, CARD_WAREHOUSE, 'table', $player_id);
+	if (count($warehouse) == 1) {
+	    $max_hand++;
+	}
+        // Can be greater if player used and then displaced the Warehouse
+        return count($this->cards->getPlayerHand($player_id)) >= $max_hand;
+    }
+
+    function getTrades($card, $cost, $player_id, &$trades)
+    {
+        $has_trade = false;
+        $card_info = $this->getCardInfo($card);
+	$cards = $this->cards->getCardsInLocation('table', $player_id);
+        $rubles = self::dbGetRubles($player_id);
+        foreach ($cards as $p_card) {
+            $p_info = $this->getCardInfo($p_card);
+            if ($card_info['card_trade_type'] != $p_info['card_type']) {
+                continue; // Not correct trading type
+            }
+            if ($card_info['card_trade_type'] == PHASE_WORKER &&
+                $card_info['card_worker_type'] != $p_info['card_worker_type'] &&
+                $p_info['card_worker_type'] != WORKER_ALL)
+            {
+                continue; // Not correct worker type
+            }
+            if ($p_card['type_arg'] == CARD_OBSERVATORY) {
+                $obs = $this->getObservatory($p_card['id']);
+                if ($obs['used']) {
+                    continue; // Observatory card has been used
+                }
+            }
+
+            $has_trade = true; // At least one valid card, ignoring cost
+
+            if ($cost - $p_info['card_value'] > $rubles) {
+                continue; // Not enough value/rubles
+            }
+
+            $trades[] = $p_card['id'];
+        }
+
+        return $has_trade;
+    }
+
+    function hasTrades($card, $cost, $player_id)
+    {
+        $trades = array();
+        $this->getTrades($card, $cost, $player_id, $trades);
+        return count($trades) > 0;
+    }
+
+    function getSelectedCardOptions($card_id, $card_row)
+    {
+        // Get card details and adjusted cost
+	$card = $this->cards->getCard($card_id);
+	$cost = $this->getCardCost($card_id, $card_row);
+        $player_id = self::getActivePlayerId();
+
+        // Determine if player can buy (with trade if needed)
+        $can_buy = true;
+        if ($this->isTrading($card)) {
+            if (!$this->hasTrades($card, $cost, $player_id)) {
+                $can_buy = false;
+            }
+        } else if ($cost > self::dbGetRubles($player_id)) {
+            $can_buy = false;
+        }
+
+	return array(
+	    'card_name' => $this->getCardName($card),
+            'cost' => $cost,
+            'player_id' => $player_id,
+            'can_add' => !$this->isHandFull($player_id),
+            'can_buy' => $can_buy
+	);
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
@@ -624,22 +705,8 @@ class SaintPetersburg extends Table
 	if ($card_id < 0 || $card_row < 0)
 	    throw new feException("Impossible move");
 
-	$player_id = self::getActivePlayerId();
-	$hand = $this->cards->getPLayerHand($player_id);
-
-	$max_hand = 3;
-	// Check if player owns the warehouse
-	$warehouse = $this->cards->getCardsOfTypeInLocation(
-	    PHASE_BUILDING, CARD_WAREHOUSE, 'table', $player_id);
-	if (count($warehouse) == 1) {
-	    $max_hand++;
-	}
-
-	if (count($hand) == $max_hand) {
+        if ($this->isHandFull(self::getActivePlayerId()))
 	    throw new BgaUserException(self::_("Your hand is full"));
-	} else if (count($hand) > $max_hand) {
-	    throw new feException("Impossible hand size");
-	}
 
 	$dest = 'hand';
 	$notif = 'addCard';
@@ -977,24 +1044,10 @@ class SaintPetersburg extends Table
         if ($cards == null || count($cards) != 1)
             throw new feException("Impossible Observatory add");
 
-        $card = array_shift($cards);
-
-	$hand = $this->cards->getPLayerHand($player_id);
-
-	$max_hand = 3;
-	// Check if player owns the warehouse
-	$warehouse = $this->cards->getCardsOfTypeInLocation(
-	    PHASE_BUILDING, CARD_WAREHOUSE, 'table', $player_id);
-	if (count($warehouse) == 1) {
-	    $max_hand++;
-	}
-
-	if (count($hand) >= $max_hand) {
-            // Allow for more (i.e. 4) cards which can happen if
-            // Warehouse is played, used, and then displaced
+        if ($this->isHandFull($player_id))
 	    throw new BgaUserException(self::_("Your hand is full"));
-	}
 
+        $card = array_shift($cards);
 	$dest = 'hand';
 	$notif = 'addCard';
 	$msg = clienttranslate('${player_name} adds ${card_name} to their hand');
@@ -1036,7 +1089,7 @@ class SaintPetersburg extends Table
 
     function argPlayerTurn()
     {
-	return array();
+        return array();
     }
 
     function argSelectCard()
@@ -1045,22 +1098,16 @@ class SaintPetersburg extends Table
 	$card_id = self::getGameStateValue("selected_card");
 	$card_row = self::getGameStateValue("selected_row");
 	if ($card_id < 0 || $card_row < 0)
-	    //throw new feException("Impossible state");
+	    //throw new feException("Impossible state");//TODO ??
 	    return array();
 
-	// Get card details and adjusted cost
 	$card = $this->cards->getCard($card_id);
-	$cost = $this->getCardCost($card_id, $card_row);
-	$card_info = $this->getCardInfo($card);
+        $opts = $this->getSelectedCardOptions($card_id, $card_row);
+        $opts['card_id'] = $card_id;
+        $opts['row'] = $card_row;
+        $opts['col'] = $card['location_arg'];
 
-	return array(
-	    'card_name' => $card_info['card_name'],
-            'cost' => $cost,
-            'player_id' => self::getActivePlayerId(),
-            'card_id' => $card['id'],
-            'row' => $card_row,
-            'col' => $card['location_arg']
-	);
+        return $opts;
     }
 
     function argTradeCard()
@@ -1069,47 +1116,18 @@ class SaintPetersburg extends Table
 	$card_id = self::getGameStateValue("selected_card");
 	$card_row = self::getGameStateValue("selected_row");
 	if ($card_id < 0 || $card_row < 0)
-	    //throw new feException("Impossible state");
+	    //throw new feException("Impossible state"); //TODO ???
 	    return array();
 
 	// Get card details and adjusted cost
 	$card = $this->cards->getCard($card_id);
 	$cost = $this->getCardCost($card_id, $card_row);
-	$card_info = $this->getCardInfo($card);
 
         $trades = array();
         $player_id = self::getActivePlayerId();
-	$rubles = self::dbGetRubles($player_id);
-        $has_trade = false;
 
-        if ($card_info['card_type'] == PHASE_TRADING) {
-	    $cards = $this->cards->getCardsInLocation('table', $player_id);
-            foreach ($cards as $p_card) {
-                $p_info = $this->getCardInfo($p_card);
-                if ($card_info['card_trade_type'] != $p_info['card_type']) {
-                    continue; // Not correct trading type
-                }
-                if ($card_info['card_trade_type'] == PHASE_WORKER &&
-                    $card_info['card_worker_type'] != $p_info['card_worker_type'] &&
-                    $p_info['card_worker_type'] != WORKER_ALL)
-                {
-                    continue; // Not correct worker type
-                }
-                if ($p_card['type_arg'] == CARD_OBSERVATORY) {
-                    $obs = $this->getObservatory($p_card['id']);
-                    if ($obs['used']) {
-                        continue; // Observatory card has been used
-                    }
-                }
-
-                $has_trade = true; // At least one valid card, ignoring cost
-
-                if ($cost - $p_info['card_value'] > $rubles) {
-                    continue; // Not enough value/rubles
-                }
-
-                $trades[] = $p_card['id'];
-            }
+        if ($this->isTrading($card)) {
+            $has_trade = $this->getTrades($card, $cost, $player_id, $trades);
 
             // Must have valid card and enough rubles to make trade
             if (count($trades) == 0) {
@@ -1122,7 +1140,7 @@ class SaintPetersburg extends Table
         }
 
 	return array(
-	    'card_name' => $card_info['card_name'],
+	    'card_name' => $this->getCardName($card),
             'cost' => $cost,
             'player_id' => $player_id,
             'card_id' => $card['id'],
@@ -1141,16 +1159,12 @@ class SaintPetersburg extends Table
             throw new feException("Impossible Observatory recall");
 
         $card = array_shift($cards);
-        $card_info = $this->getCardInfo($card);
-        $cost = $this->getCardCost($card['id'], 0);
-	$obs_id = self::getGameStateValue("activated_observatory");
-        return array(
-            'player_id' => $player_id,
-            'card' => $card,
-            'card_name' => $card_info['card_name'],
-            'cost' => $cost,
-            'obs_id' => self::getGameStateValue('observatory_' . $obs_id . '_id')
-        );
+        $obs_id = self::getGameStateValue("activated_observatory");
+        $opts = $this->getSelectedCardOptions($card['id'], 0);
+        $opts['card'] = $card;
+        $opts['obs_id'] = self::getGameStateValue('observatory_' . $obs_id . '_id');
+
+        return $opts;
     }
 
 //////////////////////////////////////////////////////////////////////////////

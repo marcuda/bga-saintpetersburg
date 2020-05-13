@@ -253,8 +253,10 @@ function (dojo, declare) {
 			this.addActionButton("button_1", _("Pass"), "onPass");
 			break;
 		    case 'selectCard':
-			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onBuyCard");
-			this.addActionButton("button_2", _("Add to hand"), "onAddCard");
+                        var buy_color = args.can_buy ? "blue" : "gray";
+                        var add_color = args.can_add ? "blue" : "gray";
+			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onBuyCard", null, false, buy_color);
+			this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
 			this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
 			break;
 		    case 'tradeCard':
@@ -270,8 +272,10 @@ function (dojo, declare) {
 			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
                     case 'chooseObservatory':
-			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onObsBuyCard");
-			this.addActionButton("button_2", _("Add to hand"), "onObsAddCard");
+                        var buy_color = args.can_buy ? "blue" : "gray";
+                        var add_color = args.can_add ? "blue" : "gray";
+			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onObsBuyCard", null, false, buy_color);
+			this.addActionButton("button_2", _("Add to hand"), "onObsAddCard", null, false, add_color);
 			this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
                         break;
                     case 'tradeObservatory':
