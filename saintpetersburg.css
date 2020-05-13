@@ -98,6 +98,13 @@
     display: none;
 }
 
+.clickcard
+{
+    width: 70px;
+    height: 112px;
+    cursor: pointer;
+}
+
 .possibleMove
 {
 	background-color: white;

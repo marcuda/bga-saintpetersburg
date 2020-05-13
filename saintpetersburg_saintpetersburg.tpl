@@ -64,8 +64,10 @@ var jstpl_some_game_item='<div class="my_game_item" id="my_game_item_${MY_ITEM_I
 
 var jstpl_card = '<div class="card" id="card_${col}_${row}" style="background-position:-${x}px -${y}px"></div>';
 var jstpl_card_content = '<div id="card_content_${id}">' +
-                            '<div id="card_content_${id}_mask" class="maskcard"></div>' +
-                            '<div id="card_content_${id}_active" class="activecard"><a href="#">Activate</a></div>' +
+                            '<div id="card_content_mask_${id}" class="maskcard"></div>' +
+                            '<div id="card_content_activewrap_${id}" class="clickcard">' +
+                                '<div id="card_content_active_${id}" class="activecard"><a href="#"></a></div>' +
+                            '</div>' +
                          '</div>';
 var jstpl_player_board = '<div class="stp_board">' +
 	                     '<div id="rubleicon_p${id}" class="rubleicon nolinebreak"><span id="rublecount_p${id}" class="iconspan"></span></div>&nbsp' + 
