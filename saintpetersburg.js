@@ -147,8 +147,8 @@ function (dojo, declare) {
             for (var i in gamedatas.observatory) {
                 var card = gamedatas.observatory[i];
                 if (card.used == 1) {
-                    dojo.style('card_content_' + card.id + '_active', 'display', 'none');
-                    dojo.style('card_content_' + card.id + '_mask', 'display', 'block');
+                    dojo.style('card_content_active_' + card.id, 'display', 'none');
+                    dojo.style('card_content_mask_' + card.id, 'display', 'block');
                 }
             }
 
@@ -319,7 +319,10 @@ function (dojo, declare) {
                 dojo.place(this.format_block('jstpl_card_content', {id:id}), card_div.id);
                 if (player_id == this.player_id) {
                     // Active player
-                    dojo.connect($('card_content_' + id + '_active'), 'onclick', this, 'onClickObservatory');
+                    dojo.query('#card_content_active_' + id + '>a')[0].textContent = _("Activate");
+                    dojo.connect(card_div, 'onclick', this, 'onClickObservatory');
+                } else {
+                    dojo.style('card_content_activewrap_' + id, 'display', 'none');
                 }
             }
 	},
@@ -543,8 +546,8 @@ function (dojo, declare) {
             }
 
             // Disable Observatory
-            dojo.style('card_content_' + args.obs_id + '_mask', 'display', 'block');
-            dojo.style('card_content_' + args.obs_id + '_active', 'display', 'none');
+            dojo.style('card_content_mask_' + args.obs_id, 'display', 'block');
+            dojo.style('card_content_active_' + args.obs_id, 'display', 'none');
 
 	    // Deck selection
             var num_cards = this.deck_counters[args.card.type].incValue(-1);
@@ -734,7 +737,7 @@ function (dojo, declare) {
                 // Not building phase, can't use
                 return;
 
-	    var card_id = evt.currentTarget.id.split('_')[2];
+	    var card_id = evt.currentTarget.id.split('_')[3];
             this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/useObservatory.html",
 		{card_id: card_id}, this, function (result) {});
