@@ -397,21 +397,21 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     26 => array( 
-	"card_name" => "Harbor",
-	"card_type" => PHASE_TRADING,
-	"card_trade_type" => PHASE_BUILDING,
-	"card_cost" => 16,
-	"card_rubles" => 5,
-	"card_points" => 2,
-	"card_nbr" => 1
-    ),
-    27 => array( 
 	"card_name" => "Church of the Resurrection of Jesus Christ",
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 16,
 	"card_rubles" => 2,
 	"card_points" => 4,
+	"card_nbr" => 1
+    ),
+    27 => array( 
+	"card_name" => "Harbor",
+	"card_type" => PHASE_TRADING,
+	"card_trade_type" => PHASE_BUILDING,
+	"card_cost" => 16,
+	"card_rubles" => 5,
+	"card_points" => 2,
 	"card_nbr" => 1
     ),
     28 => array( 
