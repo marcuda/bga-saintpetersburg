@@ -126,10 +126,26 @@ class SaintPetersburg extends Table
 	self::setGameStateInitialValue("current_phase", 0);
 	self::setGameStateInitialValue("last_round", 0);
         
-        // Init game statistics TODO
+        // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
-        //self::initStat('table', 'table_teststat1', 0);    // Init a table statistics
-        //self::initStat('player', 'player_teststat1', 0);  // Init a player statistics (for all players)
+        self::initStat('player', "actions_taken", 0);
+        self::initStat('player', "rubles_spent", 0);
+        self::initStat('player', "rubles_total", 0);
+        self::initStat('player', "rubles_Worker", 0);
+        self::initStat('player', "rubles_Building", 0);
+        self::initStat('player', "rubles_Aristocrat", 0);
+        self::initStat('player', "points_total", 0);
+        self::initStat('player', "points_Worker", 0);
+        self::initStat('player', "points_Building", 0);
+        self::initStat('player', "points_Aristocrat", 0);
+        self::initStat('player', "cards_bought", 0);
+        self::initStat('player', "cards_added", 0);
+        self::initStat('player', "cards_traded", 0);
+        self::initStat('player', "pub_points", 0);
+        self::initStat('player', "observatory_draws", 0);
+        self::initStat('player', "points_aristocrats_end", 0);
+        self::initStat('player', "points_rubles_end", 0);
+        self::initStat('player', "points_hand_end", 0);
 
 	// Init cards and decks
 	// Create all cards
@@ -453,7 +469,12 @@ class SaintPetersburg extends Table
 	    }
 
 	    $scores[$player_id] = self::dbIncScore($player_id, $points);
+            self::incStat($points, 'points_total', $player_id);
+            self::incStat($points, 'points_' . $phase, $player_id);
+
 	    self::dbIncRubles($player_id, $rubles);
+            self::incStat($rubles, 'rubles_total', $player_id);
+            self::incStat($rubles, 'rubles_' . $phase, $player_id);
 
 	    $msg = clienttranslate('${player_name} earns ${rubles} Ruble(s) and ${points} Point(s)');
 	    self::notifyAllPlayers('scorePhase', $msg, array(
@@ -471,8 +492,6 @@ class SaintPetersburg extends Table
 
     function finalScoring()
     {
-	self::notifyAllPlayers('message', clienttranslate('Final round scoring...'), array());
-
 	$players = self::loadPlayersBasicInfos();
         $scores = array();
 	foreach ($players as $player_id => $player) {
@@ -486,24 +505,36 @@ class SaintPetersburg extends Table
 
 	    $num_ari = count(array_unique($aristocrats));
 	    $points_ari = min(55, $num_ari * ($num_ari + 1) / 2);
-
-	    $num_rubles = self::dbGetRubles($player_id);
-	    $points_rubles = intdiv($num_rubles, 10);
-
-	    $num_hand = count($this->cards->getPlayerHand($player_id));
-	    $points_hand = -5 * $num_hand;
-
 	    self::dbIncScore($player_id, $points_ari);
-	    self::dbIncScore($player_id, $points_rubles);
-	    $scores[$player_id] = self::dbIncScore($player_id, $points_hand);
+            self::setStat($points_ari, 'points_aristocrats_end', $player_id);
 
-	    $msg = clienttranslate('${player_name} earns ${points_ari} point(s) for ${num_ari} aristocrat type(s), ${points_rubles} point(s) for ${num_rubles} Ruble(s), and loses ${points_hand} points for ${num_hand} card(s) in hand');
+	    $msg = clienttranslate('Final scoring: ${player_name} earns ${points_ari} point(s) for ${num_ari} aristocrat type(s)');
 	    self::notifyAllPlayers('message', $msg, array(
 		'player_name' => $player['player_name'],
 		'points_ari' => $points_ari,
 		'num_ari' => $num_ari,
+	    ));
+
+	    $num_rubles = self::dbGetRubles($player_id);
+	    $points_rubles = intdiv($num_rubles, 10);
+	    self::dbIncScore($player_id, $points_rubles);
+            self::setStat($points_rubles, 'points_rubles_end', $player_id);
+
+	    $msg = clienttranslate('Final scoring: ${player_name} earns ${points_rubles} point(s) for ${num_rubles} ruble(s)');
+	    self::notifyAllPlayers('message', $msg, array(
+		'player_name' => $player['player_name'],
 		'points_rubles' => $points_rubles,
 		'num_rubles' => $num_rubles,
+	    ));
+
+	    $num_hand = count($this->cards->getPlayerHand($player_id));
+	    $points_hand = -5 * $num_hand;
+	    $scores[$player_id] = self::dbIncScore($player_id, $points_hand);
+            self::setStat($points_hand, 'points_hand_end', $player_id);
+
+	    $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} points for ${num_hand} card(s) in hand');
+	    self::notifyAllPlayers('message', $msg, array(
+		'player_name' => $player['player_name'],
 		'points_hand' => $points_hand,
 		'num_hand' => $num_hand,
 	    ));
@@ -792,7 +823,7 @@ class SaintPetersburg extends Table
             $card_info['card_worker_type'] != $trade_info['card_worker_type'] &&
             $trade_info['card_worker_type'] != WORKER_ALL))
 	{
-	    throw new BgaUserException(self::_("Wrong type of card to displace with trading"));
+	    throw new BgaUserException(self::_("Wrong type of card to displace"));
 	}
 
         // Check if trading used Observatory
@@ -829,8 +860,11 @@ class SaintPetersburg extends Table
 	// Do this last to ensure notify information is accurate for pre-move
 	$player_id = self::getActivePlayerId();
 	$this->dbIncRubles($player_id, -$card_cost);
+        self::incStat($card_cost, 'rubles_spent', $player_id);
 	$this->cards->playCard($trade_id);
+        self::incStat(1, 'cards_traded', $player_id);
 	$this->cards->moveCard($card_id, 'table', $player_id);
+        self::incStat(1, 'cards_bought', $player_id);
 
 	self::notifyAllPlayers('tradeCard', $msg, array(
 	    'player_id' => $player_id,
@@ -850,6 +884,7 @@ class SaintPetersburg extends Table
 	self::setGameStateValue("selected_row", -1);
 	self::setGameStateValue("activated_observatory", -1);
 	self::setGameStateValue("num_pass", 0);
+        self::incStat(1, 'actions_taken', $player_id);
 
 	$this->gamestate->nextState('tradeCard');
     }
@@ -862,7 +897,14 @@ class SaintPetersburg extends Table
 	// Pay cost and take card
 	$player_id = self::getActivePlayerId();
 	$this->dbIncRubles($player_id, -$card_cost);
+        self::incStat($card_cost, 'rubles_spent', $player_id);
 	$this->cards->moveCard($card_id, $dest, $player_id);
+
+        if ($dest == 'table') {
+            self::incStat(1, 'cards_bought', $player_id);
+        } else if ($dest == 'hand') {
+            self::incStat(1, 'cards_added', $player_id);
+        }
 
 	self::notifyAllPlayers($notif, $msg, array(
 	    'player_id' => $player_id,
@@ -880,6 +922,7 @@ class SaintPetersburg extends Table
 	self::setGameStateValue("selected_row", -1);
 	self::setGameStateValue("activated_observatory", -1);
 	self::setGameStateValue("num_pass", 0);
+        self::incStat(1, 'actions_taken', $player_id);
     }
 
     function cancelSelect()
@@ -917,6 +960,8 @@ class SaintPetersburg extends Table
     {
 	self::checkAction('buyPoints');
 
+        // TODO: double check player owns pub (or two)
+
 	if ($points < 0 || $points > 5)
 	    throw new feException("Impossible pub buy");
 
@@ -928,7 +973,9 @@ class SaintPetersburg extends Table
 		throw new BgaUserException(self::_("You do not have enough rubles"));
 
 	    $this->dbIncRubles($player_id, -$cost);
+            self::incStat($cost, 'rubles_spent', $player_id);
 	    $this->dbIncScore($player_id, $points);
+            self::incStat($points, 'pub_points', $player_id);
 
 	    $msg = clienttranslate('${player_name} uses the Pub to buy ${points} Point(s) for ${cost} Rubles');
 	    self::notifyAllPlayers('buyPoints', $msg, array(
@@ -1001,6 +1048,7 @@ class SaintPetersburg extends Table
         ));
 
         self::setGameStateValue('observatory_' . $obs_id . '_used', 1);
+        self::incStat(1, 'observatory_draws', $player_id);
         $this->gamestate->nextState("drawCard");
     }
     
@@ -1080,6 +1128,7 @@ class SaintPetersburg extends Table
 
 	self::setGameStateValue("activated_observatory", -1);
 	self::setGameStateValue("num_pass", 0);
+        self::incStat(1, 'actions_taken', $player_id);
         $this->gamestate->nextState('discard');
     }
 
@@ -1210,6 +1259,7 @@ class SaintPetersburg extends Table
 	$players = array();
 	$pub = $this->cards->getCardsOfTypeInLocation(
 	    PHASE_BUILDING, CARD_PUB, 'table');
+        // TODO: one player owns both?
 	foreach ($pub as $card) {
 	    $players[] = $card['location_arg'];
 	}
