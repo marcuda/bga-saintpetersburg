@@ -55,6 +55,7 @@ if (!defined("STATE_END_GAME")) {
     define("STATE_PLAYER_TURN", 10);
     define("STATE_SELECT_CARD", 11);
     define("STATE_TRADE_CARD",  12);
+    define("STATE_TRADE_CARD_HAND",  20);
     define("STATE_NEXT_PLAYER", 13);
     define("STATE_SCORE_PHASE", 14);
     define("STATE_NEXT_PHASE",  15);
@@ -87,6 +88,7 @@ $machinestates = array(
 	    "selectCard" => STATE_SELECT_CARD,
 	    "playCard" => STATE_NEXT_PLAYER,
 	    "tradeCard" => STATE_TRADE_CARD,
+	    "tradeCardHand" => STATE_TRADE_CARD_HAND,
             "useObservatory" => STATE_USE_OBSERVATORY,
 	    "pass" => STATE_NEXT_PLAYER,
 	    "allPass" => STATE_SCORE_PHASE,
@@ -114,6 +116,28 @@ $machinestates = array(
     STATE_TRADE_CARD => array(
 	"name" => "tradeCard",
 	"description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
+	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+	"type" => "activeplayer",
+	"args" => "argTradeCard",
+	"possibleactions" => array("tradeCard", "cancel"),
+	"transitions" => array(
+	    "tradeCard" => STATE_NEXT_PLAYER,
+	    "cancel" => STATE_PLAYER_TURN,
+	    "zombiePass" => STATE_NEXT_PLAYER
+	)
+    ),
+
+    /*
+     * Player selects a Trading Card in hand. Cannot use the normal state
+     * as it will reveal the card name in the active player's hand.
+     *
+     * N.B. Reusing the same args function technically still leaks the info;
+     * however, it is also available in the game log so it can't really be
+     * protected and is therefore not a concern here.
+     */
+    STATE_TRADE_CARD_HAND => array(
+	"name" => "tradeCardHand",
+	"description" => clienttranslate('${actplayer} must play a card or pass'),
 	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
 	"type" => "activeplayer",
 	"args" => "argTradeCard",

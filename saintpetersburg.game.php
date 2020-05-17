@@ -781,7 +781,7 @@ class SaintPetersburg extends Table
 	if ($this->isTrading($this->cards->getCard($card_id))) {
 	    self::setGameStateValue("selected_card", $card_id);
 	    self::setGameStateValue("selected_row", 0);
-	    $this->gamestate->nextState('tradeCard');
+	    $this->gamestate->nextState('tradeCardHand');
 	    return;
 	}
 

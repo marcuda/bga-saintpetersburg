@@ -183,6 +183,11 @@ function (dojo, declare) {
 		    this.playerTable.setSelectionMode(1);
                     this.setSelections(args.args);
 		    break;
+                case 'tradeCardHand':
+		    this.playerHand.setSelectionMode(0);
+		    this.playerTable.setSelectionMode(1);
+                    this.setSelections(args.args);
+		    break;
                 case 'useObservatory':
                     dojo.query('.deck').addClass('selectable');
                     break;
@@ -235,6 +240,12 @@ function (dojo, declare) {
                     dojo.query('.selected').removeClass('selected');
                     dojo.query('.selectable').removeClass('selectable');
 		    break;
+                case 'tradeCardHand':
+		    this.playerHand.setSelectionMode(1);
+		    this.playerTable.setSelectionMode(0);
+                    dojo.query('.selected').removeClass('selected');
+                    dojo.query('.selectable').removeClass('selectable');
+		    break;
                 case 'useObservatory':
                     dojo.query('.deck').removeClass('selectable');
                     break;
@@ -269,6 +280,9 @@ function (dojo, declare) {
 			this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
 			break;
 		    case 'tradeCard':
+			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
+			break;
+                    case 'tradeCardHand':
 			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
 			break;
 		    case 'usePub':
