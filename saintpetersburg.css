@@ -142,18 +142,25 @@
 
 .iconspan {
     color: black;
-    text-shadow: -1px 0 white,
-    0 1px white,
-    1px 0 white,
-    0 -1px white;
-    font-size: 18px;
     font-weight: bold;
-    vertical-align: middle;
-    display:inline-block;
-    padding: 20px;
+    margin-right: 3px !important;
 }
 
 .stp_board {
+    display: inline-block;
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+.stp_board > .imgtext {
+    margin-right: 3px;
+}
+
+.stp_board > span {
+    margin-right: 5px;
+}
+
+.stp_board > div {
     display: inline-block;
 }
 
@@ -202,20 +209,31 @@
     background-position: -128px 0px; /* empty */
 }
 
+.token_small {
+    position: relative;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    z-index: 99;
+    background-image: url('img/tokens_small.png');
+    background-position: -64px 0px; /* empty */
+    margin-right: 5px;
+}
+
 .token_Worker {
     background-position: 0px 0px;
 }
 
 .token_Building {
-    background-position: -32px 0px;
+    background-position: -16px 0px;
 }
 
 .token_Aristocrat {
-    background-position: -64px 0px;
+    background-position: -32px 0px;
 }
 
 .token_Trading {
-    background-position: -96px 0px;
+    background-position: -48px 0px;
 }
 
 .activecard {

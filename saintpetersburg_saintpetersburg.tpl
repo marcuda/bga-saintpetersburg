@@ -69,14 +69,21 @@ var jstpl_card_content = '<div id="card_content_${id}">' +
                                 '<div id="card_content_active_${id}" class="activecard"><a href="#"></a></div>' +
                             '</div>' +
                          '</div>';
-var jstpl_player_board = '<div class="stp_board">' +
-	                     '<div id="rubleicon_p${id}" class="rubleicon nolinebreak"><span id="rublecount_p${id}" class="iconspan"></span></div>&nbsp' + 
-	                     '<div id="cardicon_p${id}" class="cardicon nolinebreak"><span id="handcount_p${id}" class="iconspan">0</span></div>&nbsp' + 
-                             '<div id="token_wrap_p${id}" style="display: inline-block">' +
-	                        '<div id="token_p${id}" class="token"></div>&nbsp' +
-	                        '<div id="token2_p${id}" class="token"></div>&nbsp' +
-                             '</div>' +
-                         '</div>';
+var jstpl_player_board = 
+    '<div class="stp_board">' +
+        '<img id="handcount_icon_p${id}" class="imgtext" src="${url}/img/hand.png">' +
+        '<span id="handcount_p${id}">0</span>' +
+        '&nbsp;' +
+        '<span id="rublecount_icon_p${id}" class="iconspan rublecount">&#8381;</span>' +
+        '<span id="rublecount_p${id}" class="rublecount">??</span>' +
+        '&nbsp;' +
+        '<div id="token_wrap_p${id}">' +
+	    '<div id="token_p${id}" class="imgtext token_small"></div>' +
+            '&nbsp;' +
+	    '<div id="token2_p${id}" class="imgtext token_small"></div>' +
+            '&nbsp;' +
+        '</div>' +
+    '</div>';
 var jstpl_card_tooltip = '<div class="cardtooltip">' +
                               '<h3>${card_name}</h3>' +
                               '<hr/>' +
