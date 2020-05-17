@@ -39,6 +39,7 @@ function (dojo, declare) {
 	    this.player_hands = [];
 	    this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading'];
 	    this.pub_points = 0;
+	    this.max_pub_points = 0;
             this.current_phase = '';
             this.card_types = null;
             this.card_art_row_size = 10;
@@ -193,6 +194,14 @@ function (dojo, declare) {
 		    this.playerTable.setSelectionMode(1);
                     this.setSelections(args.args);
 		    break;
+                case 'usePub':
+                    if (args.args[this.player_id] === undefined) {
+                        // Should not get here...
+                        this.max_pub_points = 0;
+                    } else {
+                        this.max_pub_points = args.args[this.player_id];
+                    }
+                    break;
             }
         },
 
@@ -263,8 +272,12 @@ function (dojo, declare) {
 			this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
 			break;
 		    case 'usePub':
-			this.addActionButton("button_1", "-1", "onOneLessPoint");
-			this.addActionButton("button_2", "+1", "onOneMorePoint");
+                        var color = "blue";
+                        if (args[this.player_id] == 0) {
+                            color = "gray";
+                        }
+			this.addActionButton("button_1", "-1", "onOneLessPoint", null, false, "gray");
+			this.addActionButton("button_2", "+1", "onOneMorePoint", null, false, color);
 			this.addActionButton("button_3", _("Buy " + this.pub_points + " (" + this.pub_points * 2 + ")"), "onBuyPoints");
 			this.addActionButton("button_4", _("Pass"), "onBuyNoPoints", null, false, "red");
 			break;
@@ -652,14 +665,52 @@ function (dojo, declare) {
 	onOneLessPoint: function (evt)
 	{
 	    dojo.stopEvent(evt);
-	    this.pub_points = Math.max(0, this.pub_points - 1);
+
+            this.pub_points -= 1;
+
+            if (this.pub_points < 0) {
+                this.showMessage(_("You cannot buy fewer than zero"), "error");
+                this.pub_points = 0;
+            }
+
+            if (this.pub_points == 0) {
+                // "Disable" -1 button
+                dojo.removeClass('button_1', 'bgabutton_blue');
+                dojo.addClass('button_1', 'bgabutton_gray');
+            }
+
+            if (this.pub_points < this.max_pub_points) {
+                // "Enable" +1 button
+                dojo.removeClass('button_2', 'bgabutton_gray');
+                dojo.addClass('button_2', 'bgabutton_blue');
+            }
+
 	    $('button_3').textContent = _("Buy " + this.pub_points + " (" + this.pub_points * 2 + ")");
 	},
 
 	onOneMorePoint: function (evt)
 	{
 	    dojo.stopEvent(evt);
-	    this.pub_points = Math.min(5, this.pub_points + 1);
+
+            this.pub_points += 1;
+
+            if (this.pub_points > this.max_pub_points) {
+                this.showMessage(_("You cannot buy any more points"), "error");
+                this.pub_points = this.max_pub_points;
+            }
+
+            if (this.pub_points == this.max_pub_points) {
+                // "Disable" +1 button
+                dojo.removeClass('button_2', 'bgabutton_blue');
+                dojo.addClass('button_2', 'bgabutton_gray');
+            }
+
+            if (this.pub_points > 0) {
+                // "Enable" -1 button
+                dojo.removeClass('button_1', 'bgabutton_gray');
+                dojo.addClass('button_1', 'bgabutton_blue');
+            }
+
 	    $('button_3').textContent = _("Buy " + this.pub_points + " (" + this.pub_points * 2 + ")");
 	},
 
