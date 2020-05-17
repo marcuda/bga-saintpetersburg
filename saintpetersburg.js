@@ -106,7 +106,7 @@ function (dojo, declare) {
 	    this.setPhase(gamedatas.phase);
 	    for (var deck in gamedatas.decks) {
 		if (deck.startsWith('deck_')) {
-                    dojo.connect($(deck), 'onclick', this, 'onDeckClicked');
+                    dojo.connect($(deck), 'onclick', this, 'onClickDeck');
                     var phase = deck.split('_')[1];
                     this.deck_counters[phase] = new ebg.counter();
                     this.deck_counters[phase].create('count_' + phase);
@@ -179,16 +179,13 @@ function (dojo, declare) {
 		case 'playerTurn':
 		    break;
 		case 'selectCard':
-		    this.playerHand.setSelectionMode(0);
                     this.setSelections(args.args);
 		    break;
 		case 'tradeCard':
-		    this.playerHand.setSelectionMode(0);
 		    this.playerTable.setSelectionMode(1);
                     this.setSelections(args.args);
 		    break;
                 case 'tradeCardHand':
-		    this.playerHand.setSelectionMode(0);
 		    this.playerTable.setSelectionMode(1);
                     this.setSelections(args.args);
 		    break;
@@ -199,7 +196,6 @@ function (dojo, declare) {
                     this.showObservatoryChoice(args.args);
                     break;
                 case 'tradeObservatory':
-		    this.playerHand.setSelectionMode(0);
 		    this.playerTable.setSelectionMode(1);
                     this.setSelections(args.args);
 		    break;
@@ -233,28 +229,15 @@ function (dojo, declare) {
                 
                 break;
            */
-		case 'selectCard':
-		    this.playerHand.setSelectionMode(1);
-                    dojo.query('.selected').removeClass('selected');
-                    dojo.query('.selectable').removeClass('selectable');
-		    break;
-		case 'tradeCard':
-		    this.playerHand.setSelectionMode(1);
-		    this.playerTable.setSelectionMode(0);
-                    dojo.query('.selected').removeClass('selected');
-                    dojo.query('.selectable').removeClass('selectable');
-		    break;
-                case 'tradeCardHand':
-		    this.playerHand.setSelectionMode(1);
-		    this.playerTable.setSelectionMode(0);
-                    dojo.query('.selected').removeClass('selected');
-                    dojo.query('.selectable').removeClass('selectable');
-		    break;
                 case 'useObservatory':
                     dojo.query('.deck').removeClass('selectable');
                     break;
+		case 'selectCard':
+		case 'tradeCard':
+                case 'tradeCardHand':
 		case 'tradeObservatory':
-		    this.playerHand.setSelectionMode(1);
+                default:
+                    this.playerHand.unselectAll();
 		    this.playerTable.setSelectionMode(0);
                     dojo.query('.selected').removeClass('selected');
                     dojo.query('.selectable').removeClass('selectable');
@@ -799,13 +782,21 @@ function (dojo, declare) {
         onClickObservatory: function (evt)
         {
             dojo.stopEvent(evt);
+
+            if (this.checkAction('tradeCard', true)) {
+                // In trade state
+                // Do not register click and let state machine handle the rest
+                return;
+            }
+
             if (!this.checkAction('useObservatory'))
                 return;
 
-            if (this.current_phase != this.phases[1])
+            if (this.current_phase != this.phases[1]) {
                 // Not building phase, can't use
                 this.showMessage(_("You can only use the Observatory during the Building phase"), "error");
                 return;
+            }
 
 	    var card_id = evt.currentTarget.id.split('_')[3];
             this.ajaxcall(
@@ -813,10 +804,10 @@ function (dojo, declare) {
 		{card_id: card_id}, this, function (result) {});
         },
 
-        onDeckClicked: function (evt)
+        onClickDeck: function (evt)
         {
             dojo.stopEvent(evt);
-            if (!this.checkAction('drawObservatoryCard'))
+            if (!this.checkAction('drawObservatoryCard', true))
                 return;
 
             var deck = evt.currentTarget.id;
