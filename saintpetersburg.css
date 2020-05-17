@@ -72,6 +72,7 @@
 	height: 480px;
 	background-image: url('img/board_full.jpg');
 	position: relative;
+        margin: auto;
 }
 
 .discard {
