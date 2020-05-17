@@ -197,6 +197,7 @@ $machinestates = array(
 	"descriptionmyturn" => clienttranslate('Pub: ${you} may buy points for 2 Rubles each'),
 	"type" => "multipleactiveplayer",
 	"action" => "stUsePub",
+        "args" => "argUsePub",
 	"possibleactions" => array("buyPoints"),
 	"transitions" => array(
 	    "nextPhase" => STATE_NEXT_PHASE

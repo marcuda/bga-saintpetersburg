@@ -830,7 +830,7 @@ class SaintPetersburg extends Table
         if ($trade_card['type_arg'] == CARD_OBSERVATORY) {
             $obs = $this->getObservatory($trade_id);
             if ($obs['used'])
-                throw new BgaUserException(self::_("You may not displace an Observatory after using it"));
+                throw new BgaUserException(self::_("You cannot displace an Observatory after using it"));
         }
 
 	// Compute cost and ensure player can pay it
@@ -960,12 +960,19 @@ class SaintPetersburg extends Table
     {
 	self::checkAction('buyPoints');
 
-        // TODO: double check player owns pub (or two)
+	$player_id = self::getCurrentPlayerId();
+        $max_points = 0;
+	$pubs = $this->cards->getCardsOfTypeInLocation(
+	    PHASE_BUILDING, CARD_PUB, 'table');
+	foreach ($pubs as $card) {
+            if ($card['location_arg'] == $player_id) {
+                $max_points += 5;
+            }
+        }
 
-	if ($points < 0 || $points > 5)
+	if ($points < 0 || $points > $max_points)
 	    throw new feException("Impossible pub buy");
 
-	$player_id = self::getCurrentPlayerId();
 	if ($points > 0) {
 	    $rubles = self::dbGetRubles($player_id);
 	    $cost = $points * 2;
@@ -1012,7 +1019,7 @@ class SaintPetersburg extends Table
 
         $obs = $this->getObservatory($card_id);
         if ($obs['used'] || $this->phases[$phase] != PHASE_BUILDING)
-            throw new BgaUserException(self::_("You may not use the Observatory right now"));
+            throw new BgaUserException(self::_("You cannot use the Observatory right now"));
 
         self::setGameStateValue("activated_observatory", $obs['id']);
         $this->gamestate->nextState("useObservatory");
@@ -1030,7 +1037,7 @@ class SaintPetersburg extends Table
         if ($num_cards == 0) {
             throw new BgaUserException(self::_("Card stack is empty"));
         } else if ($num_cards == 1) {
-            throw new BgaUserException(self::_("May not draw the last card"));
+            throw new BgaUserException(self::_("You cannot draw the last card"));
         }
 
         $player_id = self::getActivePlayerId();
@@ -1216,6 +1223,38 @@ class SaintPetersburg extends Table
         return $opts;
     }
 
+    /*
+     * Arguments for STATE_USE_PUB
+     * Returns an array of player(s) that own one or more Pub cards where
+     * key: player_id => value: maximum number of points they can buy
+     * based on number or Pub cards (1 or 2) and available rubles.
+     */
+    function argUsePub()
+    {
+        $players = array();
+	$pubs = $this->cards->getCardsOfTypeInLocation(
+	    PHASE_BUILDING, CARD_PUB, 'table');
+
+        // Determine which players own the Pubs
+	foreach ($pubs as $card) {
+            $player_id = $card['location_arg'];
+            if (key_exists($player_id, $players)) {
+	        $players[$player_id] += 5;
+            } else {
+	        $players[$player_id] = 5;
+            }
+	}
+
+        // Determine available rubles for Pub owner(s)
+        foreach ($players as $player_id => $points) {
+            $rubles = self::dbGetRubles($player_id);
+            $poss_buys = intdiv($rubles, 2);
+            $players[$player_id] = min($points, $poss_buys);
+        }
+
+	return $players;
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Game state actions
 ////////////
@@ -1257,10 +1296,9 @@ class SaintPetersburg extends Table
     {
 	// Allow any players that own the pub to use it
 	$players = array();
-	$pub = $this->cards->getCardsOfTypeInLocation(
+	$pubs = $this->cards->getCardsOfTypeInLocation(
 	    PHASE_BUILDING, CARD_PUB, 'table');
-        // TODO: one player owns both?
-	foreach ($pub as $card) {
+	foreach ($pubs as $card) {
 	    $players[] = $card['location_arg'];
 	}
 
