@@ -800,6 +800,7 @@ function (dojo, declare) {
 
             if (this.current_phase != this.phases[1])
                 // Not building phase, can't use
+                this.showMessage(_("You can only use the Observatory during the Building phase"), "error");
                 return;
 
 	    var card_id = evt.currentTarget.id.split('_')[3];
