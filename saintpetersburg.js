@@ -68,6 +68,7 @@ function (dojo, declare) {
             // Setting up player boards
             for(var player_id in gamedatas.players) {
                 var player = gamedatas.players[player_id];
+		player.url = g_gamethemeurl;
 		var player_board_div = $('player_board_' + player_id);
 		dojo.place(this.format_block('jstpl_player_board', player), player_board_div);
 
@@ -77,6 +78,7 @@ function (dojo, declare) {
 		hand_counter.setValue(gamedatas.player_hands[player_id]);
 		this.player_hands[player_id] = hand_counter;
                 this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
+                this.addTooltip('handcount_icon_p' + player_id, _("Number of cards in hand"), "");
 
 		this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0);
 	        this.player_tables[player_id].onItemCreate = dojo.hitch(this, 'setupNewCard');
@@ -90,8 +92,10 @@ function (dojo, declare) {
 		    this.rubles.create('rublecount_p' + this.player_id);
 		    this.rubles.setValue(gamedatas.rubles);
                     this.addTooltip('rublecount_p' + player_id, _("Number of rubles"), "");
+                    this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles"), "");
 		} else {
                     this.addTooltip('rublecount_p' + player_id, _("Number of rubles (secret)"), "");
+                    this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles (secret)"), "");
                 }
             }
 
@@ -441,7 +445,7 @@ function (dojo, declare) {
             var players = {};
 
             // Clear tokens
-            dojo.query('.token').removeClass('token_Worker token_Building token_Aristocrat token_Trading');
+            dojo.query('.token_small').removeClass('token_Worker token_Building token_Aristocrat token_Trading');
 
             for (var phase in tokens) {
                 // Determine current and next player for each token
@@ -457,7 +461,7 @@ function (dojo, declare) {
 
                 if (animate) {
                     // Use temp object to show tokens rotating
-                    var tmp = '<div id="tmp_token_'+phase+'" class="token token_'+phase+'"></div>';
+                    var tmp = '<div id="tmp_token_'+phase+'" class="token_small token_'+phase+'"></div>';
                     this.slideTemporaryObject(tmp, 'token_wrap_p' + token.current, curr, next, delay, 0);
                 } else {
                     // Immediately switch token to next player
