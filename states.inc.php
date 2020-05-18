@@ -92,7 +92,8 @@ $machinestates = array(
             "useObservatory" => STATE_USE_OBSERVATORY,
 	    "pass" => STATE_NEXT_PLAYER,
 	    "allPass" => STATE_SCORE_PHASE,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 
@@ -109,7 +110,8 @@ $machinestates = array(
 	    "addCard" => STATE_NEXT_PLAYER,
 	    "tradeCard" => STATE_TRADE_CARD,
 	    "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 
@@ -123,7 +125,8 @@ $machinestates = array(
 	"transitions" => array(
 	    "tradeCard" => STATE_NEXT_PLAYER,
 	    "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 
@@ -145,7 +148,8 @@ $machinestates = array(
 	"transitions" => array(
 	    "tradeCard" => STATE_NEXT_PLAYER,
 	    "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 
@@ -181,7 +185,8 @@ $machinestates = array(
 	"transitions" => array(
 	    "drawCard" => STATE_OBSERVATORY_CHOICE,
             "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 
@@ -197,7 +202,8 @@ $machinestates = array(
             "tradeCard" => STATE_OBSERVATORY_TRADE,
             "addCard" => STATE_NEXT_PLAYER,
             "discard" => STATE_NEXT_PLAYER,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 
@@ -211,7 +217,8 @@ $machinestates = array(
 	"transitions" => array(
 	    "tradeCard" => STATE_NEXT_PLAYER,
 	    "cancel" => STATE_OBSERVATORY_CHOICE,
-	    "zombiePass" => STATE_NEXT_PLAYER
+	    "zombiePass" => STATE_NEXT_PLAYER,
+	    "zombieAllPass" => STATE_SCORE_PHASE
 	)
     ),
 

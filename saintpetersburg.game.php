@@ -1399,10 +1399,53 @@ class SaintPetersburg extends Table
     	$statename = $state['name'];
     	
         if ($state['type'] === "activeplayer") {
-            switch ($statename) {
-                default:
-                    $this->gamestate->nextState("zombiePass");
-                	break;
+            if ($statename == "playerTurn") {
+                // No special action, just pass below
+                $pass = true; // Empty expression just to capture state
+            } else if ($statename == "selectCard" ||
+                $statename == "tradeCard" ||
+                $statename == "tradeCardHand" ||
+                $statename == "useObservatory")
+            {
+                // Clear card selection
+                // No notify as UI change is only on active (zombie) player
+	        self::setGameStateValue("selected_card", -1);
+	        self::setGameStateValue("selected_row", -1);
+            } else if ($statename == "chooseObservatory" ||
+                    $statename == "tradeObservatory")
+            {
+                // Clear card selection
+	        self::setGameStateValue("selected_card", -1);
+	        self::setGameStateValue("selected_row", -1);
+	        self::setGameStateValue("activated_observatory", -1);
+
+                // Discard drawn card
+                $cards = $this->cards->getCardsInLocation('obs_tmp', $active_player);
+                if ($cards != null && count($cards) == 1) {
+                    $card = array_shift($cards);
+                    $this->cards->playCard($card['id']);
+
+                    // Notify client to clear UI for other players
+                    $msg = clienttranslate('${card_name} is discarded automatically');
+                    self::notifyAllPlayers('discard', $msg, array(
+                        'card_name' => $this->getCardName($card),
+                        'cards' => array(array('row' => ROW_OBSERVATORY))
+                    ));
+                }
+            } else {
+                throw new feException("Zombie mode not supported at this game state: ".$statename);
+            }
+
+            // Pass
+            $num_pass = self::incGameStateValue('num_pass', 1);
+            if ($num_pass == self::getPlayersNumber()) {
+                // Zombie is last player to pass => next phase
+                // Reset pass counter for next phase
+                self::setGameStateValue("num_pass", 0);
+                $this->gamestate->nextState('zombieAllPass');
+            } else {
+                // One or more players left to pass => next player
+                $this->gamestate->nextState('zombiePass');
             }
 
             return;
@@ -1410,6 +1453,7 @@ class SaintPetersburg extends Table
 
         if ($state['type'] === "multipleactiveplayer") {
             // Make sure player is in a non blocking status for role turn
+            // Only multi state is Pub buy, and this is the correct action
             $this->gamestate->setPlayerNonMultiactive($active_player, '');
             
             return;
