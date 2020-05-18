@@ -10,14 +10,14 @@
 -------
 -->
 
-<div id="board">
-    <div id="discard_pile" class="discard"></div>
+<div id="stp_gameboard">
+    <div id="discard_pile" class="stp_discard"></div>
     <div id="decks">
-        <div id="deck_Worker" class="deck" style="left: 185px; top: 40px; background-position: 0px 0px;"></div>
-        <div id="deck_Building" class="deck" style="left: 327px; top: 40px; background-position: -70px 0px;"></div>
-        <div id="deck_Aristocrat" class="deck" style="left: 473px; top: 40px; background-position: -140px 0px;"></div>
-        <div id="deck_Trading" class="deck" style="left: 617px; top: 40px; background-position: -210px 0px;"></div>
-        <div id="deck_counts" class="deckcount">
+        <div id="deck_Worker" class="stp_deck" style="left: 185px; top: 40px; background-position: 0px 0px;"></div>
+        <div id="deck_Building" class="stp_deck" style="left: 327px; top: 40px; background-position: -70px 0px;"></div>
+        <div id="deck_Aristocrat" class="stp_deck" style="left: 473px; top: 40px; background-position: -140px 0px;"></div>
+        <div id="deck_Trading" class="stp_deck" style="left: 617px; top: 40px; background-position: -210px 0px;"></div>
+        <div id="deck_counts" class="stp_deckcount">
 	    <span id="count_Worker" style="left: 230px; top: 128px">0</span>
 	    <span id="count_Building" style="left: 372px; top: 128px">0</span>
 	    <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>
@@ -26,7 +26,7 @@
     </div>
 
 	<!-- BEGIN square -->
-	<div id="square_{X}_{Y}" class="square" style="left: {LEFT}px; top: {TOP}px;"></div>
+	<div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}px; top: {TOP}px;"></div>
 	<!-- END square -->
 
 	<div id="cards">
@@ -62,11 +62,11 @@ var jstpl_some_game_item='<div class="my_game_item" id="my_game_item_${MY_ITEM_I
 
 */
 
-var jstpl_card = '<div class="card" id="card_${col}_${row}" style="background-position:-${x}px -${y}px"></div>';
+var jstpl_card = '<div class="stp_card" id="card_${col}_${row}" style="background-position:-${x}px -${y}px"></div>';
 var jstpl_card_content = '<div id="card_content_${id}">' +
-                            '<div id="card_content_mask_${id}" class="maskcard"></div>' +
-                            '<div id="card_content_activewrap_${id}" class="clickcard">' +
-                                '<div id="card_content_active_${id}" class="activecard"><a href="#"></a></div>' +
+                            '<div id="card_content_mask_${id}" class="stp_maskcard"></div>' +
+                            '<div id="card_content_activewrap_${id}" class="stp_clickcard">' +
+                                '<div id="card_content_active_${id}" class="stp_activecard"><a href="#"></a></div>' +
                             '</div>' +
                          '</div>';
 var jstpl_player_board = 
@@ -74,22 +74,22 @@ var jstpl_player_board =
         '<img id="handcount_icon_p${id}" class="imgtext" src="${url}/img/hand.png">' +
         '<span id="handcount_p${id}">0</span>' +
         '&nbsp;' +
-        '<span id="rublecount_icon_p${id}" class="iconspan rublecount">&#8381;</span>' +
+        '<span id="rublecount_icon_p${id}" class="stp_iconspan">&#8381;</span>' +
         '<span id="rublecount_p${id}" class="rublecount">??</span>' +
         '&nbsp;' +
         '<div id="token_wrap_p${id}">' +
-	    '<div id="token_p${id}" class="imgtext token_small"></div>' +
+	    '<div id="token_p${id}" class="imgtext stp_token_small"></div>' +
             '&nbsp;' +
-	    '<div id="token2_p${id}" class="imgtext token_small"></div>' +
+	    '<div id="token2_p${id}" class="imgtext stp_token_small"></div>' +
             '&nbsp;' +
         '</div>' +
     '</div>';
-var jstpl_card_tooltip = '<div class="cardtooltip">' +
+var jstpl_card_tooltip = '<div class="stp_cardtooltip">' +
                               '<h3>${card_name}</h3>' +
                               '<hr/>' +
                               '<b>${card_type}</b>\<br/>' +
                               '${card_text}' +
-                              '<div class="cardartwrap"><div class="cardart" style="background-position: -${artx}px -${arty}px;"></div></div>' +
+                              '<div><div class="stp_cardart" style="background-position: -${artx}px -${arty}px;"></div></div>' +
                               '<i>${card_nbr_label}: ${card_nbr}</i>' +
                           '</div>';
 

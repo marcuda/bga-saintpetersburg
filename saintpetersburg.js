@@ -118,7 +118,7 @@ function (dojo, declare) {
                 var phase = this.phases[i];
                 if (this.deck_counters[phase] == undefined) {
                     // No counter created means deck is empty
-                    dojo.addClass('deck_' + phase, 'emptydeck')
+                    dojo.addClass('deck_' + phase, 'stp_emptydeck')
                     dojo.style('count_' + phase, 'color', 'red');
                     this.setDeckTooltip(phase, 0);
                     // Counter shouldn't be needed but create it just in case
@@ -190,7 +190,7 @@ function (dojo, declare) {
                     this.setSelections(args.args);
 		    break;
                 case 'useObservatory':
-                    dojo.query('.deck').addClass('selectable');
+                    dojo.query('.stp_deck').addClass('stp_selectable');
                     break;
                 case 'chooseObservatory':
                     this.showObservatoryChoice(args.args);
@@ -230,7 +230,7 @@ function (dojo, declare) {
                 break;
            */
                 case 'useObservatory':
-                    dojo.query('.deck').removeClass('selectable');
+                    dojo.query('.stp_deck').removeClass('stp_selectable');
                     break;
 		case 'selectCard':
 		case 'tradeCard':
@@ -239,8 +239,8 @@ function (dojo, declare) {
                 default:
                     this.playerHand.unselectAll();
 		    this.playerTable.setSelectionMode(0);
-                    dojo.query('.selected').removeClass('selected');
-                    dojo.query('.selectable').removeClass('selectable');
+                    dojo.query('.stp_selected').removeClass('stp_selected');
+                    dojo.query('.stp_selectable').removeClass('stp_selectable');
 		    break;
             }               
         }, 
@@ -392,7 +392,7 @@ function (dojo, declare) {
             this.tooltips[old_id] = null;
         },
             
-	addCardOnBoard: function (row, col, idx, src='board')
+	addCardOnBoard: function (row, col, idx, src='stp_gameboard')
 	{
 	    // Sprite index
 	    var y = Math.trunc(idx / this.card_art_row_size);
@@ -428,7 +428,7 @@ function (dojo, declare) {
             var players = {};
 
             // Clear tokens
-            dojo.query('.token_small').removeClass('token_Worker token_Building token_Aristocrat token_Trading');
+            dojo.query('.stp_token_small').removeClass('stp_token_Worker stp_token_Building stp_token_Aristocrat stp_token_Trading');
 
             for (var phase in tokens) {
                 // Determine current and next player for each token
@@ -444,11 +444,11 @@ function (dojo, declare) {
 
                 if (animate) {
                     // Use temp object to show tokens rotating
-                    var tmp = '<div id="tmp_token_'+phase+'" class="token_small token_'+phase+'"></div>';
+                    var tmp = '<div id="tmp_token_'+phase+'" class="stp_token_small stp_token_'+phase+'"></div>';
                     this.slideTemporaryObject(tmp, 'token_wrap_p' + token.current, curr, next, delay, 0);
                 } else {
                     // Immediately switch token to next player
-                    dojo.addClass(next, 'token_' + phase);
+                    dojo.addClass(next, 'stp_token_' + phase);
                     this.addTooltip(next, _("Starting player for " + phase + " phase"), "");
                 }
             }
@@ -532,12 +532,12 @@ function (dojo, declare) {
 
             console.log('PLAYER SELECT ' + args.col + ',' + args.row + ' => ' + div);
 
-            dojo.addClass(div, 'selected');
+            dojo.addClass(div, 'stp_selected');
 
             // Highlight trade options
             for (var i in args.trades) {
                 div = this.player_tables[args.player_id].getItemDivId(args.trades[i]);
-                dojo.addClass(div, 'selectable');
+                dojo.addClass(div, 'stp_selectable');
             }
         },
 
@@ -555,7 +555,7 @@ function (dojo, declare) {
             if ($(card_id)) {
                 // Card already exists on board
                 // Player must have cancelled last action
-                dojo.addClass(card_id, 'selected');
+                dojo.addClass(card_id, 'stp_selected');
                 return;
             }
 
@@ -575,8 +575,8 @@ function (dojo, declare) {
 	    }), 'cards');
 
 	    this.placeOnObject(card_id, 'deck_' + args.card.type);
-            dojo.addClass(card_id, 'selected');
-	    this.slideToObject(card_id, 'board').play();
+            dojo.addClass(card_id, 'stp_selected');
+	    this.slideToObject(card_id, 'stp_gameboard').play();
             this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg));
         },
 
@@ -898,7 +898,7 @@ function (dojo, declare) {
             if (row == 99) {
                 // Observatory pick
                 col = 99;
-                src = 'board';
+                src = 'stp_gameboard';
             }
 
 	    dojo.destroy('card_' + col + '_' + row);
@@ -921,7 +921,7 @@ function (dojo, declare) {
             if (row == 99) {
                 // Observatory pick
                 col = 99;
-                src = 'board';
+                src = 'stp_gameboard';
             }
 
 	    if (this.player_id == notif.args.player_id) {
@@ -994,7 +994,7 @@ function (dojo, declare) {
                 // Observatory pick
 		dojo.destroy('card_99_99');
 		this.player_tables[notif.args.player_id].addToStockWithId(
-		    notif.args.card_idx, notif.args.card_id, 'board');
+		    notif.args.card_idx, notif.args.card_id, 'stp_gameboard');
 	    } else {
 		// Buy from board
 		var col = 7 - notif.args.card_loc;
@@ -1072,7 +1072,7 @@ function (dojo, declare) {
             var num_cards = this.deck_counters[notif.args.phase].incValue(-draw);
             this.setDeckTooltip(notif.args.phase, num_cards);
             if (num_cards == 0) {
-                dojo.addClass(deck, 'emptydeck')
+                dojo.addClass(deck, 'stp_emptydeck')
                 dojo.style('count_' + notif.args.phase, 'color', 'red');
             }
 	},
@@ -1119,8 +1119,8 @@ function (dojo, declare) {
 
 	    this.setTokens(notif.args.tokens, true);
 
-            dojo.query('.maskcard').style('display', 'none');
-            dojo.query('.activecard').style('display', 'block');
+            dojo.query('.stp_maskcard').style('display', 'none');
+            dojo.query('.stp_activecard').style('display', 'block');
 	},
 
 	notif_buyPoints: function (notif)

@@ -48,26 +48,7 @@
 
 /********* You can start writing your CSS below this line: **********/
 
-
-/*
-    Example of CSS sprites (a black token and a white token, 20x20px each, embedded in the same "tokens.png" 40x20px image):
-
-    .white_token {
-        background-image: url('img/tokens.png');
-        background-position: 0px 0px;
-    }
-    .black_token {
-        background-image: url('img/tokens.png');
-        background-position: -20px 0px;
-    }
-    .token {
-        width: 20px;
-        height: 20px;
-        background-repeat: none;
-    }
-*/
-
-#board {
+#stp_gameboard {
 	width: 740px;
 	height: 480px;
 	background-image: url('img/board_full.jpg');
@@ -75,7 +56,7 @@
         margin: auto;
 }
 
-.discard {
+.stp_discard {
     position: absolute;
     width: 70px;
     height: 112px;
@@ -83,13 +64,13 @@
     top: 26px;
 }
 
-.square {
+.stp_square {
 	width: 70px;
 	height: 112px;
 	position: absolute;
 }
 
-.maskcard
+.stp_maskcard
 {
     width: 70px;
     height: 112px;
@@ -98,22 +79,14 @@
     display: none;
 }
 
-.clickcard
+.stp_clickcard
 {
     width: 70px;
     height: 112px;
     cursor: pointer;
 }
 
-.possibleMove
-{
-	background-color: white;
-	opacity: 0.2;
-	filter: alpha(opacity=20); /* IE8 */
-	cursor: pointer;
-}
-
-.card {
+.stp_card {
     position: absolute;
     width: 70px;
     height: 112px;
@@ -121,11 +94,11 @@
     cursor: pointer;
 }
 
-.selected {
+.stp_selected {
     border: 3px solid red ! important;
 }
 
-.selectable {
+.stp_selectable {
     border: 3px solid blue ! important;
     cursor: pointer;
 }
@@ -134,13 +107,13 @@
     border: 3px solid red ! important;
 }
 
-.rubleicon {
+.stp_rubleicon {
     width: 45px;
     height: 24px;
     background-image: url('img/ruble.jpg');
 }
 
-.iconspan {
+.stp_iconspan {
     color: black;
     font-weight: bold;
     margin-right: 3px !important;
@@ -164,28 +137,24 @@
     display: inline-block;
 }
 
-.nolinebreak {
-    display: inline-block;
-}
-
-.cardicon {
+.stp_cardicon {
     width: 32px;
     height: 32px;
     background-image: url('img/cardicon.png');
 }
 
-.deck {
+.stp_deck {
     position: absolute;
     width: 70px;
     height: 112px;
     background-image: url('img/cardbacks_big.jpg');
 }
 
-.emptydeck {
+.stp_emptydeck {
     background: rgba(200,0,0,0.4);
 }
 
-.deckcount {
+.stp_deckcount {
     color: black;
     text-shadow: -1px 0 white,
     0 1px white,
@@ -195,11 +164,11 @@
     font-weight: bold;
 }
 
-.deckcount > span {
+.stp_deckcount > span {
     position: absolute;
 }
 
-.token {
+.stp_token {
     position: relative;
     display: inline-block;
     width: 32px;
@@ -209,7 +178,7 @@
     background-position: -128px 0px; /* empty */
 }
 
-.token_small {
+.stp_token_small {
     position: relative;
     display: inline-block;
     width: 16px;
@@ -220,23 +189,23 @@
     margin-right: 5px;
 }
 
-.token_Worker {
+.stp_token_Worker {
     background-position: 0px 0px;
 }
 
-.token_Building {
+.stp_token_Building {
     background-position: -16px 0px;
 }
 
-.token_Aristocrat {
+.stp_token_Aristocrat {
     background-position: -32px 0px;
 }
 
-.token_Trading {
+.stp_token_Trading {
     background-position: -48px 0px;
 }
 
-.activecard {
+.stp_activecard {
  position:absolute;
  top:7px;
  left:20px;
@@ -249,7 +218,7 @@
  cursor:pointer;
 }
 
-.cardart {
+.stp_cardart {
  display:inline-block;
  background-image:url('img/cards_big.jpg');
  width:96px;
@@ -259,7 +228,7 @@
  border-radius:10px
 }
 
-.cardtooltip {
+.stp_cardtooltip {
  text-align:left;
  max-width:300px
 }
