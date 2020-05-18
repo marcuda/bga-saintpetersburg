@@ -309,6 +309,14 @@ class SaintPetersburg extends Table
 	$next_player = self::createNextPlayerTable(array_keys($players));
 
 	$player_id = self::getCurrentPlayerId();
+        if (!key_exists($player_id, $players)) {
+            // Spectator
+            //$player_id = array_key_first($players); // php 7.3+
+            foreach ($players as $key => $val) {
+                $player_id = $key;
+                break;
+            }
+        }
 	for ($i=0; $i<count($players); $i++)
 	{
 	    $result[] = $player_id;

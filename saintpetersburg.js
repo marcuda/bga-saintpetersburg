@@ -44,6 +44,7 @@ function (dojo, declare) {
             this.card_types = null;
             this.card_art_row_size = 10;
             this.deck_counters = [];
+            this.spectator = false;
         },
         
         /*
@@ -100,7 +101,13 @@ function (dojo, declare) {
             }
 
 	    this.playerTable = this.player_tables[this.player_id];
-            dojo.connect(this.playerTable, 'onChangeSelection', this, 'onPlayerTableSelectionChanged' );
+            if (this.playerTable === undefined) {
+                // Spectator
+                this.spectator = true;
+                dojo.style('myhand_wrap', 'display', 'none');
+            } else {
+                dojo.connect(this.playerTable, 'onChangeSelection', this, 'onPlayerTableSelectionChanged' );
+            }
 
 	    this.setTokens(gamedatas.tokens, false);
 	    this.setPhase(gamedatas.phase);
@@ -130,13 +137,15 @@ function (dojo, declare) {
 
 	    // Cards
 	    // Hand
-	    this.playerHand = this.createCardStock('myhand', 1);
-	    this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
-	    for (var i in gamedatas.hand) {
-		var card = gamedatas.hand[i];
-		this.playerHand.addToStockWithId(card.type_arg, card.id);
-	    }
-            dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
+            if (!this.spectator) {
+                this.playerHand = this.createCardStock('myhand', 1);
+                this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
+                for (var i in gamedatas.hand) {
+                    var card = gamedatas.hand[i];
+                    this.playerHand.addToStockWithId(card.type_arg, card.id);
+                }
+                dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
+            }
             
 	    // Board
 	    for (var i in gamedatas.board_top) {
@@ -179,15 +188,13 @@ function (dojo, declare) {
 		case 'playerTurn':
 		    break;
 		case 'selectCard':
-                    this.setSelections(args.args);
+                    this.setSelections(args.args, false);
 		    break;
 		case 'tradeCard':
-		    this.playerTable.setSelectionMode(1);
-                    this.setSelections(args.args);
+                    this.setSelections(args.args, true);
 		    break;
                 case 'tradeCardHand':
-		    this.playerTable.setSelectionMode(1);
-                    this.setSelections(args.args);
+                    this.setSelections(args.args, true);
 		    break;
                 case 'useObservatory':
                     dojo.query('.stp_deck').addClass('stp_selectable');
@@ -196,8 +203,7 @@ function (dojo, declare) {
                     this.showObservatoryChoice(args.args);
                     break;
                 case 'tradeObservatory':
-		    this.playerTable.setSelectionMode(1);
-                    this.setSelections(args.args);
+                    this.setSelections(args.args, true);
 		    break;
                 case 'usePub':
                     if (args.args[this.player_id] === undefined) {
@@ -237,8 +243,10 @@ function (dojo, declare) {
                 case 'tradeCardHand':
 		case 'tradeObservatory':
                 default:
-                    this.playerHand.unselectAll();
-		    this.playerTable.setSelectionMode(0);
+                    if (!this.spectator) {
+                        this.playerHand.unselectAll();
+		        this.playerTable.setSelectionMode(0);
+                    }
                     dojo.query('.stp_selected').removeClass('stp_selected');
                     dojo.query('.stp_selectable').removeClass('stp_selectable');
 		    break;
@@ -499,32 +507,39 @@ function (dojo, declare) {
 	    });
 	},
 
-        setSelections: function (args)
+        setSelections: function (args, is_trading)
         {
-            if (args.player_id != this.player_id) {
-                // Not active player
-                return;
-            }
-
             console.log(args);
+
+            var div = null;
 
             // Highlight selected card
             // In hand?
-            var div = this.playerHand.getItemDivId(args.card_id);
-            if (!$(div)) {
+            if (!this.spectator) {
+                div = this.playerHand.getItemDivId(args.card_id);
+            }
+            if ($(div)) {
+                // In hand
+                // Select stock item, otherwise won't show
+                this.playerHand.selectItem(args.card_id);
+	    } else {
                 // Not hand. Board?
 		var col = 7 - args.col;
                 div = 'card_' + col + '_' + args.row;
-	    } else {
-                // Select stock item, otherwise won't show
-                this.playerHand.selectItem(args.card_id);
             }
 
             if (!$(div)) {
-                // No, must be from Observatory pick
+                // No. Observatory pick?
                 div = 'card_99_99';
 	    }
+
             if (!$(div)) {
+                // Card not found anywhere...
+                if (args.player_id != this.player_id) {
+                    // Could be in active player's hand (not me)
+                    return;
+                }
+
                 // How did we get here?
                 alert("ERROR: Impossible selection");
                 return;
@@ -538,6 +553,11 @@ function (dojo, declare) {
             for (var i in args.trades) {
                 div = this.player_tables[args.player_id].getItemDivId(args.trades[i]);
                 dojo.addClass(div, 'stp_selectable');
+            }
+
+            // Update player table selection mode to allow trading
+            if (is_trading && args.player_id == this.player_id) {
+	        this.playerTable.setSelectionMode(1);
             }
         },
 
