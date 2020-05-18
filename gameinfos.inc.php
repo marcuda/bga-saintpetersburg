@@ -36,7 +36,6 @@ $gameinfos = array(
 // Board game geek ID of the game
 'bgg_id' => 9217,
 
-
 // Players configuration that can be played (ex: 2 to 4 players)
 'players' => array( 2,3,4 ),
 
@@ -45,11 +44,9 @@ $gameinfos = array(
 
 // Discourage players to play with these numbers of players. Must be null if there is no such advice.
 'not_recommend_player_number' => null,
-// 'not_recommend_player_number' => array( 2, 3 ),      // <= example: this is not recommended to play this game with 2 or 3 players
-
 
 // Estimated game duration, in minutes (used only for the launch, afterward the real duration is computed)
-'estimated_duration' => 60,
+'estimated_duration' => 45,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = fast)
 'fast_additional_time' => 30,
@@ -64,8 +61,6 @@ $gameinfos = array(
 // the formula used to compute "player_score_aux". This description will be used as a tooltip to explain
 // the tie breaker to the players.
 // Note: if you are NOT using any tie breaker, leave the empty string.
-//
-// Example: 'tie_breaker_description' => totranslate( "Number of remaining cards in hand" ),
 'tie_breaker_description' => totranslate("Number of rubles"),
 
 // If in the game, all losers are equal (no score to rank them or explicit in the rules that losers are not ranked between them), set this to true
@@ -77,7 +72,6 @@ $gameinfos = array(
 
 // Is this game cooperative (all players wins together or loose together)
 'is_coop' => 0,
-
 
 // Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
 'complexity' => 2,
@@ -123,9 +117,8 @@ $gameinfos = array(
 // Each paragraph must be wrapped with totranslate() for translation and should not contain html (plain text without formatting).
 // A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
 'presentation' => array(
-//    totranslate("This wonderful game is about geometric shapes!"),
-//    totranslate("It was awarded best triangle game of the year in 2005 and nominated for the Spiel des Jahres."),
-//    ...
+    totranslate("Baroque palaces, wide boulevards, and elegant bridges: St Petersburg. On May 16, 1703, Czar Peter the Great lays the foundation for the first building. Quickly impressive buildings are erected that are ever more grand and beautiful. Such buildings bring the aristocracy glory and the players victory points. But you need traders to bring the rubles necessary for all this magnificence, otherwise, the buildings are empty and bare. But the competition never sleeps and may grab needed cards right from under your nose."),
+   totranslate("St Petersburg: the card game of beautiful living on the Neva.")
 ),
 
 // Games categories
