@@ -224,7 +224,7 @@ $machinestates = array(
 
     STATE_USE_PUB => array(
 	"name" => "usePub",
-	"description" => clienttranslate('Other players may choose to use the Pub'),
+	"description" => clienttranslate('Other players may choose to use Pub'),
 	"descriptionmyturn" => clienttranslate('Pub: ${you} may buy points for 2 Rubles each'),
 	"type" => "multipleactiveplayer",
 	"action" => "stUsePub",

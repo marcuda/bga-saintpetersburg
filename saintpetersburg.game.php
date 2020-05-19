@@ -516,7 +516,7 @@ class SaintPetersburg extends Table
 	    self::dbIncScore($player_id, $points_ari);
             self::setStat($points_ari, 'points_aristocrats_end', $player_id);
 
-	    $msg = clienttranslate('Final scoring: ${player_name} earns ${points_ari} point(s) for ${num_ari} aristocrat type(s)');
+	    $msg = clienttranslate('Final scoring: ${player_name} earns ${points_ari} Point(s) for ${num_ari} Aristocrat type(s)');
 	    self::notifyAllPlayers('message', $msg, array(
 		'player_name' => $player['player_name'],
 		'points_ari' => $points_ari,
@@ -528,7 +528,7 @@ class SaintPetersburg extends Table
 	    self::dbIncScore($player_id, $points_rubles);
             self::setStat($points_rubles, 'points_rubles_end', $player_id);
 
-	    $msg = clienttranslate('Final scoring: ${player_name} earns ${points_rubles} point(s) for ${num_rubles} ruble(s)');
+	    $msg = clienttranslate('Final scoring: ${player_name} earns ${points_rubles} Point(s) for ${num_rubles} Ruble(s)');
 	    self::notifyAllPlayers('message', $msg, array(
 		'player_name' => $player['player_name'],
 		'points_rubles' => $points_rubles,
@@ -540,7 +540,7 @@ class SaintPetersburg extends Table
 	    $scores[$player_id] = self::dbIncScore($player_id, $points_hand);
             self::setStat($points_hand, 'points_hand_end', $player_id);
 
-	    $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} points for ${num_hand} card(s) in hand');
+	    $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} Points for ${num_hand} card(s) in hand');
 	    self::notifyAllPlayers('message', $msg, array(
 		'player_name' => $player['player_name'],
 		'points_hand' => $points_hand,
@@ -992,7 +992,7 @@ class SaintPetersburg extends Table
 	    $this->dbIncScore($player_id, $points);
             self::incStat($points, 'pub_points', $player_id);
 
-	    $msg = clienttranslate('${player_name} uses the Pub to buy ${points} Point(s) for ${cost} Rubles');
+	    $msg = clienttranslate('${player_name} uses Pub to buy ${points} Point(s) for ${cost} Rubles');
 	    self::notifyAllPlayers('buyPoints', $msg, array(
 		'player_id' => $player_id,
 		'player_name' => self::getCurrentPlayerName(),
@@ -1363,7 +1363,7 @@ class SaintPetersburg extends Table
 	if ($this->cards->countCardInLocation('deck_' . $phase) <= 0) {
 	    if (!self::getGameStateValue("last_round")) {
 		self::setGameStateValue("last_round", 1);
-		$msg = clienttranslate('${phase} deck is empty, this is the final round');
+		$msg = clienttranslate('Final round! ${phase} deck is empty');
 		self::notifyAllPlayers('lastRound', $msg, array(
 		    'phase' => $phase
 		));

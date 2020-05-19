@@ -24,7 +24,9 @@ define([
 function (dojo, declare) {
     return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
         constructor: function (){
-            console.log('saintpetersburg constructor');
+            this.debug = false; // enabled console log if true
+
+            if (this.debug) console.log('saintpetersburg constructor');
               
             // Here, you can init the global variables of your user interface
 	    this.playerHand = null;
@@ -62,7 +64,7 @@ function (dojo, declare) {
         
         setup: function (gamedatas)
         {
-            console.log("Starting game setup");
+            if (this.debug) console.log("Starting game setup");
 
             this.card_types = gamedatas.card_types;
             
@@ -169,7 +171,7 @@ function (dojo, declare) {
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
 
-            console.log("Ending game setup");
+            if (this.debug) console.log("Ending game setup");
         },
        
 
@@ -181,7 +183,7 @@ function (dojo, declare) {
         //
         onEnteringState: function (stateName, args)
         {
-            console.log('Entering state: ' + stateName);
+            if (this.debug) console.log('Entering state: ' + stateName);
             
             switch(stateName)
             {
@@ -221,7 +223,7 @@ function (dojo, declare) {
         //
         onLeavingState: function (stateName)
         {
-            console.log('Leaving state: ' + stateName);
+            if (this.debug) console.log('Leaving state: ' + stateName);
             
             switch(stateName)
             {
@@ -258,7 +260,7 @@ function (dojo, declare) {
         //        
         onUpdateActionButtons: function (stateName, args)
         {
-            console.log('onUpdateActionButtons: ' + stateName);
+            if (this.debug) console.log('onUpdateActionButtons: ' + stateName);
                       
             if(this.isCurrentPlayerActive())
             {            
@@ -270,7 +272,7 @@ function (dojo, declare) {
 		    case 'selectCard':
                         var buy_color = args.can_buy ? "blue" : "gray";
                         var add_color = args.can_add ? "blue" : "gray";
-			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onBuyCard", null, false, buy_color);
+			this.addActionButton("button_1", _("Buy") + "(" + args.cost + ")", "onBuyCard", null, false, buy_color);
 			this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
 			this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
 			break;
@@ -287,7 +289,7 @@ function (dojo, declare) {
                         }
 			this.addActionButton("button_1", "-1", "onOneLessPoint", null, false, "gray");
 			this.addActionButton("button_2", "+1", "onOneMorePoint", null, false, color);
-			this.addActionButton("button_3", _("Buy " + this.pub_points + " (" + this.pub_points * 2 + ")"), "onBuyPoints");
+			this.addActionButton("button_3", _("Buy") + " " + this.pub_points + " (" + this.pub_points * 2 + ")", "onBuyPoints");
 			this.addActionButton("button_4", _("Pass"), "onBuyNoPoints", null, false, "red");
 			break;
                     case 'useObservatory':
@@ -296,7 +298,7 @@ function (dojo, declare) {
                     case 'chooseObservatory':
                         var buy_color = args.can_buy ? "blue" : "gray";
                         var add_color = args.can_add ? "blue" : "gray";
-			this.addActionButton("button_1", _("Buy ("+args.cost+")"), "onObsBuyCard", null, false, buy_color);
+			this.addActionButton("button_1", _("Buy") + "(" + args.cost + ")", "onObsBuyCard", null, false, buy_color);
 			this.addActionButton("button_2", _("Add to hand"), "onObsAddCard", null, false, add_color);
 			this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
                         break;
@@ -359,7 +361,7 @@ function (dojo, declare) {
 	    card.arty = this.cardheight_big * Math.floor(card_type_id / this.card_art_row_size);
 
             if (card.card_type == "Worker") {
-                card.card_type = _("Worker") + " (" + _(card.card_worker_type) + ")";
+                card.card_type = _(card.card_type) + " (" + _(card.card_worker_type) + ")";
             } else if (card.card_type == "Trading") {
                 card.card_type = _(card.card_trade_type) + " (" + _("Trading card");
                 if (card.card_trade_type == "Worker") {
@@ -412,7 +414,7 @@ function (dojo, declare) {
 	    // Board position
 	    col = 7 - col; // row of 8, first position far right
 
-	    console.log('adding card type '+idx+' at x,y '+col+','+row);
+	    if (this.debug) console.log('adding card type '+idx+' at x,y '+col+','+row);
 
             var card_div = 'card_' + col + '_' + row;
 
@@ -457,7 +459,8 @@ function (dojo, declare) {
                 } else {
                     // Immediately switch token to next player
                     dojo.addClass(next, 'stp_token_' + phase);
-                    this.addTooltip(next, _("Starting player for " + phase + " phase"), "");
+                    var txt = _("Starting player for") + " " + _(phase) + " " + _("phase");
+                    this.addTooltip(next, txt, "");
                 }
             }
 
@@ -509,7 +512,8 @@ function (dojo, declare) {
 
         setSelections: function (args, is_trading)
         {
-            console.log(args);
+            if (this.debug) console.log('setSelection');
+            if (this.debug) console.log(args);
 
             var div = null;
 
@@ -544,8 +548,6 @@ function (dojo, declare) {
                 alert("ERROR: Impossible selection");
                 return;
             }
-
-            console.log('PLAYER SELECT ' + args.col + ',' + args.row + ' => ' + div);
 
             dojo.addClass(div, 'stp_selected');
 
@@ -604,18 +606,18 @@ function (dojo, declare) {
         {
             var txt = "";
             if (phase == this.current_phase) {
-                txt += "<b>Current phase:</b> ";
+                txt += "<b>" + _("Current phase") + ":</b> ";
             }
 
-            txt += phase + " stack ";
+            txt += _(phase) + " " + _("stack") + " ";
 
             if (cards == 0) {
-                txt += "is empty meaning game will end soon";
+                txt += _("is empty meaning game will end soon");
             } else {
-                txt += "has " + cards + " cards";
+                txt += _("has") + " " + cards + " " + _("cards");
             }
 
-            this.addTooltip('deck_' + phase, _(txt), "");
+            this.addTooltip('deck_' + phase, txt, "");
         },
 
         ///////////////////////////////////////////////////
@@ -631,9 +633,8 @@ function (dojo, declare) {
 	    var col = 7 - coords[1];
 	    var row = coords[2];
 
-	    console.log("Sending selectCard at " + row + ',' + col);
-
 	    this.ajaxcall("/saintpetersburg/saintpetersburg/selectCard.html", {
+                lock:true,
 		row:row,
 		col:col
 	    }, this, function (result){});
@@ -647,7 +648,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/addCard.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
 	},
 
 	onBuyCard: function (evt)
@@ -658,7 +659,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/buyCard.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
 	},
 
 	onCancelCard: function (evt)
@@ -669,7 +670,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/cancelSelect.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
 	},
 
 	onPass: function (evt)
@@ -680,7 +681,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/pass.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
 	},
 
 	onOneLessPoint: function (evt)
@@ -706,7 +707,7 @@ function (dojo, declare) {
                 dojo.addClass('button_2', 'bgabutton_blue');
             }
 
-	    $('button_3').textContent = _("Buy " + this.pub_points + " (" + this.pub_points * 2 + ")");
+	    $('button_3').textContent = _("Buy") + " " + this.pub_points + " (" + this.pub_points * 2 + ")";
 	},
 
 	onOneMorePoint: function (evt)
@@ -732,7 +733,7 @@ function (dojo, declare) {
                 dojo.addClass('button_1', 'bgabutton_blue');
             }
 
-	    $('button_3').textContent = _("Buy " + this.pub_points + " (" + this.pub_points * 2 + ")");
+	    $('button_3').textContent = _("Buy") + " " + this.pub_points + " (" + this.pub_points * 2 + ")";
 	},
 
 	onBuyPoints: function (evt)
@@ -743,7 +744,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/buyPoints.html",
-		{points:this.pub_points}, this, function (result) {});
+		{lock:true, points:this.pub_points}, this, function (result) {});
 	    this.pub_points = 0;
 	},
 
@@ -755,7 +756,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/buyPoints.html",
-		{points:0}, this, function (result) {});
+		{lock:true, points:0}, this, function (result) {});
 	    this.pub_points = 0;
 	},
 
@@ -770,7 +771,7 @@ function (dojo, declare) {
                     
                     this.ajaxcall(
 			"/saintpetersburg/saintpetersburg/playCard.html",
-			{card_id: card_id}, this, function (result) {});
+			{lock:true, card_id: card_id}, this, function (result) {});
 
                     this.playerHand.unselectAll();
                 } else {
@@ -790,7 +791,7 @@ function (dojo, declare) {
                     
                     this.ajaxcall(
 			"/saintpetersburg/saintpetersburg/tradeCard.html",
-			{card_id: card_id}, this, function (result) {});
+			{lock:true, card_id: card_id}, this, function (result) {});
 
                     this.playerTable.unselectAll();
                 } else {
@@ -821,7 +822,7 @@ function (dojo, declare) {
 	    var card_id = evt.currentTarget.id.split('_')[3];
             this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/useObservatory.html",
-		{card_id: card_id}, this, function (result) {});
+		{lock:true, card_id: card_id}, this, function (result) {});
         },
 
         onClickDeck: function (evt)
@@ -833,7 +834,7 @@ function (dojo, declare) {
             var deck = evt.currentTarget.id;
             this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/drawObservatoryCard.html",
-		{deck: deck}, this, function (result) {});
+		{lock:true, deck: deck}, this, function (result) {});
         },
 
 	onObsAddCard: function (evt)
@@ -844,7 +845,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/obsAdd.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
 	},
 
 	onObsBuyCard: function (evt)
@@ -855,7 +856,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/obsBuy.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
 	},
 
         onObsDiscardCard: function (evt)
@@ -866,7 +867,7 @@ function (dojo, declare) {
 
 	    this.ajaxcall(
 		"/saintpetersburg/saintpetersburg/obsDiscard.html",
-		{}, this, function (result) {});
+		{lock:true}, this, function (result) {});
         },
 
         
@@ -885,7 +886,7 @@ function (dojo, declare) {
         */
         setupNotifications: function ()
         {
-            console.log('notifications subscriptions setup');
+            if (this.debug) console.log('notifications subscriptions setup');
             
 	    dojo.subscribe('buyCard', this, 'notif_buyCard');
 	    dojo.subscribe('addCard', this, 'notif_addCard');
@@ -908,8 +909,8 @@ function (dojo, declare) {
         
 	notif_buyCard: function (notif)
 	{
-	    console.log('buy card notif');
-            console.log(notif);
+	    if (this.debug) console.log('buy card notif');
+            if (this.debug) console.log(notif);
 
 	    var row = notif.args.card_row;
 	    var col = 7 - notif.args.card_loc;
@@ -931,8 +932,8 @@ function (dojo, declare) {
 
 	notif_addCard: function (notif)
 	{
-	    console.log('add card notif');
-	    console.log(notif);
+	    if (this.debug) console.log('add card notif');
+	    if (this.debug) console.log(notif);
 
 	    var row = notif.args.card_row;
 	    var col = 7 - notif.args.card_loc;
@@ -962,8 +963,8 @@ function (dojo, declare) {
 
 	notif_playCard: function (notif)
 	{
-	    console.log('buy card notif');
-	    console.log(notif);
+	    if (this.debug) console.log('buy card notif');
+	    if (this.debug) console.log(notif);
 
 	    if (notif.args.player_id == this.player_id) {
 		this.playerTable.addToStockWithId(
@@ -984,8 +985,8 @@ function (dojo, declare) {
 
 	notif_tradeCard: function (notif)
 	{
-	    console.log('notif trade card');
-	    console.log(notif);
+	    if (this.debug) console.log('notif trade card');
+	    if (this.debug) console.log(notif);
 
 	    // Remove displaced card
 	    this.player_tables[notif.args.player_id].removeFromStockById(
@@ -1032,8 +1033,8 @@ function (dojo, declare) {
 
 	notif_shiftRight: function (notif)
 	{
-	    console.log('notif shift right');
-	    console.log(notif);
+	    if (this.debug) console.log('notif shift right');
+	    if (this.debug) console.log(notif);
 
 	    var row = notif.args.row;
 	    for (var i in notif.args.columns) {
@@ -1052,8 +1053,8 @@ function (dojo, declare) {
 
 	notif_shiftDown: function (notif)
 	{
-	    console.log('notif shift down');
-	    console.log(notif);
+	    if (this.debug) console.log('notif shift down');
+	    if (this.debug) console.log(notif);
 
 	    for (var i in notif.args.columns) {
 		var col = 7 - notif.args.columns[i];
@@ -1067,8 +1068,8 @@ function (dojo, declare) {
 
 	notif_scorePhase: function (notif)
 	{
-	    console.log('notif score phase');
-	    console.log(notif);
+	    if (this.debug) console.log('notif score phase');
+	    if (this.debug) console.log(notif);
 
 	    if (notif.args.player_id == this.player_id) {
 		this.rubles.incValue(notif.args.rubles);
@@ -1077,8 +1078,8 @@ function (dojo, declare) {
 
 	notif_nextPhase: function (notif)
 	{
-	    console.log('notif next phase');
-	    console.log(notif);
+	    if (this.debug) console.log('notif next phase');
+	    if (this.debug) console.log(notif);
 
 	    this.setPhase(notif.args.phase);
             var deck = 'deck_' + notif.args.phase;
@@ -1099,8 +1100,8 @@ function (dojo, declare) {
 
 	notif_newScores: function (notif)
 	{
-	    console.log('notif new scores');
-	    console.log(notif);
+	    if (this.debug) console.log('notif new scores');
+	    if (this.debug) console.log(notif);
 
 	    for(var player_id in notif.args.scores)
 	    {
@@ -1111,8 +1112,8 @@ function (dojo, declare) {
 
 	notif_discard: function (notif)
 	{
-	    console.log('notif discard');
-	    console.log(notif);
+	    if (this.debug) console.log('notif discard');
+	    if (this.debug) console.log(notif);
 
 	    for (var i in notif.args.cards) {
 		var card = notif.args.cards[i];
@@ -1134,8 +1135,8 @@ function (dojo, declare) {
 
 	notif_newRound: function (notif)
 	{
-	    console.log('notif new round');
-	    console.log(notif);
+	    if (this.debug) console.log('notif new round');
+	    if (this.debug) console.log(notif);
 
 	    this.setTokens(notif.args.tokens, true);
 
@@ -1145,8 +1146,8 @@ function (dojo, declare) {
 
 	notif_buyPoints: function (notif)
 	{
-	    console.log('notif buy points');
-	    console.log(notif);
+	    if (this.debug) console.log('notif buy points');
+	    if (this.debug) console.log(notif);
 
             this.scoreCtrl[notif.args.player_id].incValue(notif.args.points);
 

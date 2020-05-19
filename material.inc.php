@@ -35,18 +35,26 @@ if (!defined("CARD_PUB")) {
     define("PHASE_ARISTOCRAT", "Aristocrat");
     define("PHASE_TRADING", "Trading");
 
-    define("WORKER_ALL", "Any");
-    define("WORKER_WOOD", "Wood");
-    define("WORKER_GOLD", "Gold");
-    define("WORKER_WOOL", "Wool");
-    define("WORKER_FUR", "Fur");
-    define("WORKER_SHIP", "Shipping");
+    // Worker types
+    define("WORKER_ALL", clienttranslate("Any"));
+    define("WORKER_WOOD", clienttranslate("Wood"));
+    define("WORKER_GOLD", clienttranslate("Gold"));
+    define("WORKER_WOOL", clienttranslate("Wool"));
+    define("WORKER_FUR", clienttranslate("Fur"));
+    define("WORKER_SHIP", clienttranslate("Shipping"));
 
     // Card locations
     define("TOP_ROW", "board_top");
     define("BOTTOM_ROW", "board_bottom");
     define("ROW_HAND", -1);
     define("ROW_OBSERVATORY", 99);
+
+    // I18N
+    // Cannot translate phases above as they are used in client code
+    define("WORKER", clienttranslate("Worker"));
+    define("BUILDING", clienttranslate("Building"));
+    define("ARISTOCRAT", clienttranslate("Aristocrat"));
+    define("TRADING", clienttranslate("Trading"));
 }
 
 /*
@@ -63,7 +71,7 @@ if (!defined("CARD_PUB")) {
 */
 $this->card_types = array(
     0 => array( 
-	"card_name" => "Lumberjack",
+	"card_name" => clienttranslate("Lumberjack"),
 	"card_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_WOOD,
 	"card_cost" => 3,
@@ -73,7 +81,7 @@ $this->card_types = array(
 	"card_nbr" => 6
     ),
     1 => array( 
-	"card_name" => "Gold Miner",
+	"card_name" => clienttranslate("Gold Miner"),
 	"card_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_GOLD,
 	"card_cost" => 4,
@@ -83,7 +91,7 @@ $this->card_types = array(
 	"card_nbr" => 6
     ),
     2 => array( 
-	"card_name" => "Shepherd",
+	"card_name" => clienttranslate("Shepherd"),
 	"card_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_WOOL,
 	"card_cost" => 5,
@@ -93,7 +101,7 @@ $this->card_types = array(
 	"card_nbr" => 6
     ),
     3 => array( 
-	"card_name" => "Fur Trapper",
+	"card_name" => clienttranslate("Fur Trapper"),
 	"card_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_FUR,
 	"card_cost" => 6,
@@ -103,7 +111,7 @@ $this->card_types = array(
 	"card_nbr" => 6
     ),
     4 => array( 
-	"card_name" => "Ship Builder",
+	"card_name" => clienttranslate("Ship Builder"),
 	"card_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_SHIP,
 	"card_cost" => 7,
@@ -113,7 +121,7 @@ $this->card_types = array(
 	"card_nbr" => 6
     ),
     5 => array( 
-	"card_name" => "Czar and Carpenter",
+	"card_name" => clienttranslate("Czar and Carpenter"),
 	"card_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_ALL,
 	"card_cost" => 8,
@@ -121,10 +129,10 @@ $this->card_types = array(
 	"card_rubles" => 3,
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "Czar Peter can be displaced by any green trading card"
+        "card_text" => clienttranslate("Czar Peter can be displaced by any green trading card")
     ),
     CARD_PUB => array( 
-	"card_name" => "Pub",
+	"card_name" => clienttranslate("Pub"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 1,
@@ -132,10 +140,10 @@ $this->card_types = array(
 	"card_rubles" => 0,
 	"card_points" => 0,
         "card_nbr" => 2,
-        "card_text" => "After scoring, you may buy up to 5 points for 2 rubles each"
+        "card_text" => clienttranslate("After scoring, you may buy up to 5 points for 2 rubles each")
     ),
     CARD_WAREHOUSE => array(
-	"card_name" => "Warehouse",
+	"card_name" => clienttranslate("Warehouse"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 2,
@@ -143,10 +151,10 @@ $this->card_types = array(
 	"card_rubles" => 0,
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "You can hold up to 4 cards in your hand"
+        "card_text" => clienttranslate("You can hold up to 4 cards in your hand")
     ),
     13 => array( 
-	"card_name" => "Potjomkin's Village",
+	"card_name" => clienttranslate("Potjomkin's Village"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 2,
@@ -154,10 +162,10 @@ $this->card_types = array(
 	"card_rubles" => 0,
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "Costs 2 rubles to buy but worth 6 when displaced by a trading card"
+        "card_text" => clienttranslate("Costs 2 rubles to buy but worth 6 when displaced by a trading card")
     ),
     14 => array( 
-	"card_name" => "Market",
+	"card_name" => clienttranslate("Market"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 5,
@@ -167,7 +175,7 @@ $this->card_types = array(
 	"card_nbr" => 5
     ),
     CARD_OBSERVATORY => array( 
-	"card_name" => "Observatory",
+	"card_name" => clienttranslate("Observatory"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 6,
@@ -175,10 +183,10 @@ $this->card_types = array(
 	"card_rubles" => 0,
 	"card_points" => 1,
         "card_nbr" => 2,
-        "card_text" => "During blue actions you may draw the top-most card from any stack (it may not be the last card). You must then either buy the card, add it to your hand, or discard it. The Observatory then cannot be scored or used until the next round."
+        "card_text" => clienttranslate("During blue actions you may draw the top-most card from any stack (it may not be the last card). You must then either buy the card, add it to your hand, or discard it. The Observatory then cannot be scored or used until the next round.")
     ),
     16 => array( 
-	"card_name" => "Customs House",
+	"card_name" => clienttranslate("Customs House"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 8,
@@ -188,7 +196,7 @@ $this->card_types = array(
 	"card_nbr" => 5
     ),
     17 => array( 
-	"card_name" => "Firehouse",
+	"card_name" => clienttranslate("Firehouse"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 11,
@@ -198,7 +206,7 @@ $this->card_types = array(
 	"card_nbr" => 3
     ),
     18 => array( 
-	"card_name" => "Hospital",
+	"card_name" => clienttranslate("Hospital"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 14,
@@ -208,7 +216,7 @@ $this->card_types = array(
 	"card_nbr" => 3
     ),
     19 => array( 
-	"card_name" => "Library",
+	"card_name" => clienttranslate("Library"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 17,
@@ -218,7 +226,7 @@ $this->card_types = array(
 	"card_nbr" => 3
     ),
     20 => array( 
-	"card_name" => "Theater",
+	"card_name" => clienttranslate("Theater"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 20,
@@ -228,7 +236,7 @@ $this->card_types = array(
 	"card_nbr" => 2
     ),
     21 => array( 
-	"card_name" => "Academy",
+	"card_name" => clienttranslate("Academy"),
 	"card_type" => PHASE_BUILDING,
 	"card_trade_type" => 6,
 	"card_cost" => 23,
@@ -238,7 +246,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     32 => array( 
-	"card_name" => "Author",
+	"card_name" => clienttranslate("Author"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 4,
@@ -248,7 +256,7 @@ $this->card_types = array(
 	"card_nbr" => 6
     ),
     33 => array( 
-	"card_name" => "Administrator",
+	"card_name" => clienttranslate("Administrator"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 7,
@@ -258,7 +266,7 @@ $this->card_types = array(
 	"card_nbr" => 5
     ),
     34 => array( 
-	"card_name" => "Warehouse Manager",
+	"card_name" => clienttranslate("Warehouse Manager"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 10,
@@ -268,7 +276,7 @@ $this->card_types = array(
 	"card_nbr" => 5
     ),
     35 => array( 
-	"card_name" => "Secretary",
+	"card_name" => clienttranslate("Secretary"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 12,
@@ -278,7 +286,7 @@ $this->card_types = array(
 	"card_nbr" => 4
     ),
     36 => array( 
-	"card_name" => "Controller",
+	"card_name" => clienttranslate("Controller"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 14,
@@ -288,7 +296,7 @@ $this->card_types = array(
 	"card_nbr" => 3
     ),
     37 => array( 
-	"card_name" => "Judge",
+	"card_name" => clienttranslate("Judge"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 16,
@@ -298,7 +306,7 @@ $this->card_types = array(
 	"card_nbr" => 2
     ),
     38 => array( 
-	"card_name" => "Mistress of Ceremonies",
+	"card_name" => clienttranslate("Mistress of Ceremonies"),
 	"card_type" => PHASE_ARISTOCRAT,
 	"card_trade_type" => 7,
 	"card_cost" => 18,
@@ -308,7 +316,7 @@ $this->card_types = array(
 	"card_nbr" => 2
     ),
     CARD_CARPENTER_WORKSHOP => array( 
-	"card_name" => "Carpenter Workshop",
+	"card_name" => clienttranslate("Carpenter Workshop"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_WOOD,
@@ -316,10 +324,10 @@ $this->card_types = array(
 	"card_rubles" => 3,
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "Blue building cards cost you 1 less ruble to buy"
+        "card_text" => clienttranslate("Blue building cards cost you 1 less ruble to buy")
     ),
     CARD_GOLD_SMELTER => array( 
-	"card_name" => "Gold Smelter",
+	"card_name" => clienttranslate("Gold Smelter"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_GOLD,
@@ -327,10 +335,10 @@ $this->card_types = array(
 	"card_rubles" => 3,
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "Red aristocrat cards cost you 1 less ruble to buy"
+        "card_text" => clienttranslate("Red aristocrat cards cost you 1 less ruble to buy")
     ),
     8 => array( 
-	"card_name" => "Weaving Mill",
+	"card_name" => clienttranslate("Weaving Mill"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_WOOL,
@@ -340,7 +348,7 @@ $this->card_types = array(
 	"card_nbr" => 2
     ),
     9 => array( 
-	"card_name" => "Fur Shop",
+	"card_name" => clienttranslate("Fur Shop"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_FUR,
@@ -350,7 +358,7 @@ $this->card_types = array(
 	"card_nbr" => 3
     ),
     10 => array( 
-	"card_name" => "Wharf",
+	"card_name" => clienttranslate("Wharf"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_WORKER,
 	"card_worker_type" => WORKER_SHIP,
@@ -360,17 +368,17 @@ $this->card_types = array(
 	"card_nbr" => 3
     ),
     CARD_MARIINSKIJ_THEATER => array( 
-	"card_name" => "Mariinskij-Theater",
+	"card_name" => clienttranslate("Mariinskij-Theater"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 10,
 	"card_rubles" => 0, // 1 per aristocrat
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "+1 ruble per red aristocrat in your play area"
+        "card_text" => clienttranslate("+1 ruble per red aristocrat in your play area")
     ),
     23 => array( 
-	"card_name" => "Bank",
+	"card_name" => clienttranslate("Bank"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 13,
@@ -379,7 +387,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     24 => array( 
-	"card_name" => "Peterhof",
+	"card_name" => clienttranslate("Peterhof"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 14,
@@ -388,7 +396,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     25 => array( 
-	"card_name" => "St Isaac's Cathedral",
+	"card_name" => clienttranslate("St Isaac's Cathedral"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 15,
@@ -397,7 +405,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     26 => array( 
-	"card_name" => "Church of the Resurrection of Jesus Christ",
+	"card_name" => clienttranslate("Church of the Resurrection of Jesus Christ"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 16,
@@ -406,7 +414,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     27 => array( 
-	"card_name" => "Harbor",
+	"card_name" => clienttranslate("Harbor"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 16,
@@ -415,7 +423,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     28 => array( 
-	"card_name" => "Catherine the Great Palace",
+	"card_name" => clienttranslate("Catherine the Great Palace"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 17,
@@ -424,7 +432,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     29 => array( 
-	"card_name" => "Smolny Cathedral",
+	"card_name" => clienttranslate("Smolny Cathedral"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 17,
@@ -433,7 +441,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     30 => array( 
-	"card_name" => "Hermitage",
+	"card_name" => clienttranslate("Hermitage"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 18,
@@ -442,7 +450,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     31 => array( 
-	"card_name" => "Winter Palace",
+	"card_name" => clienttranslate("Winter Palace"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_BUILDING,
 	"card_cost" => 19,
@@ -451,7 +459,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     39 => array( 
-	"card_name" => "Pope",
+	"card_name" => clienttranslate("Pope"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 6,
@@ -460,7 +468,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     40 => array( 
-	"card_name" => "Chamber Maid",
+	"card_name" => clienttranslate("Chamber Maid"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 8,
@@ -469,7 +477,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     41 => array( 
-	"card_name" => "Weapon Master",
+	"card_name" => clienttranslate("Weapon Master"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 8,
@@ -478,7 +486,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     42 => array( 
-	"card_name" => "Builder",
+	"card_name" => clienttranslate("Builder"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 10,
@@ -487,7 +495,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     43 => array( 
-	"card_name" => "Senator",
+	"card_name" => clienttranslate("Senator"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 12,
@@ -496,7 +504,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     44 => array( 
-	"card_name" => "Patriarch",
+	"card_name" => clienttranslate("Patriarch"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 16,
@@ -505,17 +513,17 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     CARD_TAX_MAN => array( 
-	"card_name" => "Tax Man",
+	"card_name" => clienttranslate("Tax Man"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 17,
 	"card_rubles" => 0, // 1 per worker
 	"card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => "+1 ruble per green worker in your play area"
+        "card_text" => clienttranslate("+1 ruble per green worker in your play area")
     ),
     46 => array( 
-	"card_name" => "Admiral",
+	"card_name" => clienttranslate("Admiral"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 18,
@@ -524,7 +532,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     47 => array( 
-	"card_name" => "Minister of Foreign Affairs",
+	"card_name" => clienttranslate("Minister of Foreign Affairs"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 20,
@@ -533,7 +541,7 @@ $this->card_types = array(
 	"card_nbr" => 1
     ),
     48 => array( 
-	"card_name" => "Czar",
+	"card_name" => clienttranslate("Czar"),
 	"card_type" => PHASE_TRADING,
 	"card_trade_type" => PHASE_ARISTOCRAT,
 	"card_cost" => 24,
