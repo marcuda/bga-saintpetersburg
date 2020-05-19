@@ -131,6 +131,10 @@ $gameinfos = array(
 'tags' => array( 2, 22, 102, 200, 210 ),
 
 
+// 3D mode does not currently work and really doesn't add much for a card game...
+'enable_3d' => false,
+
+
 //////// BGA SANDBOX ONLY PARAMETERS (DO NOT MODIFY)
 
 // simple : A plays, B plays, C plays, A plays, B plays, ...
