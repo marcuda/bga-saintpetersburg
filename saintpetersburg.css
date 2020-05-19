@@ -49,11 +49,11 @@
 /********* You can start writing your CSS below this line: **********/
 
 #stp_gameboard {
-	width: 740px;
-	height: 480px;
-	background-image: url('img/board_full.jpg');
-	position: relative;
-        margin: auto;
+    width: 740px;
+    height: 480px;
+    background-image: url('img/board_full.jpg');
+    position: relative;
+    margin: auto;
 }
 
 .stp_discard {
@@ -65,13 +65,12 @@
 }
 
 .stp_square {
-	width: 70px;
-	height: 112px;
-	position: absolute;
+    width: 70px;
+    height: 112px;
+    position: absolute;
 }
 
-.stp_maskcard
-{
+.stp_maskcard {
     width: 70px;
     height: 112px;
     background-color: rgba(255, 228, 196, 0.75);

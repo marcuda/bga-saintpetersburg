@@ -65,7 +65,12 @@ if (!defined("STATE_END_GAME")) {
     define("STATE_OBSERVATORY_TRADE", 19);
     define("STATE_END_GAME", 99);
 }
- 
+
+// TODO: Code check claims this is long and potentially overkill...
+// Many of these state are duplicative and could potentially be reduced down
+// by a factor with added logic in the game state and arg functions.
+// But to me this feels like the clean way to handle the game logic.
+
 $machinestates = array(
 
     // The initial state. Please do not modify.
@@ -78,56 +83,56 @@ $machinestates = array(
     ),
     
     STATE_PLAYER_TURN => array(
-    	"name" => "playerTurn",
-    	"description" => clienttranslate('${actplayer} must play a card or pass'),
-    	"descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
-    	"type" => "activeplayer",
-	"args" => "argPlayerTurn",
-    	"possibleactions" => array("selectCard", "playCard", "useObservatory", "pass"),
-	"transitions" => array(
-	    "selectCard" => STATE_SELECT_CARD,
-	    "playCard" => STATE_NEXT_PLAYER,
-	    "tradeCard" => STATE_TRADE_CARD,
-	    "tradeCardHand" => STATE_TRADE_CARD_HAND,
+        "name" => "playerTurn",
+        "description" => clienttranslate('${actplayer} must play a card or pass'),
+        "descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
+        "type" => "activeplayer",
+        "args" => "argPlayerTurn",
+        "possibleactions" => array("selectCard", "playCard", "useObservatory", "pass"),
+        "transitions" => array(
+            "selectCard" => STATE_SELECT_CARD,
+            "playCard" => STATE_NEXT_PLAYER,
+            "tradeCard" => STATE_TRADE_CARD,
+            "tradeCardHand" => STATE_TRADE_CARD_HAND,
             "useObservatory" => STATE_USE_OBSERVATORY,
-	    "pass" => STATE_NEXT_PLAYER,
-	    "allPass" => STATE_SCORE_PHASE,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+            "pass" => STATE_NEXT_PLAYER,
+            "allPass" => STATE_SCORE_PHASE,
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     STATE_SELECT_CARD => array(
-    	"name" => "selectCard",
-    	"description" => clienttranslate('${card_name}: ${actplayer} must choose an action or cancel'),
-    	"descriptionmyturn" => clienttranslate('${card_name}: ${you} may buy or add to hand'),
-    	"type" => "activeplayer",
-	"args" => "argSelectCard",
+        "name" => "selectCard",
+        "description" => clienttranslate('${card_name}: ${actplayer} must choose an action or cancel'),
+        "descriptionmyturn" => clienttranslate('${card_name}: ${you} may buy or add to hand'),
+        "type" => "activeplayer",
+        "args" => "argSelectCard",
         "possibleactions" => array("selectCard", "buyCard", "addCard", "cancel"),
-    	"transitions" => array(
+        "transitions" => array(
             "selectCard" => STATE_SELECT_CARD,
-	    "buyCard" => STATE_NEXT_PLAYER,
-	    "addCard" => STATE_NEXT_PLAYER,
-	    "tradeCard" => STATE_TRADE_CARD,
-	    "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+            "buyCard" => STATE_NEXT_PLAYER,
+            "addCard" => STATE_NEXT_PLAYER,
+            "tradeCard" => STATE_TRADE_CARD,
+            "cancel" => STATE_PLAYER_TURN,
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     STATE_TRADE_CARD => array(
-	"name" => "tradeCard",
-	"description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
-	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-	"type" => "activeplayer",
-	"args" => "argTradeCard",
-	"possibleactions" => array("tradeCard", "cancel"),
-	"transitions" => array(
-	    "tradeCard" => STATE_NEXT_PLAYER,
-	    "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+        "name" => "tradeCard",
+        "description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
+        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+        "type" => "activeplayer",
+        "args" => "argTradeCard",
+        "possibleactions" => array("tradeCard", "cancel"),
+        "transitions" => array(
+            "tradeCard" => STATE_NEXT_PLAYER,
+            "cancel" => STATE_PLAYER_TURN,
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     /*
@@ -139,110 +144,110 @@ $machinestates = array(
      * protected and is therefore not a concern here.
      */
     STATE_TRADE_CARD_HAND => array(
-	"name" => "tradeCardHand",
-	"description" => clienttranslate('${actplayer} must play a card or pass'),
-	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-	"type" => "activeplayer",
-	"args" => "argTradeCard",
-	"possibleactions" => array("tradeCard", "cancel"),
-	"transitions" => array(
-	    "tradeCard" => STATE_NEXT_PLAYER,
-	    "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+        "name" => "tradeCardHand",
+        "description" => clienttranslate('${actplayer} must play a card or pass'),
+        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+        "type" => "activeplayer",
+        "args" => "argTradeCard",
+        "possibleactions" => array("tradeCard", "cancel"),
+        "transitions" => array(
+            "tradeCard" => STATE_NEXT_PLAYER,
+            "cancel" => STATE_PLAYER_TURN,
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     STATE_NEXT_PLAYER => array(
-	"name" => "nextPlayer",
-	"type" => "game",
-	"action" => "stNextPlayer",
-	"updateGameProgression" => false,
-	"transitions" => array(
-	    "nextTurn" => STATE_PLAYER_TURN,
-	    "cantPlay" => STATE_NEXT_PLAYER
-	)
+        "name" => "nextPlayer",
+        "type" => "game",
+        "action" => "stNextPlayer",
+        "updateGameProgression" => false,
+        "transitions" => array(
+            "nextTurn" => STATE_PLAYER_TURN,
+            "cantPlay" => STATE_NEXT_PLAYER
+        )
     ),
 
     STATE_SCORE_PHASE => array(
-	"name" => "scorePhase",
-	"type" => "game",
-	"action" => "stScorePhase",
-	"updateGameProgression" => false,
-	"transitions" => array(
-	    "nextPhase" => STATE_NEXT_PHASE,
-	    "usePub" => STATE_USE_PUB,
-	    "endGame" => STATE_END_GAME
-	)
+        "name" => "scorePhase",
+        "type" => "game",
+        "action" => "stScorePhase",
+        "updateGameProgression" => false,
+        "transitions" => array(
+            "nextPhase" => STATE_NEXT_PHASE,
+            "usePub" => STATE_USE_PUB,
+            "endGame" => STATE_END_GAME
+        )
     ),
 
     STATE_USE_OBSERVATORY => array(
-	"name" => "useObservatory",
-	"description" => clienttranslate('Observatory: ${actplayer} must choose a stack to draw from'),
-	"descriptionmyturn" => clienttranslate('Observatory: ${you} must choose a stack to draw from'),
-	"type" => "activeplayer",
-	"possibleactions" => array("drawObservatoryCard", "cancel"),
-	"transitions" => array(
-	    "drawCard" => STATE_OBSERVATORY_CHOICE,
+        "name" => "useObservatory",
+        "description" => clienttranslate('Observatory: ${actplayer} must choose a stack to draw from'),
+        "descriptionmyturn" => clienttranslate('Observatory: ${you} must choose a stack to draw from'),
+        "type" => "activeplayer",
+        "possibleactions" => array("drawObservatoryCard", "cancel"),
+        "transitions" => array(
+            "drawCard" => STATE_OBSERVATORY_CHOICE,
             "cancel" => STATE_PLAYER_TURN,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     STATE_OBSERVATORY_CHOICE => array(
-	"name" => "chooseObservatory",
-	"description" => clienttranslate('${card_name}: ${actplayer} must play or discard'),
-	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must play or discard'),
-	"type" => "activeplayer",
+        "name" => "chooseObservatory",
+        "description" => clienttranslate('${card_name}: ${actplayer} must play or discard'),
+        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must play or discard'),
+        "type" => "activeplayer",
         "args" => "argChooseObservatory",
-	"possibleactions" => array("buyCard", "addCard", "discard"),
-	"transitions" => array(
+        "possibleactions" => array("buyCard", "addCard", "discard"),
+        "transitions" => array(
             "buyCard" => STATE_NEXT_PLAYER,
             "tradeCard" => STATE_OBSERVATORY_TRADE,
             "addCard" => STATE_NEXT_PLAYER,
             "discard" => STATE_NEXT_PLAYER,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     STATE_OBSERVATORY_TRADE => array(
-	"name" => "tradeObservatory",
-	"description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
-	"descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-	"type" => "activeplayer",
-	"args" => "argTradeCard",
-	"possibleactions" => array("tradeCard", "cancel"),
-	"transitions" => array(
-	    "tradeCard" => STATE_NEXT_PLAYER,
-	    "cancel" => STATE_OBSERVATORY_CHOICE,
-	    "zombiePass" => STATE_NEXT_PLAYER,
-	    "zombieAllPass" => STATE_SCORE_PHASE
-	)
+        "name" => "tradeObservatory",
+        "description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
+        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+        "type" => "activeplayer",
+        "args" => "argTradeCard",
+        "possibleactions" => array("tradeCard", "cancel"),
+        "transitions" => array(
+            "tradeCard" => STATE_NEXT_PLAYER,
+            "cancel" => STATE_OBSERVATORY_CHOICE,
+            "zombiePass" => STATE_NEXT_PLAYER,
+            "zombieAllPass" => STATE_SCORE_PHASE
+        )
     ),
 
     STATE_USE_PUB => array(
-	"name" => "usePub",
-	"description" => clienttranslate('Other players may choose to use Pub'),
-	"descriptionmyturn" => clienttranslate('Pub: ${you} may buy points for 2 Rubles each'),
-	"type" => "multipleactiveplayer",
-	"action" => "stUsePub",
+        "name" => "usePub",
+        "description" => clienttranslate('Other players may choose to use Pub'),
+        "descriptionmyturn" => clienttranslate('Pub: ${you} may buy points for 2 Rubles each'),
+        "type" => "multipleactiveplayer",
+        "action" => "stUsePub",
         "args" => "argUsePub",
-	"possibleactions" => array("buyPoints"),
-	"transitions" => array(
-	    "nextPhase" => STATE_NEXT_PHASE
-	)
+        "possibleactions" => array("buyPoints"),
+        "transitions" => array(
+            "nextPhase" => STATE_NEXT_PHASE
+        )
     ),
 
     STATE_NEXT_PHASE => array(
-	"name" => "nextPhase",
-	"type" => "game",
-	"action" => "stNextPhase",
-	"updateGameProgression" => true,
-	"transitions" => array(
-	    "nextTurn" => STATE_PLAYER_TURN
-	)
+        "name" => "nextPhase",
+        "type" => "game",
+        "action" => "stNextPhase",
+        "updateGameProgression" => true,
+        "transitions" => array(
+            "nextTurn" => STATE_PLAYER_TURN
+        )
     ),
 
     // Final state.
@@ -256,6 +261,5 @@ $machinestates = array(
     )
 
 );
-
 
 

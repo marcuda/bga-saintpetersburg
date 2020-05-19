@@ -18,19 +18,19 @@
         <div id="deck_Aristocrat" class="stp_deck" style="left: 473px; top: 40px; background-position: -140px 0px;"></div>
         <div id="deck_Trading" class="stp_deck" style="left: 617px; top: 40px; background-position: -210px 0px;"></div>
         <div id="deck_counts" class="stp_deckcount">
-	    <span id="count_Worker" style="left: 230px; top: 128px">0</span>
-	    <span id="count_Building" style="left: 372px; top: 128px">0</span>
-	    <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>
-	    <span id="count_Trading" style="left: 661px; top: 128px">0</span>
+            <span id="count_Worker" style="left: 230px; top: 128px">0</span>
+            <span id="count_Building" style="left: 372px; top: 128px">0</span>
+            <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>
+            <span id="count_Trading" style="left: 661px; top: 128px">0</span>
         </div>
     </div>
 
-	<!-- BEGIN square -->
-	<div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}px; top: {TOP}px;"></div>
-	<!-- END square -->
+    <!-- BEGIN square -->
+    <div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}px; top: {TOP}px;"></div>
+    <!-- END square -->
 
-	<div id="cards">
-	</div>
+    <div id="cards">
+    </div>
 </div>
 
 <div id="myhand_wrap" class="whiteblock">
@@ -41,8 +41,8 @@
 <div id="playertables">
     <!-- BEGIN player -->
     <div id="playertable_{PLAYER_ID}_wrap" class="whiteblock">
-	<h3 style="color:#{PLAYER_COLOR}">{PLAYER_NAME}</h3>
-	<div id="playertable_{PLAYER_ID}"></div>
+        <h3 style="color:#{PLAYER_COLOR}">{PLAYER_NAME}</h3>
+        <div id="playertable_{PLAYER_ID}"></div>
     </div>
     <!-- END player -->
 </div>
@@ -56,43 +56,41 @@
 
 // Javascript HTML templates
 
-/*
-// Example:
-var jstpl_some_game_item='<div class="my_game_item" id="my_game_item_${MY_ITEM_ID}"></div>';
-
-*/
-
 var jstpl_card = '<div class="stp_card" id="card_${col}_${row}" style="background-position:-${x}px -${y}px"></div>';
-var jstpl_card_content = '<div id="card_content_${id}">' +
-                            '<div id="card_content_mask_${id}" class="stp_maskcard"></div>' +
-                            '<div id="card_content_activewrap_${id}" class="stp_clickcard">' +
-                                '<div id="card_content_active_${id}" class="stp_activecard"><a href="#"></a></div>' +
-                            '</div>' +
-                         '</div>';
-var jstpl_player_board = 
+var jstpl_card_content =
+    '<div id="card_content_${id}">' +
+        '<div id="card_content_mask_${id}" class="stp_maskcard"></div>' +
+        '<div id="card_content_activewrap_${id}" class="stp_clickcard">' +
+            '<div id="card_content_active_${id}" class="stp_activecard"><a href="#"></a></div>' +
+        '</div>' +
+     '</div>';
+var jstpl_player_board =
     '<div class="stp_board">' +
         '<img id="handcount_icon_p${id}" class="imgtext" src="${url}/img/hand.png">' +
         '<span id="handcount_p${id}">0</span>' +
         '&nbsp;' +
         '<span id="rublecount_icon_p${id}" class="stp_iconspan">&#8381;</span>' +
-        '<span id="rublecount_p${id}" class="rublecount">??</span>' +
+        '<span id="rublecount_p${id}">??</span>' +
         '&nbsp;' +
         '<div id="token_wrap_p${id}">' +
-	    '<div id="token_p${id}" class="imgtext stp_token_small"></div>' +
+            '<div id="token_p${id}" class="imgtext stp_token_small"></div>' +
             '&nbsp;' +
-	    '<div id="token2_p${id}" class="imgtext stp_token_small"></div>' +
+            '<div id="token2_p${id}" class="imgtext stp_token_small"></div>' +
             '&nbsp;' +
         '</div>' +
     '</div>';
-var jstpl_card_tooltip = '<div class="stp_cardtooltip">' +
-                              '<h3>${card_name}</h3>' +
-                              '<hr/>' +
-                              '<b>${card_type}</b>\<br/>' +
-                              '${card_text}' +
-                              '<div><div class="stp_cardart" style="background-position: -${artx}px -${arty}px;"></div></div>' +
-                              '<i>${card_nbr_label}: ${card_nbr}</i>' +
-                          '</div>';
+var jstpl_card_tooltip =
+    '<div class="stp_cardtooltip">' +
+        '<h3>${card_name}</h3>' +
+        '<hr/>' +
+        '<b>${card_type}</b>\<br/>' +
+        '${card_text}' +
+        '<div>' +
+            '<div class="stp_cardart" style="background-position: -${artx}px -${arty}px;"></div>' +
+        '</div>' +
+        '<i>${card_nbr_label}: ${card_nbr}</i>' +
+    '</div>';
 
-</script>  
+</script>
 
 {OVERALL_GAME_FOOTER}
