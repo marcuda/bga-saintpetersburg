@@ -37,11 +37,11 @@ class SaintPetersburg extends Table
             "starting_player_" . PHASE_BUILDING => 11,   // player_id holding Building token
             "starting_player_" . PHASE_ARISTOCRAT => 12, // player_id holding Aristocrat token
             "starting_player_" . PHASE_TRADING => 13,    // player_id holding Trading token
-            "selected_card" => 14,        // card_id of player selected card
-            "selected_row" => 15,         // board row (or other location as specified) of player selected card
-            "num_pass" => 16,             // number of players that have consecutively passed in this phase
-            "current_phase" => 17,        // current phase number, always increasing
-            "last_round" => 18,           // 1 if the end state has been triggered in the current round
+            "selected_card" => 14,         // card_id of player selected card
+            "selected_row" => 15,          // board row (or other location as specified) of player selected card
+            "num_pass" => 16,              // number of players that have consecutively passed in this phase
+            "current_phase" => 17,         // current phase number, always increasing
+            "last_round" => 18,            // 1 if the end state has been triggered in the current round
             "observatory_0_id" => 19,      // card_id of first Observatory card
             "observatory_1_id" => 20,      // card_id of second Observatory card
             "observatory_0_used" => 21,    // 1 if first Observatory has been used this round
@@ -68,7 +68,7 @@ class SaintPetersburg extends Table
         
     protected function getGameName()
     {
-                // Used for translations and stuff. Please do not modify.
+        // Used for translations and stuff. Please do not modify.
         return "saintpetersburg";
     }   
 
@@ -82,18 +82,17 @@ class SaintPetersburg extends Table
     protected function setupNewGame($players, $options = array())
     {    
         // Set the colors of the players with HTML color code
-        // The default below is red/green/blue/orange/brown
-        // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
  
         // Create players
-        // Player money is tie breaker and so held in aux score
+        // Player rubles is tie breaker and so held in aux score
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar, player_score_aux) VALUES ";
         $values = array();
         foreach($players as $player_id => $player)
         {
             $color = array_shift($default_colors);
+            // start with 25 rubles
             $values[] = "('".$player_id."','$color','".$player['player_canal']."','".addslashes($player['player_name'])."','".addslashes($player['player_avatar'])."',25)";
         }
         $sql .= implode($values, ',');
@@ -104,6 +103,12 @@ class SaintPetersburg extends Table
         /************ Start the game initialization *****/
 
         // Init global values with their initial values
+        self::setGameStateInitialValue("selected_card", -1);
+        self::setGameStateInitialValue("selected_row", -1);
+        self::setGameStateInitialValue("num_pass", 0);
+        self::setGameStateInitialValue("current_phase", 0);
+        self::setGameStateInitialValue("last_round", 0);
+
         // Player order for each phase
         $starting_tokens = array();
         foreach ($this->phases as $phase) {
@@ -120,14 +125,7 @@ class SaintPetersburg extends Table
             self::setGameStateInitialValue($token, $player_id);
         }
 
-        self::setGameStateInitialValue("selected_card", -1);
-        self::setGameStateInitialValue("selected_row", -1);
-        self::setGameStateInitialValue("num_pass", 0);
-        self::setGameStateInitialValue("current_phase", 0);
-        self::setGameStateInitialValue("last_round", 0);
-        
         // Init game statistics
-        // (note: statistics used in this file must be defined in your stats.inc.php file)
         self::initStat('player', "actions_taken", 0);
         self::initStat('player', "rubles_spent", 0);
         self::initStat('player', "rubles_total", 0);
@@ -150,7 +148,7 @@ class SaintPetersburg extends Table
         // Init cards and decks
         // Create all cards
         $cards = array();
-        foreach ($this->card_types as $idx => $card) {
+        foreach ($this->card_infos as $idx => $card) {
             $cards[] = array(
                 'type' => $card['card_type'],
                 'type_arg' => $idx,
@@ -177,15 +175,7 @@ class SaintPetersburg extends Table
         self::setGameStateInitialValue("activated_observatory", -1);
 
         // Starting draw based on number of players
-        if ($num_players == 2) {
-            $first_draw = 4;
-        } else if ($num_players == 3) {
-            $first_draw = 6;
-        } else { // 4
-            $first_draw = 8;
-        }
-
-        for ($i=0; $i<$first_draw; $i++) {
+        for ($i=0; $i<($num_players * 2); $i++) {
             $this->cards->pickCardForLocation('deck_' . PHASE_WORKER, TOP_ROW, $i);
         }
 
@@ -211,10 +201,10 @@ class SaintPetersburg extends Table
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
     
         // Get information about players
-        // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
         $sql = "SELECT player_id id, player_score score FROM player ";
         $result['players'] = self::getCollectionFromDb($sql);
   
+        // Get all cards on table and number in hand for each player
         $players = self::loadPlayersBasicInfos();
         $tables = array();
         $hands = array();
@@ -226,6 +216,7 @@ class SaintPetersburg extends Table
         $result['player_tables'] = $tables;
         $result['player_hands'] = $hands;
 
+        // Get starting player tokens for each phase
         $tokens = array();
         foreach ($this->phases as $token_phase) {
             $token = "starting_player_" . $token_phase;
@@ -239,16 +230,24 @@ class SaintPetersburg extends Table
         }
         $result['tokens'] = $tokens;
 
+        // Current phase
         $result['phase'] = $this->phases[self::getGameStateValue('current_phase') % 4];
 
+        // Cards on board
         $result[TOP_ROW] = $this->cards->getCardsInLocation(TOP_ROW);
         $result[BOTTOM_ROW] = $this->cards->getCardsInLocation(BOTTOM_ROW);
+
+        // Current player info
         $result['hand'] = $this->cards->getPlayerHand($current_player_id);
         $result['rubles'] = self::dbGetRubles($current_player_id);
 
+        // Cards counts for each deck
         $result['decks'] = $this->cards->countCardsInLocations();
-        $result['card_types'] = $this->card_types;
 
+        // Full card info used for tooltips
+        $result['card_infos'] = $this->card_infos;
+
+        // Observatory status
         $obs = array();
         for ($i=0; $i<2; $i++) {
             $obs[] = array(
@@ -290,6 +289,10 @@ class SaintPetersburg extends Table
             }
         }
 
+        // TODO: Is there a better way to do this? There is an issue where
+        //       progression actually drops when a new round starts and the
+        //       worker deck is not the smallest stack.
+
         $val -= 9; // allow room for phases
         $val += 3 * (self::getGameStateValue('current_phase') % 4); // 3% each phase
 
@@ -301,24 +304,29 @@ class SaintPetersburg extends Table
 //////////// Utility functions
 ////////////    
 
+    /*
+     * Return an array of players in natural turn order starting
+     * with the current player. This is used to build the player
+     * tables in the same order as the player boards.
+     *
+     * While the starting player for each phase is determined by
+     * cutom games rules, play will alway proceed in natural order.
+     */
     function getPlayersInOrder()
     {
         $result = array();
 
         $players = self::loadPlayersBasicInfos();
-        $next_player = self::createNextPlayerTable(array_keys($players));
-
+        $next_player = self::getNextPlayerTable();
         $player_id = self::getCurrentPlayerId();
+
+        // Check for spectator
         if (!key_exists($player_id, $players)) {
-            // Spectator
-            //$player_id = array_key_first($players); // php 7.3+
-            foreach ($players as $key => $val) {
-                $player_id = $key;
-                break;
-            }
+            $player_id = $next_player[0];
         }
-        for ($i=0; $i<count($players); $i++)
-        {
+
+        // Build array starting with current player
+        for ($i=0; $i<count($players); $i++) {
             $result[] = $player_id;
             $player_id = $next_player[$player_id];
         }
@@ -326,76 +334,108 @@ class SaintPetersburg extends Table
         return $result;
     }
 
+    /*
+     * Return the current score of the given player
+     */
     protected function dbGetScore($player_id)
     {
         return $this->getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id='$player_id'");
     }
 
+    /*
+     * Increment the score of the given player by the given amount
+     */
     protected function dbIncScore($player_id, $inc)
     {
         $cnt = $this->dbGetScore($player_id);
-        if ($inc != 0)
-        {
+        if ($inc != 0) {
             $cnt += $inc;
             $this->DbQuery("UPDATE player SET player_score=$cnt WHERE player_id='$player_id'");
         }
         return $cnt;
     }
+
+    /*
+     * Return the current number of rubles for a given player
+     */
     protected function dbGetRubles($player_id)
     {
         return $this->getUniqueValueFromDB("SELECT player_score_aux FROM player WHERE player_id='$player_id'");
     }
 
+    /*
+     * Increment the number of rubles of the given player by the given amount,
+     * which can be negative
+     */
     protected function dbIncRubles($player_id, $inc)
     {
         $cnt = $this->dbGetRubles($player_id);
-        if ($inc != 0)
-        {
+        if ($inc != 0) {
             $cnt += $inc;
             $this->DbQuery("UPDATE player SET player_score_aux=$cnt WHERE player_id='$player_id'");
         }
         return $cnt;
     }
 
+    /*
+     * Return additional card information for the given card.
+     * This information is stored outside of the in order to make
+     * use of the standard Deck implementation and functions.
+     */
     function getCardInfo($card)
     {
-        return $this->card_types[$card['type_arg']];
+        return $this->card_infos[$card['type_arg']];
     }
 
+    /*
+     * Return additional card information for the given card ID.
+     * See getCardInfo
+     */
     function getCardInfoById($card_id)
     {
         $card = $this->cards->getCard($card_id);
         return $this->getCardInfo($card);
     }
 
+    /*
+     * Return the written name of the given card.
+     * Convenience function mainly used for notifications.
+     */
     function getCardName($card)
     {
         return $this->getCardInfo($card)['card_name'];
     }
 
+    /*
+     * Return the active player's adjusted cost for the given card ID
+     * accounting for all possible reductions
+     */
     function getCardCost($card_id, $row, $trade_id=-1)
     {
+        // Get card details
         $card = $this->cards->getCard($card_id);
         $card_info = $this->getCardInfo($card);
+
+        // -1 if taken from the lower row
         $cost = $card_info['card_cost'] - $row;
 
         $player_id = self::getActivePlayerId();
         $player_cards = $this->cards->getCardsInLocation('table', $player_id);
 
         foreach ($player_cards as $pcard) {
-            // Same card already owned
+            // -1 for each copy of same card already owned
             if ($pcard['type_arg'] == $card['type_arg']) {
                 $cost--;
             }
 
-            // Carpenter Workshop
+            // -1 for blue buildings if player owns Carpenter Workshop
             if ($pcard['type_arg'] == CARD_CARPENTER_WORKSHOP && 
                 $this->isBuilding($card))
             {
                 $cost--;
             }
 
-            // Gold Smelter
+            // -1 for red aristocrats if player owns Gold Smelter
             if ($pcard['type_arg'] == CARD_GOLD_SMELTER &&
                 $this->isAristocrat($card))
             {
@@ -403,14 +443,21 @@ class SaintPetersburg extends Table
             }
         }
 
+        // Trading card: subtract the base cost (value, see Potjomkin's Village)
+        // of the displaced card
         if ($trade_id >= 0) {
             $trade_info = $this->getCardInfoById($trade_id);
             $cost -= $trade_info['card_value'];
         }
 
+        // Minimum cost is always 1
         return max($cost, 1);
     }
 
+    /*
+     * Return true if the given card is the same type as given,
+     * including a trading card of the same color
+     */
     function isCardType($card, $type)
     {
         $card_info = $this->getCardInfo($card);
@@ -419,15 +466,19 @@ class SaintPetersburg extends Table
         return ($is_type || $is_trade_type);
     }
 
+    // Convenience functions of isCardType with each type
     function isWorker($card) { return $this->isCardType($card, PHASE_WORKER); }
     function isBuilding($card) { return $this->isCardType($card, PHASE_BUILDING); }
     function isAristocrat($card) { return $this->isCardType($card, PHASE_ARISTOCRAT); }
     function isTrading($card) { return $card['type'] == PHASE_TRADING; }
 
+    /*
+     * Compute the scores at the end of the given phase
+     */
     function scorePhase($phase)
     {
         if ($phase == PHASE_TRADING) {
-            return; // no scoring
+            return; // no scoring after trading card phase
         }
 
         $players = self::loadPlayersBasicInfos();
@@ -444,6 +495,7 @@ class SaintPetersburg extends Table
 
             $cards = $this->cards->getCardsInLocation('table', $player_id);
             foreach ($cards as $card) {
+                // Only cards from the current phase are scored
                 if ($this->isCardType($card, $phase)) {
                     if ($card['type_arg'] == CARD_OBSERVATORY) {
                         // Observatory - do not score if used
@@ -455,6 +507,7 @@ class SaintPetersburg extends Table
                     $points += $card_info['card_points'];
                     $rubles += $card_info['card_rubles'];
 
+                    // These two special cards score based on other cards
                     if ($card['type_arg'] == CARD_TAX_MAN) {
                         $taxman = true;
                     } else if ($card['type_arg'] == CARD_MARIINSKIJ_THEATER) {
@@ -462,6 +515,7 @@ class SaintPetersburg extends Table
                     }
                 }
 
+                // Count cards for special scoring
                 if ($this->isWorker($card)) {
                     $workers++;
                 } else if ($this->isAristocrat($card)) {
@@ -469,6 +523,7 @@ class SaintPetersburg extends Table
                 }
             }
 
+            // Score special cards
             if ($taxman) {
                 $rubles += $workers;
             }
@@ -476,7 +531,8 @@ class SaintPetersburg extends Table
                 $rubles += $aristocrats;
             }
 
-            $scores[$player_id] = self::dbIncScore($player_id, $points);
+            // Update scores, stats, and log
+            $scores[$player_id] = self::dbIncScore($player_id, $points); // score to report
             self::incStat($points, 'points_total', $player_id);
             self::incStat($points, 'points_' . $phase, $player_id);
 
@@ -493,16 +549,21 @@ class SaintPetersburg extends Table
             ));
         }
 
+        // Notify to update scores on client
         self::notifyAllPlayers('newScores', "", array(
             'scores' => $scores
         ));
     }
 
+    /*
+     * Compute end game scoring and set final results
+     */
     function finalScoring()
     {
         $players = self::loadPlayersBasicInfos();
         $scores = array();
         foreach ($players as $player_id => $player) {
+            // Count number of aristocrats
             $table = $this->cards->getCardsInLocation('table', $player_id);
             $aristocrats = array();
             foreach ($table as $card) {
@@ -511,6 +572,9 @@ class SaintPetersburg extends Table
                 }
             }
 
+            // Each different aristocrat (up to 10) is worth that many points
+            // 1 = 1, 2 = 1+2 = 3, 3 = 1+2+3 = 6, ... 10 = 1+2+3+...+10 = 55
+            // or more simply: n(n+1)/2
             $num_ari = count(array_unique($aristocrats));
             $points_ari = min(55, $num_ari * ($num_ari + 1) / 2);
             self::dbIncScore($player_id, $points_ari);
@@ -523,6 +587,7 @@ class SaintPetersburg extends Table
                 'num_ari' => $num_ari,
             ));
 
+            // 1 per 10 rubles, ignoring any remainder
             $num_rubles = self::dbGetRubles($player_id);
             $points_rubles = intdiv($num_rubles, 10);
             self::dbIncScore($player_id, $points_rubles);
@@ -535,9 +600,10 @@ class SaintPetersburg extends Table
                 'num_rubles' => $num_rubles,
             ));
 
+            // -5 per card left in hand
             $num_hand = count($this->cards->getPlayerHand($player_id));
             $points_hand = -5 * $num_hand;
-            $scores[$player_id] = self::dbIncScore($player_id, $points_hand);
+            $scores[$player_id] = self::dbIncScore($player_id, $points_hand); // set final score to report
             self::setStat($points_hand, 'points_hand_end', $player_id);
 
             $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} Points for ${num_hand} card(s) in hand');
@@ -552,6 +618,12 @@ class SaintPetersburg extends Table
         self::notifyAllPlayers('newScores', "", array('scores' => $scores));
     }
 
+    /*
+     * Move all cards on the board as far right as possible and return the
+     * total number of cards on the board.
+     * Cards on the lower row go all the way to the end; those above to the
+     * next open position left of any lower cards.
+     */
     function shiftCardsRight()
     {
         $num_cards = 0;
@@ -561,6 +633,7 @@ class SaintPetersburg extends Table
                 continue;
             }
 
+            // Build associative array of old => new positions for client
             $shifted = array();
             foreach ($board as $card) {
                 $loc = $card['location_arg'];
@@ -569,6 +642,7 @@ class SaintPetersburg extends Table
                 $num_cards++;
             }
 
+            // Row constants are string but client needs integer
             if ($row == BOTTOM_ROW) {
                 $row_num = 1;
             } else {
@@ -584,6 +658,9 @@ class SaintPetersburg extends Table
         return $num_cards;
     }
 
+    /*
+     * Move all cards on the board from the upper row to the lower
+     */
     function shiftCardsDown()
     {
         $board = $this->cards->getCardsInLocation(TOP_ROW);
@@ -600,6 +677,9 @@ class SaintPetersburg extends Table
         ));
     }
 
+    /*
+     * Remove from the game all cards on the board lower row
+     */
     function discardBottomRow()
     {
         $discard = array();
@@ -614,25 +694,32 @@ class SaintPetersburg extends Table
         ));
     }
 
+    /*
+     * Return details of the Observatory with the given card ID
+     */
     function getObservatory($card_id)
     {
-        if ($card_id == self::getGameStateValue('observatory_0_id')) {
-            $id = 0;
-        } else if ($card_id == self::getGameStateValue('observatory_1_id')) {
-            $id = 1;
-        } else {
-            throw new feException("Invalid Observatory ID");
+        // Check card against each observatory global
+        for ($i=0; $i<2; $i++) {
+            if ($card_id == self::getGameStateValue('observatory_' . $i . '_id')) {
+                return array(
+                    'id' => $i,
+                    'used' => self::getGameStateValue('observatory_' . $i . '_used')
+                );
+            }
         }
 
-        return array(
-            'id' => $id,
-            'used' => self::getGameStateValue('observatory_' . $id . '_used')
-        );
+        // Card not one of the two known Observatories
+        throw new feException("Invalid Observatory ID");
     }
 
+    /*
+     * Return true if given player's hand is full and cannot hold more cards
+     */
     function isHandFull($player_id)
     {
         $max_hand = 3;
+        // +1 card in hand if player owns the Warehouse
         $warehouse = $this->cards->getCardsOfTypeInLocation(
             PHASE_BUILDING, CARD_WAREHOUSE, 'table', $player_id);
         if (count($warehouse) == 1) {
@@ -642,12 +729,20 @@ class SaintPetersburg extends Table
         return count($this->cards->getPlayerHand($player_id)) >= $max_hand;
     }
 
+    /*
+     * Return true if given player has at least one valid card to displace
+     * with given (trading) card--does NOT consider cost.
+     * Return all possible cards that could be displaced in the given
+     * (reference) trades array--DOES consider cost and available rubles.
+     */
     function getTrades($card, $cost, $player_id, &$trades)
     {
         $has_trade = false;
         $card_info = $this->getCardInfo($card);
         $cards = $this->cards->getCardsInLocation('table', $player_id);
         $rubles = self::dbGetRubles($player_id);
+
+        // Compare each card on player table to the given trading card
         foreach ($cards as $p_card) {
             $p_info = $this->getCardInfo($p_card);
             if ($card_info['card_trade_type'] != $p_info['card_type']) {
@@ -678,6 +773,10 @@ class SaintPetersburg extends Table
         return $has_trade;
     }
 
+    /*
+     * Return true if given player has at least one valid card to displace
+     * with given (trading) card--DOES consider cost and available rubles
+     */
     function hasTrades($card, $cost, $player_id)
     {
         $trades = array();
@@ -685,6 +784,10 @@ class SaintPetersburg extends Table
         return count($trades) > 0;
     }
 
+    /*
+     * Return array of possible actions the active player can take with
+     * the given card when considering cost, trading, and hand size
+     */
     function getSelectedCardOptions($card_id, $card_row)
     {
         // Get card details and adjusted cost
@@ -706,7 +809,7 @@ class SaintPetersburg extends Table
             'card_name' => $this->getCardName($card),
             'cost' => $cost,
             'player_id' => $player_id,
-            'can_add' => !$this->isHandFull($player_id),
+            'can_add' => !$this->isHandFull($player_id), // cannot add to hand if full
             'can_buy' => $can_buy
         );
     }
@@ -715,9 +818,14 @@ class SaintPetersburg extends Table
 //////////// Player actions
 //////////// 
 
+    /*
+     * Player selects a card on the board
+     */
     function selectCard($row, $loc_arg)
     {
         self::checkAction('selectCard');
+
+        // Verify a card exists here
         if ($row == 0) {
             $loc = TOP_ROW;
         } else {
@@ -728,6 +836,7 @@ class SaintPetersburg extends Table
         if (count($cards) != 1)
             throw new feException("Impossible move");
 
+        // Store card location as globals
         $card = array_shift($cards);
         self::setGameStateValue("selected_card", $card['id']);
         self::setGameStateValue("selected_row", $row);
@@ -735,18 +844,24 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState('selectCard');
     }
 
+    /*
+     * Player adds a card to their hand
+     */
     function addCard()
     {
         self::checkAction('addCard');
 
+        // Verify card already selected
         $card_id = self::getGameStateValue("selected_card");
         $card_row = self::getGameStateValue("selected_row");
         if ($card_id < 0 || $card_row < 0)
             throw new feException("Impossible move");
 
+        // Verify player hand is not full
         if ($this->isHandFull(self::getActivePlayerId()))
             throw new BgaUserException(self::_("Your hand is full"));
 
+        // Add to hand
         $dest = 'hand';
         $notif = 'addCard';
         $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
@@ -754,27 +869,33 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState('addCard');
     }
 
+    /*
+     * Player buys a card
+     */
     function buyCard()
     {
         self::checkAction('buyCard');
 
+        // Verify card already selected
         $card_id = self::getGameStateValue("selected_card");
         $card_row = self::getGameStateValue("selected_row");
         if ($card_id < 0 || $card_row < 0)
             throw new feException("Impossible move");
 
+        // Additional action required if it's a trading card
         if ($this->isTrading($this->cards->getCard($card_id))) {
             $this->gamestate->nextState('tradeCard');
             return;
         }
 
+        // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, $card_row);
-
         $player_id = self::getActivePlayerId();
         $rubles = self::dbGetRubles($player_id);
         if ($card_cost > $rubles)
             throw new BgaUserException(self::_("You do not have enough rubles"));
 
+        // Add card to player table
         $dest = 'table';
         $notif = 'buyCard';
         $msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
@@ -782,10 +903,14 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState('buyCard');
     }
 
+    /*
+     * Player play a card from their hand
+     */
     function playCard($card_id)
     {
         self::checkAction('playCard');
 
+        // Additional action required if it's a trading card
         if ($this->isTrading($this->cards->getCard($card_id))) {
             self::setGameStateValue("selected_card", $card_id);
             self::setGameStateValue("selected_row", 0);
@@ -793,13 +918,14 @@ class SaintPetersburg extends Table
             return;
         }
 
+        // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, 0);
-
         $player_id = self::getActivePlayerId();
         $rubles = self::dbGetRubles($player_id);
         if ($card_cost > $rubles)
             throw new BgaUserException(self::_("You do not have enough rubles"));
 
+        // Add card to player table
         $dest = 'table';
         $notif = 'playCard';
         $msg = clienttranslate('${player_name} plays ${card_name} from their hand for ${card_cost} Ruble(s)');
@@ -807,41 +933,44 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState('playCard');
     }
 
+    /*
+     * Player displaces a card on their table with a trading card
+     */
     function tradeCard($trade_id)
     {
         self::checkAction('tradeCard');
 
-        // Ensure card already selected
+        // Verify card already selected
         $card_id = self::getGameStateValue("selected_card");
         $card_row = self::getGameStateValue("selected_row");
         if ($card_id < 0 || $card_row < 0)
             throw new feException("Impossible move");
 
-        // Ensure card and trade exist
+        // Verify card and trade exist
         $card = $this->cards->getCard($card_id); // trading card to buy
-        $trade_card = $this->cards->getCard($trade_id); // card to be traded away
-        if ($card == null || $trade_card == null)
+        $disp_card = $this->cards->getCard($trade_id); // card to be displaced
+        if ($card == null || $disp_card == null)
             throw new feException("Impossible card id");
 
         // Verify cards are of correct type to trade
         $card_info = $this->getCardInfo($card);
-        $trade_info = $this->getCardInfo($trade_card);
-        if ($card_info['card_trade_type'] != $trade_info['card_type'] ||
-            ($trade_info['card_type'] == PHASE_WORKER &&
-            $card_info['card_worker_type'] != $trade_info['card_worker_type'] &&
-            $trade_info['card_worker_type'] != WORKER_ALL))
+        $disp_info = $this->getCardInfo($disp_card);
+        if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
+            ($disp_info['card_type'] == PHASE_WORKER &&
+            $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
+            $disp_info['card_worker_type'] != WORKER_ALL))
         {
             throw new BgaUserException(self::_("Wrong type of card to displace"));
         }
 
         // Check if trading used Observatory
-        if ($trade_card['type_arg'] == CARD_OBSERVATORY) {
+        if ($disp_card['type_arg'] == CARD_OBSERVATORY) {
             $obs = $this->getObservatory($trade_id);
             if ($obs['used'])
                 throw new BgaUserException(self::_("You cannot displace an Observatory after using it"));
         }
 
-        // Compute cost and ensure player can pay it
+        // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, $card_row, $trade_id);
         $player_id = self::getActivePlayerId();
         $rubles = self::dbGetRubles($player_id);
@@ -884,7 +1013,7 @@ class SaintPetersburg extends Table
             'card_row' => $card_row,
             'card_cost' => $card_cost,
             'trade_id' => $trade_id,
-            'trade_name' => $this->getCardName($trade_card)
+            'trade_name' => $this->getCardName($disp_card)
         ));
 
         // Reset card selection and pass counter globals
@@ -897,6 +1026,11 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState('tradeCard');
     }
 
+    /*
+     * Perform the appropriate action for the given card and destination
+     *
+     * Reduces duplication of code in main card actions (buy/add/play)
+     */
     protected function cardAction($card_id, $card_row, $card_cost, $dest, $notif, $msg)
     {
         $card = $this->cards->getCard($card_id);
@@ -905,9 +1039,10 @@ class SaintPetersburg extends Table
         // Pay cost and take card
         $player_id = self::getActivePlayerId();
         $this->dbIncRubles($player_id, -$card_cost);
-        self::incStat($card_cost, 'rubles_spent', $player_id);
         $this->cards->moveCard($card_id, $dest, $player_id);
 
+        // Stats
+        self::incStat($card_cost, 'rubles_spent', $player_id);
         if ($dest == 'table') {
             self::incStat(1, 'cards_bought', $player_id);
         } else if ($dest == 'hand') {
@@ -933,26 +1068,34 @@ class SaintPetersburg extends Table
         self::incStat(1, 'actions_taken', $player_id);
     }
 
+    /*
+     * Player cancels a card selection
+     */
     function cancelSelect()
     {
         self::checkAction('cancel');
 
-        // Player clicks cancel after selecting card
         // Reset globals for card selection
         self::setGameStateValue("selected_card", -1);
         self::setGameStateValue("selected_row", -1);
         $this->gamestate->nextState("cancel");
     }
 
+    /*
+     * Player passes their turn
+     */
     function pass()
     {
         self::checkAction('pass');
 
+        // All players much pass in turn order to end current phase
+        // Increment global pass counter to track when this happens
         $num_pass = self::incGameStateValue('num_pass', 1);
         self::notifyAllPlayers('message', clienttranslate('${player_name} passes'), array(
             'player_name' => self::getActivePlayerName()
         ));
 
+        // Determine if phase should end
         if ($num_pass == self::getPlayersNumber()) {
             // All players pass in turn => next phase
             // Reset pass counter for next phase
@@ -964,10 +1107,15 @@ class SaintPetersburg extends Table
         }
     }
 
+    /*
+     * Player buys points using a Pub
+     */
     function buyPoints($points)
     {
         self::checkAction('buyPoints');
 
+        // A player can buy up to 5 points for 2 rubles each with a Pub,
+        // or up to 10 points if the player owns both
         $player_id = self::getCurrentPlayerId();
         $max_points = 0;
         $pubs = $this->cards->getCardsOfTypeInLocation(
@@ -978,15 +1126,19 @@ class SaintPetersburg extends Table
             }
         }
 
+        // Verify the number of points to buy and also that the current
+        // player actually owns at least one Pub
         if ($points < 0 || $points > $max_points)
             throw new feException("Impossible pub buy");
 
         if ($points > 0) {
+            // Verify player can pay the cost
             $rubles = self::dbGetRubles($player_id);
             $cost = $points * 2;
             if ($cost > $rubles)
                 throw new BgaUserException(self::_("You do not have enough rubles"));
 
+            // Update rubles, points, stats
             $this->dbIncRubles($player_id, -$cost);
             self::incStat($cost, 'rubles_spent', $player_id);
             $this->dbIncScore($player_id, $points);
@@ -1000,22 +1152,24 @@ class SaintPetersburg extends Table
                 'cost' => $cost
             ));
         } else {
+            // No points, skip it
             self::notifyAllPlayers('message', clienttranslate('${player_name} declines to use the Pub bonus'), array(
                 'player_name' => self::getCurrentPlayerName()
             ));
         }
         
+        // Multiple active state as more than one player can own a Pub
         $this->gamestate->setPlayerNonMultiactive($player_id, 'nextPhase');
     }
 
+    /*
+     * Player uses an Observatory
+     */
     function useObservatory($card_id)
     {
         self::checkAction('useObservatory');
 
-        // Verify that
-        // 1. the card exists and is the observatory,
-        // 2. it is owned by the player
-        // 3. it is the building phase
+        // Verify the card exists, is an Observatory, and is owned by the player
         $player_id = self::getActivePlayerId();
         $card = $this->cards->getCard($card_id);
         $phase = self::getGameStateValue('current_phase') % 4;
@@ -1025,6 +1179,7 @@ class SaintPetersburg extends Table
             throw new feException("Invalid Observatory play");
         }
 
+        // Verify Observatory is not already used and current phase is Building
         $obs = $this->getObservatory($card_id);
         if ($obs['used'] || $this->phases[$phase] != PHASE_BUILDING)
             throw new BgaUserException(self::_("You cannot use the Observatory right now"));
@@ -1033,14 +1188,19 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState("useObservatory");
     }
 
+    /*
+     * Player selects a deck to draw from with Observatory
+     */
     function drawObservatoryCard($deck)
     {
         self::checkAction('drawObservatoryCard');
 
+        // Verify Observatory in use
         $obs_id = self::getGameStateValue("activated_observatory");
         if ($obs_id != 0 && $obs_id != 1)
             throw new feException("Impossible Obseratory draw");
 
+        // Cannot draw from empty stack or take last card in stack
         $num_cards = $this->cards->countCardInLocation($deck);
         if ($num_cards == 0) {
             throw new BgaUserException(self::_("Card stack is empty"));
@@ -1048,6 +1208,7 @@ class SaintPetersburg extends Table
             throw new BgaUserException(self::_("You cannot draw the last card"));
         }
 
+        // Draw card
         $player_id = self::getActivePlayerId();
         $card = $this->cards->pickCardForLocation($deck, 'obs_tmp', $player_id);
         if ($card == null || $this->cards->countCardInLocation('obs_tmp') != 1)
@@ -1055,22 +1216,27 @@ class SaintPetersburg extends Table
 
         $phase = explode('_', $deck)[1];
 
-        $msg = clienttranslate('${player_name} uses Observatory to draw ${card_name} from the ${phase} stack');
+        $msg = clienttranslate('Observatory: ${player_name} draws ${card_name} from the ${phase} stack');
         self::notifyAllPlayers('message', $msg, array(
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
             'phase' => $phase
         ));
 
+        // Mark Observatrory as used
         self::setGameStateValue('observatory_' . $obs_id . '_used', 1);
         self::incStat(1, 'observatory_draws', $player_id);
         $this->gamestate->nextState("drawCard");
     }
     
+    /*
+     * Player buys the card drawn with Observatory
+     */
     function obsBuy()
     {
         self::checkAction('buyCard');
 
+        // Verify drawn card
         $player_id = self::getActivePlayerId();
         $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
         if ($cards == null || count($cards) != 1)
@@ -1078,6 +1244,7 @@ class SaintPetersburg extends Table
 
         $card = array_shift($cards);
 
+        // Additional action required if trading card
         if ($this->isTrading($card)) {
             self::setGameStateValue("selected_card", $card['id']);
             self::setGameStateValue("selected_row", 0);
@@ -1085,48 +1252,60 @@ class SaintPetersburg extends Table
             return;
         }
 
+        // Verify player can pay cost
         $card_cost = $this->getCardCost($card['id'], 0);
-
         $rubles = self::dbGetRubles($player_id);
         if ($card_cost > $rubles)
             throw new BgaUserException(self::_("You do not have enough rubles"));
 
+        // Add card to player table
         $dest = 'table';
         $notif = 'buyCard';
-        $msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
+        $msg = clienttranslate('Observatory: ${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
         $this->cardAction($card['id'], ROW_OBSERVATORY, $card_cost, $dest, $notif, $msg);
         $this->gamestate->nextState('buyCard');
     }
 
+    /*
+     * Player adds to their hand the card drawn with Observatory
+     */
     function obsAdd()
     {
         self::checkAction('addCard');
 
+        // Verify drawn card
         $player_id = self::getActivePlayerId();
         $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
         if ($cards == null || count($cards) != 1)
             throw new feException("Impossible Observatory add");
 
+        // Cannot take if hand is full
         if ($this->isHandFull($player_id))
             throw new BgaUserException(self::_("Your hand is full"));
 
+        // Add card to hand
         $card = array_shift($cards);
         $dest = 'hand';
         $notif = 'addCard';
-        $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
+        $msg = clienttranslate('Observatory: ${player_name} adds ${card_name} to their hand');
         $this->cardAction($card['id'], ROW_OBSERVATORY, 0, $dest, $notif, $msg);
         $this->gamestate->nextState('addCard');
     }
 
+    /*
+     * Player discards the card drawn with Observatory
+     */
     function obsDiscard()
     {
         self::checkAction('discard');
 
+        // Verify drawn card
         $player_id = self::getActivePlayerId();
         $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
         if ($cards == null || count($cards) != 1)
             throw new feException("Impossible Observatory discard");
 
+        // Discard
         $card = array_shift($cards);
         $this->cards->playCard($card['id']);
 
@@ -1134,13 +1313,14 @@ class SaintPetersburg extends Table
         $location = array();
         $location[] = array('row' => ROW_OBSERVATORY);
 
-        $msg = clienttranslate('${player_name} discards ${card_name}');
+        $msg = clienttranslate('Observatory: ${player_name} discards ${card_name}');
         self::notifyAllPlayers('discard', $msg, array(
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
             'cards' => $location
         ));
 
+        // Reset card selection and pass counter globals
         self::setGameStateValue("activated_observatory", -1);
         self::setGameStateValue("num_pass", 0);
         self::incStat(1, 'actions_taken', $player_id);
@@ -1151,11 +1331,11 @@ class SaintPetersburg extends Table
 //////////// Game state arguments
 ////////////
 
-    function argPlayerTurn()
-    {
-        return array();
-    }
-
+    /*
+     * Arguments for state: selectCard state
+     * Player selects a card
+     * Return card details and possible actions
+     */
     function argSelectCard()
     {
         // Selected card location are global variables
@@ -1165,6 +1345,7 @@ class SaintPetersburg extends Table
             //throw new feException("Impossible state");//TODO ??
             return array();
 
+        // Card location and possible player actions
         $card = $this->cards->getCard($card_id);
         $opts = $this->getSelectedCardOptions($card_id, $card_row);
         $opts['card_id'] = $card_id;
@@ -1174,6 +1355,11 @@ class SaintPetersburg extends Table
         return $opts;
     }
 
+    /*
+     * Arguments for states: tradeCard, tradeCardHand,  tradeObservatory
+     * Player attempts to buy a trading card
+     * Return card details and possible actions
+     */
     function argTradeCard()
     {
         // Selected card location are global variables
@@ -1190,6 +1376,7 @@ class SaintPetersburg extends Table
         $trades = array();
         $player_id = self::getActivePlayerId();
 
+        // Possible actions for displacing
         if ($this->isTrading($card)) {
             $has_trade = $this->getTrades($card, $cost, $player_id, $trades);
 
@@ -1214,14 +1401,20 @@ class SaintPetersburg extends Table
         );
     }
 
+    /*
+     * Arguments for state: chooseObservatory
+     * Player draws a card with Observatory
+     * Return card details and possible actions
+     */
     function argChooseObservatory()
     {
-        // Send card drawn with Observatory
+        // Get card drawn with Observatory
         $player_id = self::getActivePlayerId();
         $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
         if ($cards == null || count($cards) != 1)
             throw new feException("Impossible Observatory recall");
 
+        // Possible actions
         $card = array_shift($cards);
         $obs_id = self::getGameStateValue("activated_observatory");
         $opts = $this->getSelectedCardOptions($card['id'], 0);
@@ -1232,10 +1425,11 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Arguments for STATE_USE_PUB
-     * Returns an array of player(s) that own one or more Pub cards where
+     * Arguments for state: usePub
+     * Player(s) can choose to buy points with Pub
+     * Return an array of player(s) that own one or more Pub cards where
      * key: player_id => value: maximum number of points they can buy
-     * based on number or Pub cards (1 or 2) and available rubles.
+     * based on number or Pub cards (1 or 2) and available rubles
      */
     function argUsePub()
     {
@@ -1267,6 +1461,10 @@ class SaintPetersburg extends Table
 //////////// Game state actions
 ////////////
 
+    /*
+     * Game state: nextPlayer
+     * Give more time and activate next player
+     */
     function stNextPlayer()
     {
         $player_id = self::activeNextPlayer();
@@ -1274,6 +1472,10 @@ class SaintPetersburg extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
+    /*
+     * Game state: scorePhase
+     * Score end of phase and move to next phase or round, or end game
+     */
     function stScorePhase()
     {
         // Get phase status
@@ -1281,7 +1483,7 @@ class SaintPetersburg extends Table
         $next_phase = self::incGameStateValue('current_phase', 1) % 4;
         $new_round = ($next_phase == 0);
 
-        // Check if last phase of final round just finished
+        // End game if last phase of final round just finished
         if ($new_round && self::getGameStateValue("last_round")) {
             $this->finalScoring();
             $this->gamestate->nextState('endGame');
@@ -1300,9 +1502,13 @@ class SaintPetersburg extends Table
         }
     }
 
+    /*
+     * Game state: usePub
+     * Activate multiple player state for any player(s) owning Pub
+     */
     function stUsePub()
     {
-        // Allow any players that own the pub to use it
+        // Allow any players that own a Pub to use it
         $players = array();
         $pubs = $this->cards->getCardsOfTypeInLocation(
             PHASE_BUILDING, CARD_PUB, 'table');
@@ -1313,9 +1519,14 @@ class SaintPetersburg extends Table
         $this->gamestate->setPlayersMultiactive($players, 'nextPhase', true);
     }
 
+    /*
+     * Game state: nextPhase
+     * Progress from completed phase to the next phase/round and
+     * track end game trigger
+     */
     function stNextPhase()
     {
-        // Get phase (already incremented)
+        // Get phase (already incremented from scoring)
         $next_phase = self::getGameStateValue('current_phase') % 4;
         $phase = $this->phases[$next_phase];
 

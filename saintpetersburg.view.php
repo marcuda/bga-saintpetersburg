@@ -40,6 +40,7 @@ class view_saintpetersburg_saintpetersburg extends game_view
 
         /*********** Place your code below:  ************/
 
+        // Template block for card slots on board
         $this->page->begin_block("saintpetersburg_saintpetersburg", "square");
 
         $hor_scale = 90;
@@ -57,6 +58,8 @@ class view_saintpetersburg_saintpetersburg extends game_view
                 }
         }
 
+        // Template block for player boards
+        // Get correct order relative to current player
         $players_ordered = $this->game->getPlayersInOrder();
         $this->page->begin_block( "saintpetersburg_saintpetersburg", "player" );
         foreach ( $players_ordered as $player_id )
@@ -68,6 +71,7 @@ class view_saintpetersburg_saintpetersburg extends game_view
             ) );
         }
 
+        // Translate title for hand block
         $this->tpl['MY_HAND'] = self::_("My hand");
 
         /*********** Do not change anything below this line  ************/
