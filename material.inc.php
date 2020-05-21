@@ -19,13 +19,14 @@
  *
  */
 
+// Define constants
 if (!defined("CARD_PUB")) {
     // Special card types
     define("CARD_CARPENTER_WORKSHOP", 6);
     define("CARD_GOLD_SMELTER", 7);
     define("CARD_PUB", 11);
     define("CARD_WAREHOUSE", 12);
-    define("CARD_OBSERVATORY", 15);
+    define("CARD_OBSERVATORY", 15); // N.B. this value is used in client code!
     define("CARD_MARIINSKIJ_THEATER", 22);
     define("CARD_TAX_MAN", 45);
 
@@ -50,7 +51,7 @@ if (!defined("CARD_PUB")) {
     define("ROW_OBSERVATORY", 99);
 
     // I18N
-    // Cannot translate phases above as they are used in client code
+    // Cannot translate phases above as they are used in client logic
     define("WORKER", clienttranslate("Worker"));
     define("BUILDING", clienttranslate("Building"));
     define("ARISTOCRAT", clienttranslate("Aristocrat"));
@@ -58,18 +59,20 @@ if (!defined("CARD_PUB")) {
 }
 
 /*
- * Card types
+ * Card infos
  * array index = index of card sprite art (db type_arg)
  * card_name = printed name of card
  * card_type = type of card (db type)
- * card_trade_type = identifier of trading type
- * card_cost = cost in upper right corner
- * card_value = cost reduction when replaced (same as cost for all but village)
- * card_rubles = money gained during scoring
+ * card_trade_type = identifier of trading type (color)
+ * card_worker_type = type of worker for trading (green cards upper right symbol)
+ * card_cost = cost in upper left corner
+ * card_value = cost reduction when displaced (same as cost for all but village)
+ * card_rubles = rubles gained during scoring
  * card_points = points gained during scoring
  * card_nbr = number of this card in deck
+ * card_text = explanation of any additional card effects (for tooltip)
 */
-$this->card_types = array(
+$this->card_infos = array(
     0 => array( 
         "card_name" => clienttranslate("Lumberjack"),
         "card_type" => PHASE_WORKER,

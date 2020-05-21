@@ -10,6 +10,7 @@
 -------
 -->
 
+<!-- Game board, card stacks and play area -->
 <div id="stp_gameboard">
     <div id="discard_pile" class="stp_discard"></div>
     <div id="decks">
@@ -33,11 +34,13 @@
     </div>
 </div>
 
+<!-- Current player hand -->
 <div id="myhand_wrap" class="whiteblock">
     <h3>{MY_HAND}</h3>
     <div id="myhand"></div>
 </div>
 
+<!-- Player tables -->
 <div id="playertables">
     <!-- BEGIN player -->
     <div id="playertable_{PLAYER_ID}_wrap" class="whiteblock">
@@ -47,6 +50,7 @@
     <!-- END player -->
 </div>
 
+<!-- Action buttons -->
 <div id="button_1"></div>
 <div id="button_2"></div>
 <div id="button_3"></div>
@@ -56,7 +60,10 @@
 
 // Javascript HTML templates
 
+// Card on board
 var jstpl_card = '<div class="stp_card" id="card_${col}_${row}" style="background-position:-${x}px -${y}px"></div>';
+
+// Additional card elements for cards on table (Observatory)
 var jstpl_card_content =
     '<div id="card_content_${id}">' +
         '<div id="card_content_mask_${id}" class="stp_maskcard"></div>' +
@@ -64,6 +71,7 @@ var jstpl_card_content =
             '<div id="card_content_active_${id}" class="stp_activecard"><a href="#"></a></div>' +
         '</div>' +
      '</div>';
+
 var jstpl_player_board =
     '<div class="stp_board">' +
         '<img id="handcount_icon_p${id}" class="imgtext" src="${url}/img/hand.png">' +
@@ -79,6 +87,7 @@ var jstpl_player_board =
             '&nbsp;' +
         '</div>' +
     '</div>';
+
 var jstpl_card_tooltip =
     '<div class="stp_cardtooltip">' +
         '<h3>${card_name}</h3>' +

@@ -50,6 +50,10 @@ $game_options = array(
 
     */
 
+    // TODO: Options to show rubles of all players? Cards in hand?
+    // These are not in the rules but could make turn-based games better
+    // All info is reported in the logs anyway
+
 );
 
 

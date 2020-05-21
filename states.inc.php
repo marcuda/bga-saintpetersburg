@@ -69,7 +69,7 @@ if (!defined("STATE_END_GAME")) {
 // TODO: Code check claims this is long and potentially overkill...
 // Many of these state are duplicative and could potentially be reduced down
 // by a factor with added logic in the game state and arg functions.
-// But to me this feels like the clean way to handle the game logic.
+// Would require a rather large refactor to move much of it to the client side
 
 $machinestates = array(
 
@@ -82,12 +82,12 @@ $machinestates = array(
         "transitions" => array( "" => STATE_PLAYER_TURN )
     ),
     
+    // Normal player turn
     STATE_PLAYER_TURN => array(
         "name" => "playerTurn",
         "description" => clienttranslate('${actplayer} must play a card or pass'),
         "descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
         "type" => "activeplayer",
-        "args" => "argPlayerTurn",
         "possibleactions" => array("selectCard", "playCard", "useObservatory", "pass"),
         "transitions" => array(
             "selectCard" => STATE_SELECT_CARD,
@@ -102,6 +102,7 @@ $machinestates = array(
         )
     ),
 
+    // Player selects a card and needs to choose an action
     STATE_SELECT_CARD => array(
         "name" => "selectCard",
         "description" => clienttranslate('${card_name}: ${actplayer} must choose an action or cancel'),
@@ -120,6 +121,7 @@ $machinestates = array(
         )
     ),
 
+    // Player wants to buy/play a trading card and needs to select one to displace
     STATE_TRADE_CARD => array(
         "name" => "tradeCard",
         "description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
@@ -158,6 +160,7 @@ $machinestates = array(
         )
     ),
 
+    // Game state to move to next player
     STATE_NEXT_PLAYER => array(
         "name" => "nextPlayer",
         "type" => "game",
@@ -169,6 +172,7 @@ $machinestates = array(
         )
     ),
 
+    // Game state for end of phase scoring
     STATE_SCORE_PHASE => array(
         "name" => "scorePhase",
         "type" => "game",
@@ -181,6 +185,7 @@ $machinestates = array(
         )
     ),
 
+    // Player selects the Observatory to draw a card
     STATE_USE_OBSERVATORY => array(
         "name" => "useObservatory",
         "description" => clienttranslate('Observatory: ${actplayer} must choose a stack to draw from'),
@@ -195,6 +200,7 @@ $machinestates = array(
         )
     ),
 
+    // Player draws a card with Observatory and needs to choose what to do
     STATE_OBSERVATORY_CHOICE => array(
         "name" => "chooseObservatory",
         "description" => clienttranslate('${card_name}: ${actplayer} must play or discard'),
@@ -212,6 +218,7 @@ $machinestates = array(
         )
     ),
 
+    // Player draws a trading card with Observatory and needs to select a card to displace
     STATE_OBSERVATORY_TRADE => array(
         "name" => "tradeObservatory",
         "description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
@@ -227,6 +234,7 @@ $machinestates = array(
         )
     ),
 
+    // Player can use Pub to buy points
     STATE_USE_PUB => array(
         "name" => "usePub",
         "description" => clienttranslate('Other players may choose to use Pub'),
@@ -240,6 +248,7 @@ $machinestates = array(
         )
     ),
 
+    // Game state to progress to next phase
     STATE_NEXT_PHASE => array(
         "name" => "nextPhase",
         "type" => "game",
