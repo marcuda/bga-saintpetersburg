@@ -35,9 +35,9 @@ function (dojo, declare) {
             this.card_art_row_size = 10;    // Number of cards per row in sprite for stock
             this.cardwidth_big = 96;        // Large card width for tooltip
             this.cardheight_big = 150;      // Large card height for tooltip
-            this.rubles = new ebg.counter();// Counter for current player rubles
+            this.player_rubles = []         // Counters for all player rubles
             this.player_tables = [];        // Stocks for all player tables
-            this.player_hands = [];         // Couters for all player hands
+            this.player_hands = [];         // Counters for all player hands
             this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading']; // Game phases in order
             this.pub_points = 0;            // Current number of points to buy with Pub
             this.max_pub_points = 0;        // Upper limit on Pub points
@@ -95,10 +95,11 @@ function (dojo, declare) {
                     this.player_tables[player_id].addToStockWithId(card.type_arg, card.id);
                 }
 
-                // Rubles (hidden for other players)
-                if (player_id == this.player_id) {
-                    this.rubles.create('rublecount_p' + this.player_id);
-                    this.rubles.setValue(gamedatas.rubles);
+                // Rubles (default hidden for other players)
+                if (gamedatas.rubles[player_id]) {
+                    this.player_rubles[player_id] = new ebg.counter();
+                    this.player_rubles[player_id].create('rublecount_p' + player_id);
+                    this.player_rubles[player_id].setValue(gamedatas.rubles[player_id]);
                     this.addTooltip('rublecount_p' + player_id, _("Number of rubles"), "");
                     this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles"), "");
                 } else {
@@ -1073,9 +1074,10 @@ function (dojo, declare) {
             this.player_tables[notif.args.player_id].addToStockWithId(
                 notif.args.card_idx, notif.args.card_id, src);
 
-            if (this.player_id == notif.args.player_id) {
+            if (this.player_rubles[notif.args.player_id]) {
                 // Active player sees ruble count after playing cost
-                this.rubles.incValue(-notif.args.card_cost);
+                // (either their own or with game option enabled for others)
+                this.player_rubles[notif.args.player_id].incValue(-notif.args.card_cost);
             }
         },
 
@@ -1131,14 +1133,17 @@ function (dojo, declare) {
                     notif.args.card_idx, notif.args.card_id,
                     'myhand_item_' + notif.args.card_id);
                 this.playerHand.removeFromStockById(notif.args.card_id);
-
-                // Active player sees ruble count after paying cost
-                this.rubles.incValue(-notif.args.card_cost);
             } else {
                 // Other players - add card to table
                 this.player_tables[notif.args.player_id].addToStockWithId(
                     notif.args.card_idx, notif.args.card_id,
                     'overall_player_board_' + notif.args.player_id);
+            }
+
+            if (this.player_rubles[notif.args.player_id]) {
+                // Active player sees ruble count after playing cost
+                // (either their own or with game option enabled for others)
+                this.player_rubles[notif.args.player_id].incValue(-notif.args.card_cost);
             }
 
             // Update hand count on player board
@@ -1190,9 +1195,10 @@ function (dojo, declare) {
                     'square_' + col + '_' + row);
             }
 
-            // Active player sees ruble count after paying cost
-            if (this.player_id == notif.args.player_id) {
-                this.rubles.incValue(-notif.args.card_cost);
+            if (this.player_rubles[notif.args.player_id]) {
+                // Active player sees ruble count after playing cost
+                // (either their own or with game option enabled for others)
+                this.player_rubles[notif.args.player_id].incValue(-notif.args.card_cost);
             }
         },
 
@@ -1245,9 +1251,10 @@ function (dojo, declare) {
             if (this.debug) console.log('notif score phase');
             if (this.debug) console.log(notif);
 
-            if (notif.args.player_id == this.player_id) {
-                // Active player sees ruble count after scoring
-                this.rubles.incValue(notif.args.rubles);
+            if (this.player_rubles[notif.args.player_id]) {
+                // Active player sees ruble count after playing cost
+                // (either their own or with game option enabled for others)
+                this.player_rubles[notif.args.player_id].incValue(notif.args.rubles);
             }
         },
 
@@ -1352,9 +1359,10 @@ function (dojo, declare) {
             // Update score
             this.scoreCtrl[notif.args.player_id].incValue(notif.args.points);
 
-            if (notif.args.player_id == this.player_id) {
-                // Active player sees ruble count after paying cost
-                this.rubles.incValue(-notif.args.cost);
+            if (this.player_rubles[notif.args.player_id]) {
+                // Active player sees ruble count after playing cost
+                // (either their own or with game option enabled for others)
+                this.player_rubles[notif.args.player_id].incValue(-notif.args.cost);
             }
         },
 

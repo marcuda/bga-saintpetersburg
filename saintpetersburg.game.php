@@ -47,6 +47,8 @@ class SaintPetersburg extends Table
             "observatory_0_used" => 21,    // 1 if first Observatory has been used this round
             "observatory_1_used" => 22,    // 1 if second Observatory has been used this round
             "activated_observatory" => 23, // index (0/1) of Observatory being actively used
+
+            "show_player_rubles" => 100,
         ));        
 
         $this->cards = self::getNew("module.common.deck");
@@ -201,7 +203,7 @@ class SaintPetersburg extends Table
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
     
         // Get information about players
-        $sql = "SELECT player_id id, player_score score FROM player ";
+        $sql = "SELECT player_id id, player_score score FROM player";
         $result['players'] = self::getCollectionFromDb($sql);
   
         // Get all cards on table and number in hand for each player
@@ -239,7 +241,16 @@ class SaintPetersburg extends Table
 
         // Current player info
         $result['hand'] = $this->cards->getPlayerHand($current_player_id);
-        $result['rubles'] = self::dbGetRubles($current_player_id);
+        if ($this->gamestate->table_globals[100]) {
+            // Option to see all player rubles enabled
+            $sql = "SELECT player_id, player_score_aux FROM player";
+            $result['rubles'] = self::getCollectionFromDb($sql, true);
+        } else {
+            // By default only own rubles visible
+            $result['rubles'] = array(
+                $current_player_id => self::dbGetRubles($current_player_id)
+            );
+        }
 
         // Cards counts for each deck
         $result['decks'] = $this->cards->countCardsInLocations();
