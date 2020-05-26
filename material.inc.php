@@ -26,7 +26,7 @@ if (!defined("CARD_PUB")) {
     define("CARD_GOLD_SMELTER", 7);
     define("CARD_PUB", 11);
     define("CARD_WAREHOUSE", 12);
-    define("CARD_OBSERVATORY", 15); // N.B. this value is used in client code!
+    define("CARD_OBSERVATORY", 15);
     define("CARD_MARIINSKIJ_THEATER", 22);
     define("CARD_TAX_MAN", 45);
 

@@ -46,6 +46,7 @@ function (dojo, declare) {
             this.deck_counters = [];        // Counters for cards in each phase stack
                                             // N.B. terms deck and stack are used interchangably
             this.spectator = false;         // Is current player a spectator
+            this.observatory_card_type = 0; // Constant for Observatory card
         },
         
         /*
@@ -68,6 +69,7 @@ function (dojo, declare) {
             // Store full card details for tooltips
             // Used in game board setup
             this.card_infos = gamedatas.card_infos;
+            this.observatory_card_type = gamedatas.observatory_card_type;
 
             // Setting up player boards, tables, cards
             for(var player_id in gamedatas.players) {
@@ -366,7 +368,7 @@ function (dojo, declare) {
             this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id));
 
             // Observatory is only card needing extra elements
-            if (card_type_id == 15 && card_div.id.substring(0, 6) != 'myhand') {
+            if (card_type_id == this.observatory_card_type && card_div.id.substring(0, 6) != 'myhand') {
                 // Get player and card ids to add templated html
                 var player_id = parseInt(card_div.id.split('_')[1]);
                 var id = card_id.split('_');

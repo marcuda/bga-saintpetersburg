@@ -256,6 +256,9 @@ class SaintPetersburg extends Table
             );
         }
         $result['observatory'] = $obs;
+
+        // Constant value for identifying an Observatory
+        $result['observatory_card_type'] = CARD_OBSERVATORY;
   
         return $result;
     }
