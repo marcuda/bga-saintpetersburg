@@ -100,6 +100,17 @@ var jstpl_card_tooltip =
         '<i>${card_nbr_label}: ${card_nbr}</i>' +
     '</div>';
 
+var jstpl_hand_tooltip =
+    '<div class="stp_cardtooltip">' +
+        '<b>${text}</b>' +
+        '<div>' +
+            '<div class="stp_cardart_small" style="background-position: -${artx.0}px -${arty.0}px; display: ${disp.0}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: -${artx.1}px -${arty.1}px; display: ${disp.1}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: -${artx.2}px -${arty.2}px; display: ${disp.2}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: -${artx.3}px -${arty.3}px; display: ${disp.3}"></div>' +
+        '</div>' +
+    '</div>';
+
 </script>
 
 {OVERALL_GAME_FOOTER}

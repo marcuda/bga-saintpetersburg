@@ -48,7 +48,8 @@ class SaintPetersburg extends Table
             "observatory_1_used" => 22,    // 1 if second Observatory has been used this round
             "activated_observatory" => 23, // index (0/1) of Observatory being actively used
 
-            "show_player_rubles" => 100,
+            "show_player_rubles" => OPT_SHOW_RUBLES,
+            "show_player_hands" => OPT_SHOW_HANDS,
         ));        
 
         $this->cards = self::getNew("module.common.deck");
@@ -210,13 +211,38 @@ class SaintPetersburg extends Table
         $players = self::loadPlayersBasicInfos();
         $tables = array();
         $hands = array();
+        $hand_size = array();
         foreach ($players as $player_id => $player)
         {
             $tables[$player_id] = $this->cards->getCardsInLocation('table', $player_id);
-            $hands[$player_id] = count($this->cards->getCardsInLocation('hand', $player_id));
+            if ($player_id == $current_player_id || $this->gamestate->table_globals[OPT_SHOW_HANDS]) {
+                // Always send full hand details for current player
+                // Send all others if game option is enabled
+                $hands[$player_id] = $this->cards->getPlayerHand($player_id);
+                $hand_size[$player_id] = count($hands[$player_id]);
+            } else {
+                // Default only send count of cards in hand for other players
+                $hand_size[$player_id] = count($this->cards->getPlayerHand($player_id));
+            }
+
         }
         $result['player_tables'] = $tables;
         $result['player_hands'] = $hands;
+        $result['player_hand_size'] = $hand_size;
+
+        // Get number of rubles for current or all players
+        // Separate query to avoid sending possible secret info in 'players' above
+        if ($this->gamestate->table_globals[OPT_SHOW_RUBLES]) {
+            // Option to see all player rubles enabled
+            $sql = "SELECT player_id, player_score_aux FROM player";
+            $result['rubles'] = self::getCollectionFromDb($sql, true);
+        } else {
+            // By default only own rubles visible
+            $result['rubles'] = array(
+                $current_player_id => self::dbGetRubles($current_player_id)
+            );
+        }
+
 
         // Get starting player tokens for each phase
         $tokens = array();
@@ -238,19 +264,6 @@ class SaintPetersburg extends Table
         // Cards on board
         $result[TOP_ROW] = $this->cards->getCardsInLocation(TOP_ROW);
         $result[BOTTOM_ROW] = $this->cards->getCardsInLocation(BOTTOM_ROW);
-
-        // Current player info
-        $result['hand'] = $this->cards->getPlayerHand($current_player_id);
-        if ($this->gamestate->table_globals[100]) {
-            // Option to see all player rubles enabled
-            $sql = "SELECT player_id, player_score_aux FROM player";
-            $result['rubles'] = self::getCollectionFromDb($sql, true);
-        } else {
-            // By default only own rubles visible
-            $result['rubles'] = array(
-                $current_player_id => self::dbGetRubles($current_player_id)
-            );
-        }
 
         // Cards counts for each deck
         $result['decks'] = $this->cards->countCardsInLocations();

@@ -37,7 +37,8 @@ function (dojo, declare) {
             this.cardheight_big = 150;      // Large card height for tooltip
             this.player_rubles = []         // Counters for all player rubles
             this.player_tables = [];        // Stocks for all player tables
-            this.player_hands = [];         // Counters for all player hands
+            this.player_hands = [];         // Cards held in each player's hand
+            this.player_hand_counts = [];   // Counters for all player hands
             this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading']; // Game phases in order
             this.pub_points = 0;            // Current number of points to buy with Pub
             this.max_pub_points = 0;        // Upper limit on Pub points
@@ -82,10 +83,21 @@ function (dojo, declare) {
                 // Player hand counters
                 var hand_counter = new ebg.counter();
                 hand_counter.create('handcount_p' + player_id);
-                hand_counter.setValue(gamedatas.player_hands[player_id]);
-                this.player_hands[player_id] = hand_counter;
-                this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
-                this.addTooltip('handcount_icon_p' + player_id, _("Number of cards in hand"), "");
+                hand_counter.setValue(gamedatas.player_hand_size[player_id]);
+                this.player_hand_counts[player_id] = hand_counter;
+                if (gamedatas.player_hands[player_id] && player_id != this.player_id) {
+                    // Game option to show player hands enabled
+                    // (but no need to do so for current player)
+                    this.player_hands[player_id] = [];
+                    for (var i in gamedatas.player_hands[player_id]) {
+                        this.player_hands[player_id].push(gamedatas.player_hands[player_id][i].type_arg);
+                    }
+                    this.updateHandTooltip(player_id);
+                } else {
+                    // Default just show count of cards in hand
+                    this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
+                    this.addTooltip('handcount_icon_p' + player_id, _("Number of cards in hand"), "");
+                }
 
                 // Player tables and cards
                 this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0);
@@ -154,8 +166,8 @@ function (dojo, declare) {
             if (!this.spectator) { // Spectator has no hand element
                 this.playerHand = this.createCardStock('myhand', 1);
                 this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
-                for (var i in gamedatas.hand) {
-                    var card = gamedatas.hand[i];
+                for (var i in gamedatas.player_hands[this.player_id]) {
+                    var card = gamedatas.player_hands[this.player_id][i];
                     this.playerHand.addToStockWithId(card.type_arg, card.id);
                 }
                 dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
@@ -450,7 +462,45 @@ function (dojo, declare) {
             this.tooltips[new_id] = this.tooltips[old_id];
             this.tooltips[old_id] = null;
         },
-            
+
+        /*
+         * Set the detailed tooltip for player hand to show all cards held
+         */
+        updateHandTooltip: function (player_id)
+        {
+            // Sort card by type
+            var hand = this.player_hands[player_id];
+            hand = hand.sort();
+
+            // Clear all four template cards by default
+            var artx = [0, 0, 0, 0];
+            var arty = [0, 0, 0, 0];
+            var disp = ['none', 'none', 'none', 'none'];
+
+            // Display correct art for each card in hand
+            for (var i=0; i<hand.length; i++) {
+                artx[i] = this.cardwidth * (hand[i] % this.card_art_row_size);
+                arty[i] = this.cardheight * Math.floor(hand[i] / this.card_art_row_size);
+                disp[i] = 'inline-block';
+            }
+
+            if (hand.length > 0) {
+                // Add detailed tooltip
+                var html = this.format_block("jstpl_hand_tooltip", {
+                    artx: artx,
+                    arty: arty,
+                    disp: disp,
+                    text: _("Cards in player hand") + " (" + hand.length + "):"
+                });
+                this.addTooltipHtml('handcount_p' + player_id, html)
+                this.addTooltipHtml('handcount_icon_p' + player_id, html);
+            } else {
+                // No cards in hand - use standard tooltip
+                this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
+                this.addTooltip('handcount_icon_p' + player_id, _("Number of cards in hand"), "");
+            }
+        },
+
         /*
          * Place a card on the game board at the given row,col location.
          * Card specified by its sprite index (idx), source element (src)
@@ -1116,7 +1166,13 @@ function (dojo, declare) {
             }
 
             // Update hand count on player board
-            this.player_hands[notif.args.player_id].incValue(1);
+            this.player_hand_counts[notif.args.player_id].incValue(1);
+
+            // Update hand tooltip if show cards option enabled
+            if (this.player_hands[notif.args.player_id]) {
+                this.player_hands[notif.args.player_id].push(notif.args.card_idx);
+                this.updateHandTooltip(notif.args.player_id);
+            }
         },
 
         /*
@@ -1147,7 +1203,14 @@ function (dojo, declare) {
             }
 
             // Update hand count on player board
-            this.player_hands[notif.args.player_id].incValue(-1);
+            this.player_hand_counts[notif.args.player_id].incValue(-1);
+
+            // Update hand tooltip if show cards option enabled
+            if (this.player_hands[notif.args.player_id]) {
+                var idx = this.player_hands[notif.args.player_id].indexOf(notif.args.card_idx);
+                this.player_hands[notif.args.player_id].splice(idx, 1);
+                this.updateHandTooltip(notif.args.player_id);
+            }
         },
 
         /*
@@ -1180,7 +1243,14 @@ function (dojo, declare) {
                 }
 
                 // Update hand count on player board
-                this.player_hands[notif.args.player_id].incValue(-1);
+                this.player_hand_counts[notif.args.player_id].incValue(-1);
+
+                // Update hand tooltip if show cards option enabled
+                if (this.player_hands[notif.args.player_id]) {
+                    var idx = this.player_hands[notif.args.player_id].indexOf(notif.args.card_idx);
+                    this.player_hands[notif.args.player_id].splice(idx, 1);
+                    this.updateHandTooltip(notif.args.player_id);
+                }
             } else if (row == 99) {
                 // Observatory pick - move card from board to table
                 dojo.destroy('card_99_99');
