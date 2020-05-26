@@ -61,6 +61,14 @@ $game_options = array(
         )
     ),
 
+    101 => array(
+        'name' => totranslate('Show other player hands'),
+        'values' => array(
+            0 => array('name' => totranslate('No')),
+            1 => array('name' => totranslate('Yes'))
+        )
+    ),
+
 );
 
 

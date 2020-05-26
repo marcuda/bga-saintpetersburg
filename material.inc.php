@@ -56,6 +56,10 @@ if (!defined("CARD_PUB")) {
     define("BUILDING", clienttranslate("Building"));
     define("ARISTOCRAT", clienttranslate("Aristocrat"));
     define("TRADING", clienttranslate("Trading"));
+
+    // Game options
+    define("OPT_SHOW_RUBLES", 100);
+    define("OPT_SHOW_HANDS", 101);
 }
 
 /*

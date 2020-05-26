@@ -227,6 +227,15 @@
  border-radius:10px
 }
 
+.stp_cardart_small {
+    width: 70px;
+    height: 112px;
+    background-image: url('img/cards.jpg');
+    margin: 1px;
+    border: 1px solid black;
+    border-radius: 10px
+}
+
 .stp_cardtooltip {
  text-align:left;
  max-width:300px
