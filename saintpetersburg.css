@@ -205,26 +205,26 @@
 }
 
 .stp_activecard {
- position:absolute;
- top:7px;
- left:20px;
- width:48px;
- text-align:center;
- font-size:60%;
- font-weight:bold;
- background-color:white;
- display:block;
- cursor:pointer;
+    position:absolute;
+    top:7px;
+    left:20px;
+    width:48px;
+    text-align:center;
+    font-size:60%;
+    font-weight:bold;
+    background-color:white;
+    display:block;
+    cursor:pointer;
 }
 
 .stp_cardart {
- display:inline-block;
- background-image:url('img/cards_big.jpg');
- width:96px;
- height:150px;
- margin:10px;
- border:4px solid black;
- border-radius:10px
+    display:inline-block;
+    background-image:url('img/cards_big.jpg');
+    width:96px;
+    height:150px;
+    margin:10px;
+    border:4px solid black;
+    border-radius:10px
 }
 
 .stp_cardart_small {
@@ -237,6 +237,24 @@
 }
 
 .stp_cardtooltip {
- text-align:left;
- max-width:300px
+    text-align:left;
+    max-width:300px
+}
+
+.stp_publisher_icon {
+    background-image: url('img/publisher_small.png');
+    width: 50px;
+    height: 64px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.stp_publisher_msg {
+    display: inline-block;
+    text-align: center;
+    font-size: 110%;
+    font-weight: bold;
+    line-height: 32px;
+    position: relative;
+    width: 100%;
 }
