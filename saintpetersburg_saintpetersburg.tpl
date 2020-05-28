@@ -10,6 +10,20 @@
 -------
 -->
 
+<div id="publisher_msg" style="display: none; margin-bottom: 5px; margin-right: 10px">
+    <div class="roundedbox" style="width: 100%;">
+        <div class=roundedboxinner">
+            <div class="stp_publisher_msg">
+                <div class="stp_publisher_icon"></div>
+                &nbsp;
+                <span>{PUBLISHER_MSG}</span>
+                &nbsp;
+                <a id="button_publisher_ack" class="action-button bgabutton bgabutton_blue" href="#">{PUBLISHER_ACK}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Game board, card stacks and play area -->
 <div id="stp_gameboard">
     <div id="discard_pile" class="stp_discard"></div>

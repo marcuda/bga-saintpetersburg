@@ -67,6 +67,12 @@ function (dojo, declare) {
         {
             if (this.debug) console.log("Starting game setup");
 
+            if (this.prefs[100].value == 0) {
+                // Show message from publisher player has not seen/acknowledged
+                dojo.style('publisher_msg', 'display', 'block');
+                dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
+            }
+
             // Store full card details for tooltips
             // Used in game board setup
             this.card_infos = gamedatas.card_infos;
@@ -345,6 +351,18 @@ function (dojo, declare) {
             script.
         
         */
+
+        /*
+         * Player clicks okay on note from publisher
+         */
+        ackPublisherMessage: function (evt)
+        {
+            // Remove message banner
+            dojo.style('publisher_msg', 'display', 'none');
+            // Save user preference to not show banner
+            // See ly_studio.js
+            this.ajaxcall("/table/table/changePreference.html",{id:100,value:1,game:this.game_name}, this, function(){});
+        },
 
         /*
          * Convert card location from given list position to UI board position

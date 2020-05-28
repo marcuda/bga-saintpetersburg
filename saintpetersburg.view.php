@@ -74,6 +74,11 @@ class view_saintpetersburg_saintpetersburg extends game_view
         // Translate title for hand block
         $this->tpl['MY_HAND'] = self::_("My hand");
 
+        // Temporary publisher notice
+        $publisher = html_entity_decode('Hans im Gl&uuml;ck');
+        $this->tpl['PUBLISHER_MSG'] = self::_("A word from " . $publisher . ": the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the final product is ready.");
+        $this->tpl['PUBLISHER_ACK'] = self::_("Okay, got it!");
+
         /*********** Do not change anything below this line  ************/
     }
 }
