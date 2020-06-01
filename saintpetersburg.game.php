@@ -1177,16 +1177,15 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Player uses an Observatory
+     * Player uses Observatory to draw a card
      */
-    function useObservatory($card_id)
+    function drawObservatoryCard($deck, $card_id)
     {
         self::checkAction('useObservatory');
 
-        // Verify the card exists, is an Observatory, and is owned by the player
+        // Verify Observatory exists and owned by player
         $player_id = self::getActivePlayerId();
         $card = $this->cards->getCard($card_id);
-        $phase = self::getGameStateValue('current_phase') % 4;
         if ($card == null || $card['type_arg'] != CARD_OBSERVATORY ||
             $card['location_arg'] != $player_id || $card['location'] != 'table')
         {
@@ -1195,24 +1194,9 @@ class SaintPetersburg extends Table
 
         // Verify Observatory is not already used and current phase is Building
         $obs = $this->getObservatory($card_id);
+        $phase = self::getGameStateValue('current_phase') % 4;
         if ($obs['used'] || $this->phases[$phase] != PHASE_BUILDING)
             throw new BgaUserException(self::_("You cannot use the Observatory right now"));
-
-        self::setGameStateValue("activated_observatory", $obs['id']);
-        $this->gamestate->nextState("useObservatory");
-    }
-
-    /*
-     * Player selects a deck to draw from with Observatory
-     */
-    function drawObservatoryCard($deck)
-    {
-        self::checkAction('drawObservatoryCard');
-
-        // Verify Observatory in use
-        $obs_id = self::getGameStateValue("activated_observatory");
-        if ($obs_id != 0 && $obs_id != 1)
-            throw new feException("Impossible Obseratory draw");
 
         // Cannot draw from empty stack or take last card in stack
         $num_cards = $this->cards->countCardInLocation($deck);
@@ -1223,7 +1207,6 @@ class SaintPetersburg extends Table
         }
 
         // Draw card
-        $player_id = self::getActivePlayerId();
         $card = $this->cards->pickCardForLocation($deck, 'obs_tmp', $player_id);
         if ($card == null || $this->cards->countCardInLocation('obs_tmp') != 1)
             throw new feException("Impossible Observatory draw");
@@ -1238,7 +1221,8 @@ class SaintPetersburg extends Table
         ));
 
         // Mark Observatrory as used
-        self::setGameStateValue('observatory_' . $obs_id . '_used', 1);
+        self::setGameStateValue("activated_observatory", $obs['id']);
+        self::setGameStateValue('observatory_' . $obs['id'] . '_used', 1);
         self::incStat(1, 'observatory_draws', $player_id);
         $this->gamestate->nextState("drawCard");
     }

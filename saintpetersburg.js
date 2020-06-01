@@ -237,7 +237,7 @@ function (dojo, declare) {
                 case 'tradeCardHand':
                     this.setSelections(args.args, true);
                     break;
-                case 'useObservatory':
+                case 'client_useObservatory':
                     // Highlight decks for selection
                     dojo.query('.stp_deck').addClass('stp_selectable');
                     break;
@@ -267,7 +267,7 @@ function (dojo, declare) {
 
             switch(stateName)
             {
-                case 'useObservatory':
+                case 'client_useObservatory':
                     dojo.query('.stp_deck').removeClass('stp_selectable');
                     break;
                 // Fall thru for everything else
@@ -330,7 +330,7 @@ function (dojo, declare) {
                         this.addActionButton("button_3", _("Buy") + " " + this.pub_points + " (" + this.pub_points * 2 + ")", "onBuyPoints");
                         this.addActionButton("button_4", _("Pass"), "onBuyNoPoints", null, false, "red");
                         break;
-                    case 'useObservatory':
+                    case 'client_useObservatory':
                         // Options: cancel
                         this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
@@ -1121,10 +1121,14 @@ function (dojo, declare) {
                 return;
             }
 
-            var card_id = evt.currentTarget.id.split('_')[3];
-            this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/useObservatory.html",
-                {lock:true, card_id: card_id}, this, function (result) {});
+
+            //TODO: show error message when obs already selected?
+
+            this.client_state_args.obs_id = evt.currentTarget.id.split('_')[3];
+
+            this.setClientState('client_useObservatory', {
+                descriptionmyturn: _('Observatory: ${you} must choose a stack to draw from')
+            });
         },
 
         /*
@@ -1133,16 +1137,16 @@ function (dojo, declare) {
         onClickDeck: function (evt)
         {
             dojo.stopEvent(evt);
-            if (!this.checkAction('drawObservatoryCard', true)) {
+            if (!this.checkAction('useObservatory', true)) {
                 // Decks are only selectable and active after using Observatory
                 // Ignore click without error message
                 return;
             }
 
-            var deck = evt.currentTarget.id;
+            this.client_state_args.deck = evt.currentTarget.id;
             this.ajaxcall(
                 "/saintpetersburg/saintpetersburg/drawObservatoryCard.html",
-                {lock:true, deck: deck}, this, function (result) {});
+                this.client_state_args, this, function (result) {});
         },
 
         /*

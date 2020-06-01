@@ -96,7 +96,7 @@ $machinestates = array(
             "playCard" => STATE_NEXT_PLAYER,
             "tradeCard" => STATE_TRADE_CARD,
             "tradeCardHand" => STATE_TRADE_CARD_HAND,
-            "useObservatory" => STATE_USE_OBSERVATORY,
+            "drawCard" => STATE_OBSERVATORY_CHOICE,
             "pass" => STATE_NEXT_PLAYER,
             "allPass" => STATE_SCORE_PHASE,
             "zombiePass" => STATE_NEXT_PLAYER,
@@ -187,25 +187,10 @@ $machinestates = array(
         )
     ),
 
-    // Player selects the Observatory to draw a card
-    STATE_USE_OBSERVATORY => array(
-        "name" => "useObservatory",
-        "description" => clienttranslate('Observatory: ${actplayer} must choose a stack to draw from'),
-        "descriptionmyturn" => clienttranslate('Observatory: ${you} must choose a stack to draw from'),
-        "type" => "activeplayer",
-        "possibleactions" => array("drawObservatoryCard", "cancel"),
-        "transitions" => array(
-            "drawCard" => STATE_OBSERVATORY_CHOICE,
-            "cancel" => STATE_PLAYER_TURN,
-            "zombiePass" => STATE_NEXT_PLAYER,
-            "zombieAllPass" => STATE_SCORE_PHASE
-        )
-    ),
-
     // Player draws a card with Observatory and needs to choose what to do
     STATE_OBSERVATORY_CHOICE => array(
         "name" => "chooseObservatory",
-        "description" => clienttranslate('${card_name}: ${actplayer} must play or discard'),
+        "description" => clienttranslate('Observatory: ${actplayer} must play or discard'),
         "descriptionmyturn" => clienttranslate('${card_name}: ${you} must play or discard'),
         "type" => "activeplayer",
         "args" => "argChooseObservatory",

@@ -116,7 +116,8 @@ class action_saintpetersburg extends APP_GameAction
     {
         self::setAjaxMode();
         $deck = self::getArg("deck", AT_alphanum, true); // deck name
-        $result = $this->game->drawObservatoryCard($deck);
+        $obs_id = self::getArg("obs_id", AT_posint, true); // observastory id
+        $result = $this->game->drawObservatoryCard($deck, $obs_id);
         self::ajaxResponse();
     }
 
