@@ -282,7 +282,13 @@ class SaintPetersburg extends Table
         $result['observatory'] = $obs;
 
         // Constant value for identifying an Observatory
-        $result['observatory_card_type'] = CARD_OBSERVATORY;
+        $result['constants'] = array(
+            'top_row' => 0,
+            'bottom_row' => 1,
+            'hand' => ROW_HAND,
+            'observatory' => ROW_OBSERVATORY
+        );
+
   
         return $result;
     }
@@ -670,11 +676,7 @@ class SaintPetersburg extends Table
             }
 
             // Row constants are string but client needs integer
-            if ($row == BOTTOM_ROW) {
-                $row_num = 1;
-            } else {
-                $row_num = 0;
-            }
+            $row_num = ($row == BOTTOM_ROW ? 1 : 0);
 
             self::notifyAllPlayers('shiftRight', "", array(
                 'columns' => $shifted,
@@ -841,48 +843,33 @@ class SaintPetersburg extends Table
         );
     }
 
+    /*
+     * Return the card at given board row, col location
+     */
+    function getSelectedCard($row, $col)
+    {
+        // Verify a card exists here
+        $loc = ($row == 0 ? TOP_ROW : BOTTOM_ROW);
+        $cards = $this->cards->getCardsInLocation($loc, $col);
+
+        if (count($cards) != 1)
+            throw new feException("Impossible selection");
+
+        return array_shift($cards);
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
 
     /*
-     * Player selects a card on the board
-     */
-    function selectCard($row, $loc_arg)
-    {
-        self::checkAction('selectCard');
-
-        // Verify a card exists here
-        if ($row == 0) {
-            $loc = TOP_ROW;
-        } else {
-            $loc = BOTTOM_ROW;
-        }
-        $cards = $this->cards->getCardsInLocation($loc, $loc_arg);
-
-        if (count($cards) != 1)
-            throw new feException("Impossible move");
-
-        // Store card location as globals
-        $card = array_shift($cards);
-        self::setGameStateValue("selected_card", $card['id']);
-        self::setGameStateValue("selected_row", $row);
-
-        $this->gamestate->nextState('selectCard');
-    }
-
-    /*
      * Player adds a card to their hand
      */
-    function addCard()
+    function addCard($card_row, $card_col)
     {
         self::checkAction('addCard');
 
-        // Verify card already selected
-        $card_id = self::getGameStateValue("selected_card");
-        $card_row = self::getGameStateValue("selected_row");
-        if ($card_id < 0 || $card_row < 0)
-            throw new feException("Impossible move");
+        $card = $this->getSelectedCard($card_row, $card_col);
 
         // Verify player hand is not full
         if ($this->isHandFull(self::getActivePlayerId()))
@@ -892,25 +879,23 @@ class SaintPetersburg extends Table
         $dest = 'hand';
         $notif = 'addCard';
         $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
-        $this->cardAction($card_id, $card_row, 0, $dest, $notif, $msg);
+        $this->cardAction($card['id'], $card_row, 0, $dest, $notif, $msg);
         $this->gamestate->nextState('addCard');
     }
 
     /*
      * Player buys a card
      */
-    function buyCard()
+    function buyCard($card_row, $card_col)
     {
         self::checkAction('buyCard');
 
-        // Verify card already selected
-        $card_id = self::getGameStateValue("selected_card");
-        $card_row = self::getGameStateValue("selected_row");
-        if ($card_id < 0 || $card_row < 0)
-            throw new feException("Impossible move");
+        $card = $this->getSelectedCard($card_row, $card_col);
+        $card_id = $card['id'];
 
+        // TODO
         // Additional action required if it's a trading card
-        if ($this->isTrading($this->cards->getCard($card_id))) {
+        if ($this->isTrading($card)) {
             $this->gamestate->nextState('tradeCard');
             return;
         }
@@ -944,6 +929,8 @@ class SaintPetersburg extends Table
             $this->gamestate->nextState('tradeCardHand');
             return;
         }
+
+        //TODO: verify player holds card?
 
         // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, 0);
@@ -1359,7 +1346,83 @@ class SaintPetersburg extends Table
 ////////////
 
     /*
-     * Arguments for state: selectCard state
+     * Arguments for state: playerTurn
+     * Main turn for player to select a card and add/buy/trade
+     * Return all possible moves
+     * 
+     * N.B. pseudo private info included here (cards in hand)
+     *      although the same info is available to any player
+     *      paying attanetion and/or and keeping notes and is
+     *      also recorded in the logs. TODO: fix it?
+     */
+    function argPlayerTurn()
+    {
+        $player_id = self::getActivePlayerId();
+
+        $rubles = self::dbGetRubles($player_id);
+        $can_add = !$this->isHandFull($player_id);
+        $possible_moves = array(0 => array(), 1 => array());
+
+        // Cards on board
+        $row = 0;
+        foreach (array(TOP_ROW, BOTTOM_ROW) as $row_loc) {
+            $board = $this->cards->getCardsInLocation($row_loc, null, 'location_arg');
+            foreach ($board as $card) {
+                $col = $card['location_arg'];
+                $cost = $this->getCardCost($card['id'], $row);
+                $can_buy = $cost <= $rubles;
+                $trades = array();
+                if ($this->isTrading($card)) {
+                    $has_trade = $this->getTrades($card, $cost, $player_id, $trades);
+                    $can_buy &= count($trades) > 0;
+                }
+                $possible_moves[$row][$col] = array(
+                    'card_name' => $this->getCardName($card),
+                    'can_add' => $can_add,
+                    'can_buy' => $can_buy,
+                    'cost' => $cost,
+                    'trades' => $trades
+                );
+            }
+            $row += 1;
+        }
+
+        // Cards in hand
+        $cards = $this->cards->getPlayerHand($player_id);
+        foreach ($cards as $card) {
+            $col = $card['id'];
+            $cost = $this->getCardCost($card['id'], 0);
+            $can_buy = $cost <= $rubles;
+            $trades = array();
+            $possible_moves[ROW_HAND][$col] = array(
+                'name' => $this->getCardName($card),
+                'can_add' => false,
+                'can_buy' => $can_buy,
+                'cost' => $cost,
+                'trades' => $trades
+            );
+        }
+
+        // Observatory
+        $current_phase = self::getGameStateValue('current_phase') % 4;
+        if ($this->phases[$current_phase] == PHASE_BUILDING) {
+            $cards = $this->cards->getCardsOfTypeInLocation(
+                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
+            foreach ($cards as $card) {
+                $obs = $this->getObservatory($card['id']);
+                if (!$obs['used']) {
+                    $possible_moves[ROW_OBSERVATORY][$card['id']] = array(
+                        'can_add' => true // to trigger possible move styling
+                    );
+                }
+            }
+        }
+
+        return $possible_moves;
+    }
+
+    /*
+     * Arguments for state: selectCard
      * Player selects a card
      * Return card details and possible actions
      */

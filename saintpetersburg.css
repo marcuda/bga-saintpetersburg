@@ -95,10 +95,12 @@
 
 .stp_selected {
     border: 3px solid red ! important;
+    border-radius: 10px;
 }
 
 .stp_selectable {
     border: 3px solid blue ! important;
+    border-radius: 10px;
     cursor: pointer;
 }
 
