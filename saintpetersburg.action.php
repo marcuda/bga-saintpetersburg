@@ -39,21 +39,13 @@ class action_saintpetersburg extends APP_GameAction
         }
     } 
         
-    // Player selects a card on the board
-    public function selectCard()
-    {
-        self::setAjaxMode();
-        $row = self::getArg("row", AT_posint, true); // card location on board
-        $col = self::getArg("col", AT_posint, true);
-        $result = $this->game->selectCard($row, $col);
-        self::ajaxResponse();
-    }
-
     // Player clicks the 'Buy' button
     public function buyCard()
     {
         self::setAjaxMode();
-        $result = $this->game->buyCard();
+        $row = self::getArg("row", AT_posint, true);
+        $col = self::getArg("col", AT_posint, true);
+        $result = $this->game->buyCard($row, $col);
         self::ajaxResponse();
     }
 
@@ -61,7 +53,9 @@ class action_saintpetersburg extends APP_GameAction
     public function addCard()
     {
         self::setAjaxMode();
-        $result = $this->game->addCard();
+        $row = self::getArg("row", AT_posint, true);
+        $col = self::getArg("col", AT_posint, true);
+        $result = $this->game->addCard($row, $col);
         self::ajaxResponse();
     }
 
