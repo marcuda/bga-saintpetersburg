@@ -53,21 +53,13 @@
 // State constants
 if (!defined("STATE_END_GAME")) {
     define("STATE_PLAYER_TURN", 10);
-    define("STATE_TRADE_CARD",  12);
-    define("STATE_TRADE_CARD_HAND",  20);
-    define("STATE_NEXT_PLAYER", 13);
-    define("STATE_SCORE_PHASE", 14);
-    define("STATE_NEXT_PHASE",  15);
-    define("STATE_USE_PUB",     16);
-    define("STATE_USE_OBSERVATORY", 18);
-    define("STATE_OBSERVATORY_TRADE", 19);
+    define("STATE_NEXT_PLAYER", 11);
+    define("STATE_SCORE_PHASE", 12);
+    define("STATE_NEXT_PHASE",  13);
+    define("STATE_USE_OBSERVATORY", 14);
+    define("STATE_USE_PUB",     15);
     define("STATE_END_GAME", 99);
 }
-
-// TODO: Code check claims this is long and potentially overkill...
-// Many of these state are duplicative and could potentially be reduced down
-// by a factor with added logic in the game state and arg functions.
-// Would require a rather large refactor to move much of it to the client side
 
 $machinestates = array(
 
@@ -89,53 +81,9 @@ $machinestates = array(
         "args" => "argPlayerTurn",
         "possibleactions" => array("selectCard", "addCard", "buyCard", "playCard", "useObservatory", "pass", "cancel"),
         "transitions" => array(
-            "addCard" => STATE_NEXT_PLAYER,
-            "buyCard" => STATE_NEXT_PLAYER,
-            "playCard" => STATE_NEXT_PLAYER,
-            "tradeCard" => STATE_TRADE_CARD,
-            "tradeCardHand" => STATE_TRADE_CARD_HAND,
-            "drawCard" => STATE_USE_OBSERVATORY,
-            "pass" => STATE_NEXT_PLAYER,
+            "nextPlayer" => STATE_NEXT_PLAYER,
+            "useObservatory" => STATE_USE_OBSERVATORY,
             "allPass" => STATE_SCORE_PHASE,
-            "zombiePass" => STATE_NEXT_PLAYER,
-            "zombieAllPass" => STATE_SCORE_PHASE
-        )
-    ),
-
-    // Player wants to buy/play a trading card and needs to select one to displace
-    STATE_TRADE_CARD => array(
-        "name" => "tradeCard",
-        "description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
-        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-        "type" => "activeplayer",
-        "args" => "argTradeCard",
-        "possibleactions" => array("tradeCard", "cancel"),
-        "transitions" => array(
-            "tradeCard" => STATE_NEXT_PLAYER,
-            "cancel" => STATE_PLAYER_TURN,
-            "zombiePass" => STATE_NEXT_PLAYER,
-            "zombieAllPass" => STATE_SCORE_PHASE
-        )
-    ),
-
-    /*
-     * Player selects a Trading Card in hand. Cannot use the normal state
-     * as it will reveal the card name in the active player's hand.
-     *
-     * N.B. Reusing the same args function technically still leaks the info;
-     * however, it is also available in the game log so it can't really be
-     * protected and is therefore not a concern here.
-     */
-    STATE_TRADE_CARD_HAND => array(
-        "name" => "tradeCardHand",
-        "description" => clienttranslate('${actplayer} must play a card or pass'),
-        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-        "type" => "activeplayer",
-        "args" => "argTradeCard",
-        "possibleactions" => array("tradeCard", "cancel"),
-        "transitions" => array(
-            "tradeCard" => STATE_NEXT_PLAYER,
-            "cancel" => STATE_PLAYER_TURN,
             "zombiePass" => STATE_NEXT_PLAYER,
             "zombieAllPass" => STATE_SCORE_PHASE
         )
@@ -175,25 +123,7 @@ $machinestates = array(
         "args" => "argUseObservatory",
         "possibleactions" => array("buyCard", "addCard", "discard"),
         "transitions" => array(
-            "buyCard" => STATE_NEXT_PLAYER,
-            "addCard" => STATE_NEXT_PLAYER,
-            "discard" => STATE_NEXT_PLAYER,
-            "zombiePass" => STATE_NEXT_PLAYER,
-            "zombieAllPass" => STATE_SCORE_PHASE
-        )
-    ),
-
-    // Player draws a trading card with Observatory and needs to select a card to displace
-    STATE_OBSERVATORY_TRADE => array(
-        "name" => "tradeObservatory",
-        "description" => clienttranslate('${card_name}: ${actplayer} must choose a card to displace'),
-        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-        "type" => "activeplayer",
-        "args" => "argTradeCard",
-        "possibleactions" => array("tradeCard", "cancel"),
-        "transitions" => array(
-            "tradeCard" => STATE_NEXT_PLAYER,
-            "cancel" => STATE_USE_OBSERVATORY,
+            "nextPlayer" => STATE_NEXT_PLAYER,
             "zombiePass" => STATE_NEXT_PLAYER,
             "zombieAllPass" => STATE_SCORE_PHASE
         )

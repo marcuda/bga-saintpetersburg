@@ -37,8 +37,6 @@ class SaintPetersburg extends Table
             "starting_player_" . PHASE_BUILDING => 11,   // player_id holding Building token
             "starting_player_" . PHASE_ARISTOCRAT => 12, // player_id holding Aristocrat token
             "starting_player_" . PHASE_TRADING => 13,    // player_id holding Trading token
-            "selected_card" => 14,         // card_id of player selected card
-            "selected_row" => 15,          // board row (or other location as specified) of player selected card
             "num_pass" => 16,              // number of players that have consecutively passed in this phase
             "current_phase" => 17,         // current phase number, always increasing
             "last_round" => 18,            // 1 if the end state has been triggered in the current round
@@ -48,6 +46,7 @@ class SaintPetersburg extends Table
             "observatory_1_used" => 22,    // 1 if second Observatory has been used this round
             "activated_observatory" => 23, // index (0/1) of Observatory being actively used
 
+            // Game options
             "show_player_rubles" => OPT_SHOW_RUBLES,
             "show_player_hands" => OPT_SHOW_HANDS,
         ));        
@@ -106,8 +105,6 @@ class SaintPetersburg extends Table
         /************ Start the game initialization *****/
 
         // Init global values with their initial values
-        self::setGameStateInitialValue("selected_card", -1);
-        self::setGameStateInitialValue("selected_row", -1);
         self::setGameStateInitialValue("num_pass", 0);
         self::setGameStateInitialValue("current_phase", 0);
         self::setGameStateInitialValue("last_round", 0);
@@ -818,36 +815,6 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Return array of possible actions the active player can take with
-     * the given card when considering cost, trading, and hand size
-     */
-    function getSelectedCardOptions($card_id, $card_row)
-    {
-        // Get card details and adjusted cost
-        $card = $this->cards->getCard($card_id);
-        $cost = $this->getCardCost($card_id, $card_row);
-        $player_id = self::getActivePlayerId();
-
-        // Determine if player can buy (with trade if needed)
-        $can_buy = true;
-        if ($this->isTrading($card)) {
-            if (!$this->hasTrades($card, $cost, $player_id)) {
-                $can_buy = false;
-            }
-        } else if ($cost > self::dbGetRubles($player_id)) {
-            $can_buy = false;
-        }
-
-        return array(
-            'card_name' => $this->getCardName($card),
-            'cost' => $cost,
-            'player_id' => $player_id,
-            'can_add' => !$this->isHandFull($player_id), // cannot add to hand if full
-            'can_buy' => $can_buy
-        );
-    }
-
-    /*
      * Return array of possible moves the active player can take for
      * each card on board, in hand, and special actions
      */
@@ -898,6 +865,35 @@ class SaintPetersburg extends Table
         return array_shift($cards);
     }
 
+    /*
+     * Verify that given trading card can displace selected card
+     */
+    function checkTrade($card, $disp_id)
+    {
+        // Verify displaced card exists
+        $disp_card = $this->cards->getCard($disp_id);
+        if ($disp_card == null)
+            throw new feException("Impossible card id");
+
+        // Verify cards are of correct type to trade
+        $card_info = $this->getCardInfo($card);
+        $disp_info = $this->getCardInfo($disp_card);
+        if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
+            ($disp_info['card_type'] == PHASE_WORKER &&
+            $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
+            $disp_info['card_worker_type'] != WORKER_ALL))
+        {
+            throw new BgaUserException(self::_("Wrong type of card to displace"));
+        }
+
+        // Check if trading used Observatory
+        if ($disp_card['type_arg'] == CARD_OBSERVATORY) {
+            $obs = $this->getObservatory($disp_id);
+            if ($obs['used'])
+                throw new BgaUserException(self::_("You cannot displace an Observatory after using it"));
+        }
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
@@ -920,7 +916,7 @@ class SaintPetersburg extends Table
         $notif = 'addCard';
         $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
         $this->cardAction($card['id'], -1, $card_row, 0, $dest, $notif, $msg);
-        $this->gamestate->nextState('addCard');
+        $this->gamestate->nextState('nextPlayer');
     }
 
     /*
@@ -956,33 +952,7 @@ class SaintPetersburg extends Table
             $msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
         }
         $this->cardAction($card_id, $trade_id, $card_row, $card_cost, $dest, $notif, $msg);
-        $this->gamestate->nextState('buyCard');
-    }
-
-    function checkTrade($card, $disp_id)
-    {
-        // Verify displaced card exists
-        $disp_card = $this->cards->getCard($disp_id);
-        if ($disp_card == null)
-            throw new feException("Impossible card id");
-
-        // Verify cards are of correct type to trade
-        $card_info = $this->getCardInfo($card);
-        $disp_info = $this->getCardInfo($disp_card);
-        if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
-            ($disp_info['card_type'] == PHASE_WORKER &&
-            $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
-            $disp_info['card_worker_type'] != WORKER_ALL))
-        {
-            throw new BgaUserException(self::_("Wrong type of card to displace"));
-        }
-
-        // Check if trading used Observatory
-        if ($disp_card['type_arg'] == CARD_OBSERVATORY) {
-            $obs = $this->getObservatory($disp_id);
-            if ($obs['used'])
-                throw new BgaUserException(self::_("You cannot displace an Observatory after using it"));
-        }
+        $this->gamestate->nextState('nextPlayer');
     }
 
     /*
@@ -1018,100 +988,7 @@ class SaintPetersburg extends Table
             $msg = clienttranslate('${player_name} plays ${card_name} from their hand for ${card_cost} Ruble(s)');
         }
         $this->cardAction($card_id, $trade_id, 0, $card_cost, $dest, $notif, $msg);
-        $this->gamestate->nextState('playCard');
-    }
-
-    /*
-     * Player displaces a card on their table with a trading card
-     */
-    function tradeCard($trade_id)
-    {
-        self::checkAction('tradeCard');
-
-        // Verify card already selected
-        $card_id = self::getGameStateValue("selected_card");
-        $card_row = self::getGameStateValue("selected_row");
-        if ($card_id < 0 || $card_row < 0)
-            throw new feException("Impossible move");
-
-        // Verify card and trade exist
-        $card = $this->cards->getCard($card_id); // trading card to buy
-        $disp_card = $this->cards->getCard($trade_id); // card to be displaced
-        if ($card == null || $disp_card == null)
-            throw new feException("Impossible card id");
-
-        // Verify cards are of correct type to trade
-        $card_info = $this->getCardInfo($card);
-        $disp_info = $this->getCardInfo($disp_card);
-        if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
-            ($disp_info['card_type'] == PHASE_WORKER &&
-            $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
-            $disp_info['card_worker_type'] != WORKER_ALL))
-        {
-            throw new BgaUserException(self::_("Wrong type of card to displace"));
-        }
-
-        // Check if trading used Observatory
-        if ($disp_card['type_arg'] == CARD_OBSERVATORY) {
-            $obs = $this->getObservatory($trade_id);
-            if ($obs['used'])
-                throw new BgaUserException(self::_("You cannot displace an Observatory after using it"));
-        }
-
-        // Verify player can pay cost
-        $card_cost = $this->getCardCost($card_id, $card_row, $trade_id);
-        $player_id = self::getActivePlayerId();
-        $rubles = self::dbGetRubles($player_id);
-        if ($card_cost > $rubles)
-            throw new BgaUserException(self::_("You do not have enough rubles"));
-
-        // Notify message details
-        $card_idx = $card['type_arg'];
-        $card_loc = $card['location_arg'];
-        if ($card['location'] == 'hand') {
-            //play
-            $card_row = ROW_HAND; // signal client card is in hand
-            $msg = clienttranslate('${player_name} plays ${card_name} from their hand, displacing ${trade_name}, for ${card_cost} Ruble(s)');
-        } else if ($card['location'] == 'obs_tmp') {
-            //observatory
-            $card_row = ROW_OBSERVATORY; // signal client card is observatory pick
-            $msg = clienttranslate('${player_name} buys ${card_name}, displacing ${trade_name}, for ${card_cost} Ruble(s)');
-        } else {
-            //buy
-            $msg = clienttranslate('${player_name} buys ${card_name}, displacing ${trade_name}, for ${card_cost} Ruble(s)');
-        }
-
-        // Pay cost and take card
-        // Do this last to ensure notify information is accurate for pre-move
-        $player_id = self::getActivePlayerId();
-        $this->dbIncRubles($player_id, -$card_cost);
-        self::incStat($card_cost, 'rubles_spent', $player_id);
-        $this->cards->playCard($trade_id);
-        self::incStat(1, 'cards_traded', $player_id);
-        $this->cards->moveCard($card_id, 'table', $player_id);
-        self::incStat(1, 'cards_bought', $player_id);
-
-        self::notifyAllPlayers('tradeCard', $msg, array(
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
-            'card_name' => $this->getCardName($card),
-            'card_id' => $card_id,
-            'card_idx' => $card_idx,
-            'card_loc' => $card_loc,
-            'card_row' => $card_row,
-            'card_cost' => $card_cost,
-            'trade_id' => $trade_id,
-            'trade_name' => $this->getCardName($disp_card)
-        ));
-
-        // Reset card selection and pass counter globals
-        self::setGameStateValue("selected_card", -1);
-        self::setGameStateValue("selected_row", -1);
-        self::setGameStateValue("activated_observatory", -1);
-        self::setGameStateValue("num_pass", 0);
-        self::incStat(1, 'actions_taken', $player_id);
-
-        $this->gamestate->nextState('tradeCard');
+        $this->gamestate->nextState('nextPlayer');
     }
 
     /*
@@ -1161,25 +1038,10 @@ class SaintPetersburg extends Table
             'trade_name' => $trade_name
         ));
 
-        // Reset card selection and pass counter globals
-        self::setGameStateValue("selected_card", -1);
-        self::setGameStateValue("selected_row", -1);
+        // Reset globals
         self::setGameStateValue("activated_observatory", -1);
         self::setGameStateValue("num_pass", 0);
         self::incStat(1, 'actions_taken', $player_id);
-    }
-
-    /*
-     * Player cancels a card selection
-     */
-    function cancelSelect()
-    {
-        self::checkAction('cancel');
-
-        // Reset globals for card selection
-        self::setGameStateValue("selected_card", -1);
-        self::setGameStateValue("selected_row", -1);
-        $this->gamestate->nextState("cancel");
     }
 
     /*
@@ -1204,7 +1066,7 @@ class SaintPetersburg extends Table
             $this->gamestate->nextState('allPass');
         } else {
             // One or more players left to pass => next player
-            $this->gamestate->nextState('pass');
+            $this->gamestate->nextState('nextPlayer');
         }
     }
 
@@ -1311,13 +1173,13 @@ class SaintPetersburg extends Table
         self::setGameStateValue("activated_observatory", $obs['id']);
         self::setGameStateValue('observatory_' . $obs['id'] . '_used', 1);
         self::incStat(1, 'observatory_draws', $player_id);
-        $this->gamestate->nextState("drawCard");
+        $this->gamestate->nextState("useObservatory");
     }
     
     /*
      * Player discards the card drawn with Observatory
      */
-    function obsDiscard()
+    function discardCard()
     {
         self::checkAction('discard');
 
@@ -1346,7 +1208,7 @@ class SaintPetersburg extends Table
         self::setGameStateValue("activated_observatory", -1);
         self::setGameStateValue("num_pass", 0);
         self::incStat(1, 'actions_taken', $player_id);
-        $this->gamestate->nextState('discard');
+        $this->gamestate->nextState('nextPlayer');
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1411,52 +1273,6 @@ class SaintPetersburg extends Table
         }
 
         return $possible_moves;
-    }
-
-    /*
-     * Arguments for states: tradeCard, tradeCardHand,  tradeObservatory
-     * Player attempts to buy a trading card
-     * Return card details and possible actions
-     */
-    function argTradeCard()
-    {
-        // Selected card location are global variables
-        $card_id = self::getGameStateValue("selected_card");
-        $card_row = self::getGameStateValue("selected_row");
-        if ($card_id < 0 || $card_row < 0)
-            //throw new feException("Impossible state"); //TODO ???
-            return array();
-
-        // Get card details and adjusted cost
-        $card = $this->cards->getCard($card_id);
-        $cost = $this->getCardCost($card_id, $card_row);
-
-        $trades = array();
-        $player_id = self::getActivePlayerId();
-
-        // Possible actions for displacing
-        if ($this->isTrading($card)) {
-            $has_trade = $this->getTrades($card, $cost, $player_id, $trades);
-
-            // Must have valid card and enough rubles to make trade
-            if (count($trades) == 0) {
-                if ($has_trade) {
-                    throw new BgaUserException(self::_('You do not have enough rubles to trade'));
-                } else {
-                    throw new BgaUserException(self::_('You do not have any valid cards to trade'));
-                }
-            }
-        }
-
-        return array(
-            'card_name' => $this->getCardName($card),
-            'cost' => $cost,
-            'player_id' => $player_id,
-            'card_id' => $card['id'],
-            'row' => $card_row,
-            'col' => $card['location_arg'],
-            'trades' => $trades
-        );
     }
 
     /*
@@ -1683,21 +1499,8 @@ class SaintPetersburg extends Table
             if ($statename == "playerTurn") {
                 // No special action, just pass below
                 $pass = true; // Empty expression just to capture state
-            } else if ($statename == "selectCard" ||
-                $statename == "tradeCard" ||
-                $statename == "tradeCardHand" ||
-                $statename == "useObservatory")
-            {
-                // Clear card selection
-                // No notify as UI change is only on active (zombie) player
-                self::setGameStateValue("selected_card", -1);
-                self::setGameStateValue("selected_row", -1);
-            } else if ($statename == "useObservatory" ||
-                    $statename == "tradeObservatory")
-            {
-                // Clear card selection
-                self::setGameStateValue("selected_card", -1);
-                self::setGameStateValue("selected_row", -1);
+            } else if ($statename == "useObservatory") {
+                // Clear Observatory selection
                 self::setGameStateValue("activated_observatory", -1);
 
                 // Discard drawn card
@@ -1735,7 +1538,7 @@ class SaintPetersburg extends Table
         if ($state['type'] === "multipleactiveplayer") {
             // Make sure player is in a non blocking status for role turn
             // Only multi state is Pub buy, and this is the correct action
-            $this->gamestate->setPlayerNonMultiactive($active_player, '');
+            $this->gamestate->setPlayerNonMultiactive($active_player, 'nextPhase');
             
             return;
         }
