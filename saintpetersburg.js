@@ -225,17 +225,17 @@ function (dojo, declare) {
                     this.possible_moves = args.args;
                     this.client_state_args = {lock:true};
                     if (this.isCurrentPlayerActive()) {
-                        this.setSelections(args.args, false);
+                        this.setSelections(false);
                     }
                     break;
                 case 'client_selectCard':
-                    this.setSelections(args.args, false);
+                    this.setSelections(false);
                     break;
-                case 'tradeCard':
-                    this.setSelections(args.args, true);
+                case 'client_tradeCard':
+                    this.setSelections(true);
                     break;
                 case 'tradeCardHand':
-                    this.setSelections(args.args, true);
+                    this.setSelections(true);
                     break;
                 case 'client_useObservatory':
                     // Highlight decks for selection
@@ -272,7 +272,7 @@ function (dojo, declare) {
                     break;
                 // Fall thru for everything else
                 case 'client_selectCard':
-                case 'tradeCard':
+                case 'client_tradeCard':
                 case 'tradeCardHand':
                 case 'tradeObservatory':
                 default:
@@ -311,7 +311,7 @@ function (dojo, declare) {
                         this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                         this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
-                    case 'tradeCard':
+                    case 'client_tradeCard':
                         // Options: cancel
                         this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
@@ -672,31 +672,52 @@ function (dojo, declare) {
         /*
          * Highlight selected card and any possible moves
          */
-        setSelections: function (args, is_trading)
+        setSelections: function (is_trading)
         {
             if (this.debug) console.log('setSelection');
-            if (this.debug) console.log(args);
+            if (this.debug) console.log(is_trading);
 
-            for (var row in this.possible_moves) {
-                for (var col in this.possible_moves[row]) {
-                    var card = this.possible_moves[row][col];
-                    console.log(row + "," + col);
-                    console.log(card);
-                    if (card.can_buy || card.can_add) {
-                        // Board
-                        var div = this.getCardDiv(row, col);
-                        if (row == this.constants.hand) {
-                            // Hand
-                            div = this.playerHand.getItemDivId(col);
-                        } else if (row == this.constants.observatory) {
-                            // Observatory
-                            div = this.player_tables[this.player_id].getItemDivId(col);
+            var row, col, div, card;
+
+            if (is_trading) {
+                // Player is acting on a trading card
+                // Highlight possible trades on table
+                row = this.client_state_args.row;
+                col = this.client_state_args.col;
+                var card_info = this.possible_moves[row][col];
+
+                for (var i in card_info.trades) {
+                    div = this.player_tables[this.player_id].getItemDivId(card_info.trades[i]);
+                    dojo.addClass(div, 'stp_selectable');
+                }
+
+                // Let player select a card on their table
+                this.playerTable.setSelectionMode(1);
+            } else {
+                // Player can select a card to add/buy/play
+                // Highlight all possible moves
+                for (row in this.possible_moves) {
+                    for (col in this.possible_moves[row]) {
+                        card = this.possible_moves[row][col];
+                        console.log(row + "," + col);
+                        console.log(card);
+                        if (card.can_buy || card.can_add) {
+                            // Board
+                            div = this.getCardDiv(row, col);
+                            if (row == this.constants.hand) {
+                                // Hand
+                                div = this.playerHand.getItemDivId(col);
+                            } else if (row == this.constants.observatory) {
+                                // Observatory
+                                div = this.player_tables[this.player_id].getItemDivId(col);
+                            }
+                            dojo.addClass(div, 'stp_selectable');
                         }
-                        dojo.addClass(div, 'stp_selectable');
                     }
                 }
             }
 
+            // Highlight currently selected card, if any
             row = this.client_state_args.row;
             col = this.client_state_args.col;
             if (row !== undefined && col !== undefined) {
@@ -712,60 +733,6 @@ function (dojo, declare) {
                 dojo.removeClass(div, 'stp_selectable');
                 dojo.addClass(div, 'stp_selected');
             }
-
-            //TODO: trade?
-
-            //TODO: cancel -> this.restoreServerGameState();
-
-
-            /*
-            var div = null;
-
-            // Highlight selected card
-            // In hand?
-            if (!this.spectator) { // spectator has no hand
-                div = this.playerHand.getItemDivId(args.card_id);
-            }
-            if ($(div)) {
-                // In hand
-                // Select stock item, otherwise won't show
-                this.playerHand.selectItem(args.card_id);
-            } else {
-                // Not hand. Board?
-                var col = this.getBoardColumn(args.col);
-                div = 'card_' + col + '_' + args.row;
-            }
-
-            if (!$(div)) {
-                // No. Observatory pick?
-                div = 'card_99_99';
-            }
-
-            if (!$(div)) {
-                // Card not found anywhere...
-                if (args.player_id != this.player_id) {
-                    // Could be in active player's hand (not me)
-                    return;
-                }
-
-                // How did we get here?
-                alert("ERROR: Impossible selection");
-                return;
-            }
-
-            dojo.addClass(div, 'stp_selected'); // highlight
-
-            // Highlight trade options
-            for (var i in args.trades) {
-                div = this.player_tables[args.player_id].getItemDivId(args.trades[i]);
-                dojo.addClass(div, 'stp_selectable');
-            }
-
-            // Update player table selection mode to allow trading
-            if (is_trading && args.player_id == this.player_id) {
-                this.playerTable.setSelectionMode(1);
-            }
-            */
         },
 
         /*
@@ -890,14 +857,34 @@ function (dojo, declare) {
             if (!this.checkAction('buyCard'))
                 return;
 
+            // Get card info to handle trading cards
+            var col = this.client_state_args.col;
+            var row = this.client_state_args.row;
+            var card_info = this.possible_moves[row][col];
+
             if (this.isButtonDisabled(evt.target)) {
-                this.showMessage(_("You do not have enough rubles"), "error");
+                // Player cannot buy
+                // Check if trading card to give most accurate error message
+                if (card_info.is_trading && !card_info.has_trade) {
+                    this.showMessage(_("You do not have any valid cards to trade"), "error");
+                } else {
+                    this.showMessage(_("You do not have enough rubles"), "error");
+                }
                 return;
             }
 
-            this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/buyCard.html",
-                this.client_state_args, this, function (result) {});
+            if (card_info.is_trading) {
+                // Player needs to select card to displace
+                this.setClientState('client_tradeCard', {
+                    descriptionmyturn: _('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+                    args: card_info
+                });
+            } else {
+                // Send buy action to server
+                this.ajaxcall(
+                    "/saintpetersburg/saintpetersburg/buyCard.html",
+                    this.client_state_args, this, function (result) {});
+            }
         },
 
         /*
@@ -909,11 +896,8 @@ function (dojo, declare) {
             if (!this.checkAction('cancel'))
                 return;
 
+            // Reset to main state
             this.restoreServerGameState();
-
-            //this.ajaxcall(
-             //   "/saintpetersburg/saintpetersburg/cancelSelect.html",
-              //  {lock:true}, this, function (result) {});
         },
 
         /*
@@ -1034,6 +1018,8 @@ function (dojo, declare) {
                 if (this.checkAction('playCard')) {
                     // Play card from hand
                     var card_id = items[0].id;
+                    this.client_state_args.col = card_id;
+                    this.client_state_args.row = this.constants.hand;
 
                     var card = this.possible_moves[this.constants.hand][card_id];
                     if (card === undefined) {
@@ -1041,14 +1027,29 @@ function (dojo, declare) {
                     }
 
                     if (!card.can_buy) {
-                        this.showMessage(_("You do not have enough rubles"), "error");
+                        // Player cannot play this card
+                        // Check if trading card to give most accurate error message
+                        if (card.is_trading && !card.has_trade) {
+                            this.showMessage(_("You do not have any valid cards to trade"), "error");
+                        } else {
+                            this.showMessage(_("You do not have enough rubles"), "error");
+                        }
                         this.playerHand.unselectAll();
                         return;
                     }
                     
-                    this.ajaxcall(
-                        "/saintpetersburg/saintpetersburg/playCard.html",
-                        {lock:true, card_id: card_id}, this, function (result) {});
+                    if (card.is_trading) {
+                        // Player needs to select card to displace
+                        this.setClientState('client_tradeCard', {
+                            descriptionmyturn: _('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+                            args: card
+                        });
+                    } else {
+                        // Send play action to server
+                        this.ajaxcall(
+                            "/saintpetersburg/saintpetersburg/playCard.html",
+                            this.client_state_args, this, function (result) {});
+                    }
 
                     this.playerHand.unselectAll();
                 } else {
@@ -1067,13 +1068,22 @@ function (dojo, declare) {
             var items = this.playerTable.getSelectedItems();
 
             if (items.length > 0) {
-                if (this.checkAction('tradeCard')) {
+                //TODO: how to check this? check client state? if (this.checkAction('tradeCard')) {
+                if (this.checkAction('buyCard')) {//XXX
                     // Displace card with trading card
-                    var card_id = items[0].id;
+                    this.client_state_args.trade_id = items[0].id;
                     
-                    this.ajaxcall(
-                        "/saintpetersburg/saintpetersburg/tradeCard.html",
-                        {lock:true, card_id: card_id}, this, function (result) {});
+                    if (this.client_state_args.row == this.constants.hand) {
+                        // Play from hand
+                        this.ajaxcall(
+                            "/saintpetersburg/saintpetersburg/playCard.html",
+                            this.client_state_args, this, function (result) {});
+                    } else {
+                        // Buy from board
+                        this.ajaxcall(
+                            "/saintpetersburg/saintpetersburg/buyCard.html",
+                            this.client_state_args, this, function (result) {});
+                    }
 
                     this.playerTable.unselectAll();
                 } else {
