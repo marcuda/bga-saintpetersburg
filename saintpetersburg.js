@@ -241,7 +241,10 @@ function (dojo, declare) {
                     // Highlight decks for selection
                     dojo.query('.stp_deck').addClass('stp_selectable');
                     break;
-                case 'chooseObservatory':
+                case 'useObservatory':
+                    this.possible_moves = {};
+                    this.possible_moves[this.constants.observatory] = {};
+                    this.possible_moves[this.constants.observatory][0] = args.args;
                     this.showObservatoryChoice(args.args);
                     break;
                 case 'tradeObservatory':
@@ -334,12 +337,12 @@ function (dojo, declare) {
                         // Options: cancel
                         this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
-                    case 'chooseObservatory':
+                    case 'useObservatory':
                         // Options: buy, add, cancel
                         var buy_color = args.can_buy ? "blue" : "gray";
                         var add_color = args.can_add ? "blue" : "gray";
-                        this.addActionButton("button_1", _("Buy") + " (" + args.cost + ")", "onObsBuyCard", null, false, buy_color);
-                        this.addActionButton("button_2", _("Add to hand"), "onObsAddCard", null, false, add_color);
+                        this.addActionButton("button_1", _("Buy") + " (" + args.cost + ")", "onBuyCard", null, false, buy_color);
+                        this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                         this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
                         break;
                     case 'tradeObservatory':
@@ -726,7 +729,13 @@ function (dojo, declare) {
                 } else if (row == this.constants.hand) {
                     div = this.playerHand.getItemDivId(col);
                 } else if (row == this.constants.observatory) {
-                    div = this.player_tables[this.player_id].getItemDivId(col);
+                    if (col == 0) {
+                        // Drawn Observatory card
+                        div = this.getCardDiv(this.constants.observatory, col);
+                    } else {
+                        // Observatory on table
+                        div = this.player_tables[this.player_id].getItemDivId(col);
+                    }
                 }
                 console.log('SELECTED: ' + row + ' ' + col);
                 console.log(div);
@@ -752,6 +761,9 @@ function (dojo, declare) {
                 dojo.addClass(card_id, 'stp_selected');
                 return;
             }
+
+            this.client_state_args.row = this.constants.observatory;
+            this.client_state_args.col = 0;
 
             // Disable Observatory
             dojo.style('card_content_mask_' + args.obs_id, 'display', 'block');
@@ -1101,6 +1113,7 @@ function (dojo, declare) {
         {
             dojo.stopEvent(evt);
 
+            //TODO!
             if (this.checkAction('tradeCard', true)) {
                 // In trade state
                 // Do not register click and let state machine handle the rest
@@ -1224,7 +1237,7 @@ function (dojo, declare) {
         },  
         
         /*
-         * Message for player buying (non-trading) card
+         * Message for player buying card
          */
         notif_buyCard: function (notif)
         {
@@ -1240,6 +1253,12 @@ function (dojo, declare) {
                 // Observatory pick
                 col = 0;
                 src = 'stp_gameboard';
+            }
+
+            if (notif.args.trade_id > 0) {
+                // Remove displaced card from table
+                this.player_tables[notif.args.player_id].removeFromStockById(
+                    notif.args.trade_id, 'discard_pile');
             }
 
             // Move card from board to player table
@@ -1305,6 +1324,12 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('buy card notif');
             if (this.debug) console.log(notif);
+
+            if (notif.args.trade_id > 0) {
+                // Remove displaced card from table
+                this.player_tables[notif.args.player_id].removeFromStockById(
+                    notif.args.trade_id, 'discard_pile');
+            }
 
             if (notif.args.player_id == this.player_id) {
                 // Active player - move card from hand to table
