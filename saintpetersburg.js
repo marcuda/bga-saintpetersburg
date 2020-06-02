@@ -402,18 +402,6 @@ function (dojo, declare) {
         },
 
         /*
-         * Convert card location from given list position to UI board position
-         */
-        getBoardColumn: function (x)
-        {
-            // 8 card slots (0-7) in each row of the board
-            // First card from server is at position 0
-            // Right-most position on board is 7
-            // Invert column index to deal right-to-left
-            return 7 - x;
-        },
-
-        /*
          * Build stock element for player hand and tables
          */
         createCardStock: function (elem, mode)
@@ -571,10 +559,6 @@ function (dojo, declare) {
             var x = this.cardwidth * (idx % this.card_art_row_size);
             var y = this.cardheight * Math.floor(idx / this.card_art_row_size);
 
-            // Board position
-            col = this.getBoardColumn(col);
-            var card_div = this.getCardDiv(row, col);
-
             if (this.debug) console.log('adding card type '+idx+' at x,y '+col+','+row);
 
             dojo.place(this.format_block('jstpl_card', {
@@ -584,6 +568,7 @@ function (dojo, declare) {
                 col: col
             }), 'cards');
 
+            var card_div = this.getCardDiv(row, col);
             this.placeOnObject(card_div, src);
             this.slideToObject(card_div, this.getBoardDiv(row, col)).play();
 
@@ -699,7 +684,7 @@ function (dojo, declare) {
                     console.log(card);
                     if (card.can_buy || card.can_add) {
                         // Board
-                        var div = this.getCardDiv(row, this.getBoardColumn(col));
+                        var div = this.getCardDiv(row, col);
                         if (row == this.constants.hand) {
                             // Hand
                             div = this.playerHand.getItemDivId(col);
@@ -713,7 +698,7 @@ function (dojo, declare) {
             }
 
             row = this.client_state_args.row;
-            col = this.getBoardColumn(this.client_state_args.col);
+            col = this.client_state_args.col;
             if (row !== undefined && col !== undefined) {
                 if (row == 0 || row == 1) {
                     div = this.getCardDiv(row, col);
@@ -864,7 +849,7 @@ function (dojo, declare) {
 
             // Card location
             var coords = evt.currentTarget.id.split('_');
-            var col = this.getBoardColumn(coords[1]);
+            var col = coords[1];
             var row = coords[2];
             var card_info = this.possible_moves[row][col];
 
@@ -1238,7 +1223,7 @@ function (dojo, declare) {
 
             // Card position on board
             var row = notif.args.card_row;
-            var col = this.getBoardColumn(notif.args.card_loc);
+            var col = notif.args.card_loc;
             var src = this.getBoardDiv(row, col);
 
             if (row == this.constants.observatory) {
@@ -1269,7 +1254,7 @@ function (dojo, declare) {
 
             // Card position on board
             var row = notif.args.card_row;
-            var col = this.getBoardColumn(notif.args.card_loc);
+            var col = notif.args.card_loc;
             var src = this.getBoardDiv(row, col);
 
             if (row == this.constants.observatory) {
@@ -1386,7 +1371,7 @@ function (dojo, declare) {
                     notif.args.card_idx, notif.args.card_id, 'stp_gameboard');
             } else {
                 // Buy from board
-                var col = this.getBoardColumn(notif.args.card_loc);
+                var col = notif.args.card_loc;
                 dojo.destroy(this.getCardDiv(row, col));
                 this.player_tables[notif.args.player_id].addToStockWithId(
                     notif.args.card_idx, notif.args.card_id,
@@ -1410,8 +1395,8 @@ function (dojo, declare) {
 
             var row = notif.args.row;
             for (var i in notif.args.columns) {
-                var old_col = this.getBoardColumn(i);
-                var new_col = this.getBoardColumn(notif.args.columns[i]);
+                var old_col = i;
+                var new_col = notif.args.columns[i];
                 if (new_col != old_col) {
                     var old_card = this.getCardDiv(row, old_col);
                     var new_card = this.getCardDiv(row, new_col);
@@ -1434,7 +1419,7 @@ function (dojo, declare) {
             if (this.debug) console.log(notif);
 
             for (var i in notif.args.columns) {
-                var col = this.getBoardColumn(notif.args.columns[i]);
+                var col = notif.args.columns[i];
                 var old_card = this.getCardDiv(0, col);
                 var new_card = this.getCardDiv(1, col);
                 // Slide card down to new position
@@ -1519,7 +1504,7 @@ function (dojo, declare) {
                 var card = notif.args.cards[i];
                 // Card location
                 var row = card.row;
-                var col = this.getBoardColumn(card.col);
+                var col = card.col;
                 if (row == this.constants.observatory) {
                     // Observatory pick
                     var col = 0;
