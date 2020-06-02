@@ -234,9 +234,6 @@ function (dojo, declare) {
                 case 'client_tradeCard':
                     this.setSelections(true);
                     break;
-                case 'tradeCardHand':
-                    this.setSelections(true);
-                    break;
                 case 'client_useObservatory':
                     // Highlight decks for selection
                     dojo.query('.stp_deck').addClass('stp_selectable');
@@ -246,9 +243,6 @@ function (dojo, declare) {
                     this.possible_moves[this.constants.observatory] = {};
                     this.possible_moves[this.constants.observatory][0] = args.args;
                     this.showObservatoryChoice(args.args);
-                    break;
-                case 'tradeObservatory':
-                    this.setSelections(args.args, true);
                     break;
                 case 'usePub':
                     if (args.args[this.player_id] === undefined) {
@@ -268,27 +262,15 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('Leaving state: ' + stateName);
 
-            switch(stateName)
-            {
-                case 'client_useObservatory':
-                    dojo.query('.stp_deck').removeClass('stp_selectable');
-                    break;
-                // Fall thru for everything else
-                case 'client_selectCard':
-                case 'client_tradeCard':
-                case 'tradeCardHand':
-                case 'tradeObservatory':
-                default:
-                    // Reset selections for all items
-                    if (!this.spectator) {
-                        // Spectator has no hand or board!
-                        this.playerHand.unselectAll();
-                        this.playerTable.setSelectionMode(0);
-                    }
-                    dojo.query('.stp_selected').removeClass('stp_selected');
-                    dojo.query('.stp_selectable').removeClass('stp_selectable');
-                    break;
-            }               
+            // Reset selections for all items
+            // No special handling for any state
+            if (!this.spectator) {
+                // Spectator has no hand or board!
+                this.playerHand.unselectAll();
+                this.playerTable.setSelectionMode(0);
+            }
+            dojo.query('.stp_selected').removeClass('stp_selected');
+            dojo.query('.stp_selectable').removeClass('stp_selectable');
         }, 
 
         // onUpdateActionButtons: in this method you can manage "action buttons" that are displayed in the
@@ -318,10 +300,6 @@ function (dojo, declare) {
                         // Options: cancel
                         this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
-                    case 'tradeCardHand':
-                        // Options: cancel
-                        this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
-                        break;
                     case 'usePub':
                         // Options: -1, +1, buy, pass
                         var color = "blue";
@@ -343,11 +321,7 @@ function (dojo, declare) {
                         var add_color = args.can_add ? "blue" : "gray";
                         this.addActionButton("button_1", _("Buy") + " (" + args.cost + ")", "onBuyCard", null, false, buy_color);
                         this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
-                        this.addActionButton("button_3", _("Discard"), "onObsDiscardCard");
-                        break;
-                    case 'tradeObservatory':
-                        // Options: cancel
-                        this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
+                        this.addActionButton("button_3", _("Discard"), "onDiscardCard");
                         break;
                 }
             }
@@ -815,7 +789,6 @@ function (dojo, declare) {
         ///////////////////////////////////////////////////
         //// Player's action
         //
-        // TODO: Currently almost all actions are handled by server, which is probably overkill
 
         /*
          * Player clicks an active card
@@ -1158,44 +1131,16 @@ function (dojo, declare) {
         },
 
         /*
-         * Player clicks 'Add to hand' button for Observatory
-         */
-        onObsAddCard: function (evt)
-        {
-            dojo.stopEvent(evt);
-            if (!this.checkAction('addCard'))
-                return;
-
-            this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/obsAdd.html",
-                {lock:true}, this, function (result) {});
-        },
-
-        /*
-         * Player clicks 'Buy' button for Observatory
-         */
-        onObsBuyCard: function (evt)
-        {
-            dojo.stopEvent(evt);
-            if (!this.checkAction('buyCard'))
-                return;
-
-            this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/obsBuy.html",
-                {lock:true}, this, function (result) {});
-        },
-
-        /*
          * Player clicks 'Discard' button for Observatory
          */
-        onObsDiscardCard: function (evt)
+        onDiscardCard: function (evt)
         {
             dojo.stopEvent(evt);
             if (!this.checkAction('discard'))
                 return;
 
             this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/obsDiscard.html",
+                "/saintpetersburg/saintpetersburg/discardCard.html",
                 {lock:true}, this, function (result) {});
         },
 
@@ -1220,7 +1165,6 @@ function (dojo, declare) {
             dojo.subscribe('buyCard', this, 'notif_buyCard');
             dojo.subscribe('addCard', this, 'notif_addCard');
             dojo.subscribe('playCard', this, 'notif_playCard');
-            dojo.subscribe('tradeCard', this, 'notif_tradeCard');
             dojo.subscribe('shiftRight', this, 'notif_shiftRight');
             this.notifqueue.setSynchronous('shiftRight', 1000);
             dojo.subscribe('shiftDown', this, 'notif_shiftDown');
@@ -1358,65 +1302,6 @@ function (dojo, declare) {
                 var idx = this.player_hands[notif.args.player_id].indexOf(notif.args.card_idx);
                 this.player_hands[notif.args.player_id].splice(idx, 1);
                 this.updateHandTooltip(notif.args.player_id);
-            }
-        },
-
-        /*
-         * Message for player buying a trading card displacing a card on table
-         */
-        notif_tradeCard: function (notif)
-        {
-            if (this.debug) console.log('notif trade card');
-            if (this.debug) console.log(notif);
-
-            // Remove displaced card from table
-            this.player_tables[notif.args.player_id].removeFromStockById(
-                notif.args.trade_id, 'discard_pile');
-
-            // Add trading card from correct place
-            var row = notif.args.card_row;
-            if (row == this.constants.hand) {
-                // Play from hand
-                if (notif.args.player_id == this.player_id) {
-                    // Active player - move card from hand to table
-                    this.playerTable.addToStockWithId(
-                        notif.args.card_idx, notif.args.card_id,
-                        'myhand_item_' + notif.args.card_id);
-                    this.playerHand.removeFromStockById(notif.args.card_id);
-                } else {
-                    // Other players - add card to table
-                    this.player_tables[notif.args.player_id].addToStockWithId(
-                        notif.args.card_idx, notif.args.card_id,
-                        'overall_player_board_' + notif.args.player_id);
-                }
-
-                // Update hand count on player board
-                this.player_hand_counts[notif.args.player_id].incValue(-1);
-
-                // Update hand tooltip if show cards option enabled
-                if (this.player_hands[notif.args.player_id]) {
-                    var idx = this.player_hands[notif.args.player_id].indexOf(notif.args.card_idx);
-                    this.player_hands[notif.args.player_id].splice(idx, 1);
-                    this.updateHandTooltip(notif.args.player_id);
-                }
-            } else if (row == this.constants.observatory) {
-                // Observatory pick - move card from board to table
-                dojo.destroy(this.getCardDiv(this.constants.observatory, 0));
-                this.player_tables[notif.args.player_id].addToStockWithId(
-                    notif.args.card_idx, notif.args.card_id, 'stp_gameboard');
-            } else {
-                // Buy from board
-                var col = notif.args.card_loc;
-                dojo.destroy(this.getCardDiv(row, col));
-                this.player_tables[notif.args.player_id].addToStockWithId(
-                    notif.args.card_idx, notif.args.card_id,
-                    this.getBoardDiv(row, col));
-            }
-
-            if (this.player_rubles[notif.args.player_id]) {
-                // Active player sees ruble count after playing cost
-                // (either their own or with game option enabled for others)
-                this.player_rubles[notif.args.player_id].incValue(-notif.args.card_cost);
             }
         },
 

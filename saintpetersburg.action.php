@@ -60,14 +60,6 @@ class action_saintpetersburg extends APP_GameAction
         self::ajaxResponse();
     }
 
-    // Player clicks the 'Cancel' button
-    public function cancelSelect()
-    {
-        self::setAjaxMode();
-        $result = $this->game->cancelSelect();
-        self::ajaxResponse();
-    }
-
     // Player clicks the 'Pass' button
     public function pass()
     {
@@ -86,30 +78,12 @@ class action_saintpetersburg extends APP_GameAction
         self::ajaxResponse();
     }
 
-    // Player selects a card on their board to displace
-    public function tradeCard()
-    {
-        self::setAjaxMode();
-        $card_id = self::getArg("card_id", AT_posint, true); // displaced card id
-        $result = $this->game->tradeCard($card_id);
-        self::ajaxResponse();
-    }
-
     // Player clicks the 'Buy' button for the Pub bonus
     public function buyPoints()
     {
         self::setAjaxMode();
         $points = self::getArg("points", AT_posint, true); // number points
         $result = $this->game->buyPoints($points);
-        self::ajaxResponse();
-    }
-
-    // Player clicks an active Observatory on their board
-    public function useObservatory()
-    {
-        self::setAjaxMode();
-        $card_id = self::getArg("card_id", AT_posint, true); // observatory id
-        $result = $this->game->useObservatory($card_id);
         self::ajaxResponse();
     }
 
@@ -123,27 +97,11 @@ class action_saintpetersburg extends APP_GameAction
         self::ajaxResponse();
     }
 
-    // Player clicks the 'Buy' button while using Observatory
-    public function obsBuy()
-    {
-        self::setAjaxMode();
-        $result = $this->game->obsBuy();
-        self::ajaxResponse();
-    }
-
-    // Player clicks the 'Add to hand' button while using Observatory
-    public function obsAdd()
-    {
-        self::setAjaxMode();
-        $result = $this->game->obsAdd();
-        self::ajaxResponse();
-    }
-
     // Player clicks the 'Discard' button while using Observatory
-    public function obsDiscard()
+    public function discardCard()
     {
         self::setAjaxMode();
-        $result = $this->game->obsDiscard();
+        $result = $this->game->discardCard();
         self::ajaxResponse();
     }
 
