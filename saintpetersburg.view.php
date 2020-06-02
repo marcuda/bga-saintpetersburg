@@ -45,17 +45,17 @@ class view_saintpetersburg_saintpetersburg extends game_view
 
         $hor_scale = 90;
         $ver_scale = 120;
-        for ($x=0; $x<8; $x++)
+        for ($y=0; $y<2; $y++)
         {
-                for ($y=0; $y<2; $y++)
-                {
-                        $this->page->insert_block("square", array(
-                                'X' => $x,
-                                'Y' => $y,
-                                'LEFT' => round(($x) * $hor_scale + 20),
-                                'TOP' => round(($y) * $ver_scale + 232)
-                        ));
-                }
+            for ($x=0; $x<8; $x++)
+            {
+                $this->page->insert_block("square", array(
+                    'X' => $x,
+                    'Y' => $y,
+                    'LEFT' => round((7 - $x) * $hor_scale + 20), // count right to left
+                    'TOP' => round($y * $ver_scale + 232)
+                ));
+            }
         }
 
         // Template block for player boards
