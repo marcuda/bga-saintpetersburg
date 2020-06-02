@@ -450,6 +450,10 @@ class SaintPetersburg extends Table
         $card_info = $this->getCardInfo($card);
 
         // -1 if taken from the lower row
+        if ($row != 1) {
+            // Other locations (e.g. hand, Observatory) give no discount
+            $row = 0;
+        }
         $cost = $card_info['card_cost'] - $row;
 
         $player_id = self::getActivePlayerId();
@@ -876,10 +880,18 @@ class SaintPetersburg extends Table
      */
     function getSelectedCard($row, $col)
     {
-        // Verify a card exists here
-        $loc = ($row == 0 ? TOP_ROW : BOTTOM_ROW);
+        // Get card from correct location
+        if ($row == 0) {
+            $loc = TOP_ROW;
+        } else if ($row == 1) {
+            $loc = BOTTOM_ROW;
+        } else if ($row == ROW_OBSERVATORY) {
+            $loc = 'obs_tmp';
+            $col = self::getActivePlayerId();
+        }
         $cards = $this->cards->getCardsInLocation($loc, $col);
 
+        // Verify a card exists here
         if (count($cards) != 1)
             throw new feException("Impossible selection");
 
@@ -1303,69 +1315,6 @@ class SaintPetersburg extends Table
     }
     
     /*
-     * Player buys the card drawn with Observatory
-     */
-    function obsBuy()
-    {
-        self::checkAction('buyCard');
-
-        // Verify drawn card
-        $player_id = self::getActivePlayerId();
-        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
-        if ($cards == null || count($cards) != 1)
-            throw new feException("Impossible Observatory buy");
-
-        $card = array_shift($cards);
-
-        // Additional action required if trading card
-        if ($this->isTrading($card)) {
-            self::setGameStateValue("selected_card", $card['id']);
-            self::setGameStateValue("selected_row", 0);
-            $this->gamestate->nextState('tradeCard');
-            return;
-        }
-
-        // Verify player can pay cost
-        $card_cost = $this->getCardCost($card['id'], 0);
-        $rubles = self::dbGetRubles($player_id);
-        if ($card_cost > $rubles)
-            throw new BgaUserException(self::_("You do not have enough rubles"));
-
-        // Add card to player table
-        $dest = 'table';
-        $notif = 'buyCard';
-        $msg = clienttranslate('Observatory: ${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
-        $this->cardAction($card['id'], ROW_OBSERVATORY, $card_cost, $dest, $notif, $msg);
-        $this->gamestate->nextState('buyCard');
-    }
-
-    /*
-     * Player adds to their hand the card drawn with Observatory
-     */
-    function obsAdd()
-    {
-        self::checkAction('addCard');
-
-        // Verify drawn card
-        $player_id = self::getActivePlayerId();
-        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
-        if ($cards == null || count($cards) != 1)
-            throw new feException("Impossible Observatory add");
-
-        // Cannot take if hand is full
-        if ($this->isHandFull($player_id))
-            throw new BgaUserException(self::_("Your hand is full"));
-
-        // Add card to hand
-        $card = array_shift($cards);
-        $dest = 'hand';
-        $notif = 'addCard';
-        $msg = clienttranslate('Observatory: ${player_name} adds ${card_name} to their hand');
-        $this->cardAction($card['id'], ROW_OBSERVATORY, 0, $dest, $notif, $msg);
-        $this->gamestate->nextState('addCard');
-    }
-
-    /*
      * Player discards the card drawn with Observatory
      */
     function obsDiscard()
@@ -1386,7 +1335,7 @@ class SaintPetersburg extends Table
         $location = array();
         $location[] = array('row' => ROW_OBSERVATORY);
 
-        $msg = clienttranslate('Observatory: ${player_name} discards ${card_name}');
+        $msg = clienttranslate('${player_name} discards ${card_name}');
         self::notifyAllPlayers('discard', $msg, array(
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
@@ -1511,11 +1460,11 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Arguments for state: chooseObservatory
+     * Arguments for state: useObservatory
      * Player draws a card with Observatory
      * Return card details and possible actions
      */
-    function argChooseObservatory()
+    function argUseObservatory()
     {
         // Get card drawn with Observatory
         $player_id = self::getActivePlayerId();
@@ -1525,12 +1474,15 @@ class SaintPetersburg extends Table
 
         // Possible actions
         $card = array_shift($cards);
+        $rubles = self::dbGetRubles($player_id);
+        $hand_full = $this->isHandFull($player_id);
+        $possible_moves = $this->getPossibleMoves($player_id, $card, $rubles, $hand_full);
         $obs_id = self::getGameStateValue("activated_observatory");
-        $opts = $this->getSelectedCardOptions($card['id'], 0);
-        $opts['card'] = $card;
-        $opts['obs_id'] = self::getGameStateValue('observatory_' . $obs_id . '_id');
+        $possible_moves['card'] = $card;
+        $possible_moves['obs_id'] = self::getGameStateValue('observatory_' . $obs_id . '_id');
+        $possible_moves['player_id'] = $player_id;
 
-        return $opts;
+        return $possible_moves;
     }
 
     /*
@@ -1576,6 +1528,7 @@ class SaintPetersburg extends Table
      */
     function stNextPlayer()
     {
+        //TODO: auto pass if no action?
         $player_id = self::activeNextPlayer();
         self::giveExtraTime($player_id);
         $this->gamestate->nextState('nextTurn');
@@ -1739,7 +1692,7 @@ class SaintPetersburg extends Table
                 // No notify as UI change is only on active (zombie) player
                 self::setGameStateValue("selected_card", -1);
                 self::setGameStateValue("selected_row", -1);
-            } else if ($statename == "chooseObservatory" ||
+            } else if ($statename == "useObservatory" ||
                     $statename == "tradeObservatory")
             {
                 // Clear card selection

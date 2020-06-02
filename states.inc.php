@@ -83,8 +83,8 @@ $machinestates = array(
     // Normal player turn
     STATE_PLAYER_TURN => array(
         "name" => "playerTurn",
-        "description" => clienttranslate('${actplayer} must play a card or pass'),
-        "descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
+        "description" => clienttranslate('${actplayer} must choose a card or pass'),
+        "descriptionmyturn" => clienttranslate('${you} must choose a card or pass'),
         "type" => "activeplayer",
         "args" => "argPlayerTurn",
         "possibleactions" => array("selectCard", "addCard", "buyCard", "playCard", "useObservatory", "pass", "cancel"),
@@ -168,15 +168,14 @@ $machinestates = array(
 
     // Player draws a card with Observatory and needs to choose what to do
     STATE_USE_OBSERVATORY => array(
-        "name" => "chooseObservatory",
-        "description" => clienttranslate('Observatory: ${actplayer} must play or discard'),
-        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must play or discard'),
+        "name" => "useObservatory",
+        "description" => clienttranslate('Observatory: ${actplayer} must take or discard'),
+        "descriptionmyturn" => clienttranslate('${card_name}: ${you} must take or discard'),
         "type" => "activeplayer",
-        "args" => "argChooseObservatory",
+        "args" => "argUseObservatory",
         "possibleactions" => array("buyCard", "addCard", "discard"),
         "transitions" => array(
             "buyCard" => STATE_NEXT_PLAYER,
-            "tradeCard" => STATE_OBSERVATORY_TRADE,
             "addCard" => STATE_NEXT_PLAYER,
             "discard" => STATE_NEXT_PLAYER,
             "zombiePass" => STATE_NEXT_PLAYER,
