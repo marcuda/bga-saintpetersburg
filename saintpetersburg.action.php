@@ -45,7 +45,8 @@ class action_saintpetersburg extends APP_GameAction
         self::setAjaxMode();
         $row = self::getArg("row", AT_posint, true);
         $col = self::getArg("col", AT_posint, true);
-        $result = $this->game->buyCard($row, $col);
+        $trade_id = self::getArg("trade_id", AT_posint, false, -1);
+        $result = $this->game->buyCard($row, $col, $trade_id);
         self::ajaxResponse();
     }
 
@@ -79,8 +80,9 @@ class action_saintpetersburg extends APP_GameAction
     public function playCard()
     {
         self::setAjaxMode();
-        $card_id = self::getArg("card_id", AT_posint, true); // hand card id
-        $result = $this->game->playCard($card_id);
+        $card_id = self::getArg("col", AT_posint, true); // hand card id
+        $trade_id = self::getArg("trade_id", AT_posint, false, -1);
+        $result = $this->game->playCard($card_id, $trade_id);
         self::ajaxResponse();
     }
 

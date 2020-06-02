@@ -53,15 +53,13 @@
 // State constants
 if (!defined("STATE_END_GAME")) {
     define("STATE_PLAYER_TURN", 10);
-    define("STATE_SELECT_CARD", 11);
     define("STATE_TRADE_CARD",  12);
     define("STATE_TRADE_CARD_HAND",  20);
     define("STATE_NEXT_PLAYER", 13);
     define("STATE_SCORE_PHASE", 14);
     define("STATE_NEXT_PHASE",  15);
     define("STATE_USE_PUB",     16);
-    define("STATE_USE_OBSERVATORY", 17);
-    define("STATE_OBSERVATORY_CHOICE", 18);
+    define("STATE_USE_OBSERVATORY", 18);
     define("STATE_OBSERVATORY_TRADE", 19);
     define("STATE_END_GAME", 99);
 }
@@ -96,28 +94,9 @@ $machinestates = array(
             "playCard" => STATE_NEXT_PLAYER,
             "tradeCard" => STATE_TRADE_CARD,
             "tradeCardHand" => STATE_TRADE_CARD_HAND,
-            "drawCard" => STATE_OBSERVATORY_CHOICE,
+            "drawCard" => STATE_USE_OBSERVATORY,
             "pass" => STATE_NEXT_PLAYER,
             "allPass" => STATE_SCORE_PHASE,
-            "zombiePass" => STATE_NEXT_PLAYER,
-            "zombieAllPass" => STATE_SCORE_PHASE
-        )
-    ),
-
-    // Player selects a card and needs to choose an action
-    STATE_SELECT_CARD => array(
-        "name" => "selectCard",
-        "description" => clienttranslate('${card_name}: ${actplayer} must choose an action or cancel'),
-        "descriptionmyturn" => clienttranslate('${card_name}: ${you} may buy or add to hand'),
-        "type" => "activeplayer",
-        "args" => "argSelectCard",
-        "possibleactions" => array("selectCard", "buyCard", "addCard", "cancel"),
-        "transitions" => array(
-            "selectCard" => STATE_SELECT_CARD,
-            "buyCard" => STATE_NEXT_PLAYER,
-            "addCard" => STATE_NEXT_PLAYER,
-            "tradeCard" => STATE_TRADE_CARD,
-            "cancel" => STATE_PLAYER_TURN,
             "zombiePass" => STATE_NEXT_PLAYER,
             "zombieAllPass" => STATE_SCORE_PHASE
         )
@@ -188,7 +167,7 @@ $machinestates = array(
     ),
 
     // Player draws a card with Observatory and needs to choose what to do
-    STATE_OBSERVATORY_CHOICE => array(
+    STATE_USE_OBSERVATORY => array(
         "name" => "chooseObservatory",
         "description" => clienttranslate('Observatory: ${actplayer} must play or discard'),
         "descriptionmyturn" => clienttranslate('${card_name}: ${you} must play or discard'),
@@ -215,7 +194,7 @@ $machinestates = array(
         "possibleactions" => array("tradeCard", "cancel"),
         "transitions" => array(
             "tradeCard" => STATE_NEXT_PLAYER,
-            "cancel" => STATE_OBSERVATORY_CHOICE,
+            "cancel" => STATE_USE_OBSERVATORY,
             "zombiePass" => STATE_NEXT_PLAYER,
             "zombieAllPass" => STATE_SCORE_PHASE
         )
