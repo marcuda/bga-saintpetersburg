@@ -13,7 +13,7 @@
 $gameinfos = array(
 
 // Name of the game in English (will serve as the basis for translation)
-'game_name' => "Saint Petersburg",
+'game_name' => "Saint Petersburg", // NOI18N
 
 // Game designer (or game designers, separated by commas)
 'designer' => 'Bernd Brunnhofer',
