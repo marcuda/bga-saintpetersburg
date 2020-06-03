@@ -868,12 +868,16 @@ class SaintPetersburg extends Table
     /*
      * Verify that given trading card can displace selected card
      */
-    function checkTrade($card, $disp_id)
+    function checkTrade($card, $disp_id, $player_id)
     {
-        // Verify displaced card exists
+        // Verify displaced card exists and owned by player
         $disp_card = $this->cards->getCard($disp_id);
-        if ($disp_card == null)
-            throw new feException("Impossible card id");
+        if ($disp_card == null ||
+            $disp_card['location'] != 'table' ||
+            $disp_card['location_arg'] != $player_id)
+        {
+            throw new feException("Impossible trade card");
+        }
 
         // Verify cards are of correct type to trade
         $card_info = $this->getCardInfo($card);
@@ -889,8 +893,9 @@ class SaintPetersburg extends Table
         // Check if trading used Observatory
         if ($disp_card['type_arg'] == CARD_OBSERVATORY) {
             $obs = $this->getObservatory($disp_id);
-            if ($obs['used'])
+            if ($obs['used']) {
                 throw new BgaUserException(self::_("You cannot displace an Observatory after using it"));
+            }
         }
     }
 
@@ -926,19 +931,19 @@ class SaintPetersburg extends Table
     {
         self::checkAction('buyCard');
 
+        $player_id = self::getActivePlayerId();
         $card = $this->getSelectedCard($card_row, $card_col);
         $card_id = $card['id'];
 
         // Verify trade if needed
         if ($this->isTrading($card)) {
-            $this->checkTrade($card, $trade_id);
+            $this->checkTrade($card, $trade_id, $player_id);
         } else if ($trade_id > 0) {
             throw new feException("Impossible buy with trade");
         }
 
         // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, $card_row, $trade_id);
-        $player_id = self::getActivePlayerId();
         $rubles = self::dbGetRubles($player_id);
         if ($card_cost > $rubles)
             throw new BgaUserException(self::_("You do not have enough rubles"));
@@ -962,19 +967,21 @@ class SaintPetersburg extends Table
     {
         self::checkAction('playCard');
 
-        //TODO: verify player holds card?
+        $player_id = self::getActivePlayerId();
         $card = $this->cards->getCard($card_id);
+        if ($card == null || $card['location'] != 'hand' || $card['location_arg'] != $player_id) {
+            throw new feException("Impossible play from hand");
+        }
 
         // Verify trade if needed
         if ($this->isTrading($card)) {
-            $this->checkTrade($card, $trade_id);
+            $this->checkTrade($card, $trade_id, $player_id);
         } else if ($trade_id > 0) {
             throw new feException("Impossible play with trade");
         }
 
         // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, 0, $trade_id);
-        $player_id = self::getActivePlayerId();
         $rubles = self::dbGetRubles($player_id);
         if ($card_cost > $rubles)
             throw new BgaUserException(self::_("You do not have enough rubles"));
