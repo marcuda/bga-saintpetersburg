@@ -24,7 +24,7 @@ define([
 function (dojo, declare) {
     return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
         constructor: function (){
-            this.debug = true; // enabled console logs if true //TODO
+            this.debug = false; // enabled console logs if true
 
             if (this.debug) console.log('saintpetersburg constructor');
               
@@ -50,6 +50,7 @@ function (dojo, declare) {
             this.client_state_args = {lock:true};    // Object to hold argument during client state changes
             this.possible_moves = null;     // All possible moves for current player
             this.constants = null;          // Constant values between client and server
+            this.is_trading = false;        // True if in client state for trading card
         },
         
         /*
@@ -221,18 +222,18 @@ function (dojo, declare) {
             switch(stateName)
             {
                 case 'playerTurn':
-                    console.log(args);
                     this.possible_moves = args.args;
                     this.client_state_args = {lock:true};
                     if (this.isCurrentPlayerActive()) {
-                        this.setSelections(false);
+                        this.setSelections();
                     }
                     break;
                 case 'client_selectCard':
-                    this.setSelections(false);
+                    this.setSelections();
                     break;
                 case 'client_tradeCard':
-                    this.setSelections(true);
+                    this.is_trading = true;
+                    this.setSelections();
                     break;
                 case 'client_useObservatory':
                     // Highlight decks for selection
@@ -242,6 +243,7 @@ function (dojo, declare) {
                     this.possible_moves = {};
                     this.possible_moves[this.constants.observatory] = {};
                     this.possible_moves[this.constants.observatory][0] = args.args;
+                    this.client_state_args = {lock:true};
                     this.showObservatoryChoice(args.args);
                     break;
                 case 'usePub':
@@ -271,6 +273,7 @@ function (dojo, declare) {
             }
             dojo.query('.stp_selected').removeClass('stp_selected');
             dojo.query('.stp_selectable').removeClass('stp_selectable');
+            this.is_trading = false;
         }, 
 
         // onUpdateActionButtons: in this method you can manage "action buttons" that are displayed in the
@@ -649,14 +652,15 @@ function (dojo, declare) {
         /*
          * Highlight selected card and any possible moves
          */
-        setSelections: function (is_trading)
+        setSelections: function ()
         {
             if (this.debug) console.log('setSelection');
-            if (this.debug) console.log(is_trading);
+            if (this.debug) console.log(this.possible_moves);
+            if (this.debug) console.log(this.is_trading);
 
             var row, col, div, card;
 
-            if (is_trading) {
+            if (this.is_trading) {
                 // Player is acting on a trading card
                 // Highlight possible trades on table
                 row = this.client_state_args.row;
@@ -676,8 +680,6 @@ function (dojo, declare) {
                 for (row in this.possible_moves) {
                     for (col in this.possible_moves[row]) {
                         card = this.possible_moves[row][col];
-                        console.log(row + "," + col);
-                        console.log(card);
                         if (card.can_buy || card.can_add) {
                             // Board
                             div = this.getCardDiv(row, col);
@@ -711,8 +713,8 @@ function (dojo, declare) {
                         div = this.player_tables[this.player_id].getItemDivId(col);
                     }
                 }
-                console.log('SELECTED: ' + row + ' ' + col);
-                console.log(div);
+                if (this.debug) console.log('SELECTED: ' + row + ' ' + col);
+                if (this.debug) console.log(div);
                 dojo.removeClass(div, 'stp_selectable');
                 dojo.addClass(div, 'stp_selected');
             }
@@ -1039,7 +1041,6 @@ function (dojo, declare) {
                     this.playerHand.unselectAll();
                 } else {
                     // Cannot play from hand right now
-                    // TODO: more useful error message
                     this.playerHand.unselectAll();
                 }                
             }
@@ -1053,8 +1054,7 @@ function (dojo, declare) {
             var items = this.playerTable.getSelectedItems();
 
             if (items.length > 0) {
-                //TODO: how to check this? check client state? if (this.checkAction('tradeCard')) {
-                if (this.checkAction('buyCard')) {//XXX
+                if (this.checkAction('buyCard') && this.is_trading) {
                     // Displace card with trading card
                     this.client_state_args.trade_id = items[0].id;
                     
@@ -1073,7 +1073,7 @@ function (dojo, declare) {
                     this.playerTable.unselectAll();
                 } else {
                     // Cannot trade cards right now
-                    // TODO: more useful error message
+                    this.showMessage(_("You must select first select a card to buy"), "error");
                     this.playerTable.unselectAll();
                 }                
             }
@@ -1086,8 +1086,7 @@ function (dojo, declare) {
         {
             dojo.stopEvent(evt);
 
-            //TODO!
-            if (this.checkAction('tradeCard', true)) {
+            if (this.is_trading) {
                 // In trade state
                 // Do not register click and let state machine handle the rest
                 return;
@@ -1102,10 +1101,15 @@ function (dojo, declare) {
                 return;
             }
 
+            var obs_id = evt.currentTarget.id.split('_')[3];
+            if (this.client_state_args.obs_id == obs_id) {
+                // Already in client state for Observatory
+                // Player needs to click choose a deck or cancel
+                this.showMessage(_("You must select a card stack on the board"), "error");
+                return;
+            }
 
-            //TODO: show error message when obs already selected?
-
-            this.client_state_args.obs_id = evt.currentTarget.id.split('_')[3];
+            this.client_state_args.obs_id = obs_id;
 
             this.setClientState('client_useObservatory', {
                 descriptionmyturn: _('Observatory: ${you} must choose a stack to draw from')
