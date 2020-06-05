@@ -48,6 +48,11 @@
 
 /********* You can start writing your CSS below this line: **********/
 
+#stp_game_area {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 #stp_gameboard {
     width: 740px;
     height: 480px;
@@ -55,6 +60,38 @@
     position: relative;
     margin: auto;
 }
+
+/* smallest screen */
+#myhand_wrap {
+    width: 100%;
+    height: 145px;
+    margin-bottom: 0px;
+}
+
+/* medium screen */
+@media only screen and (min-width: 1185px) {
+    #stp_gameboard {
+        margin-right: 10px;
+    }
+
+    #myhand_wrap {
+        width: 150px;
+        height: 260px;
+        margin-top: 200px;
+        margin-right: auto;
+    }
+}
+
+/* large screen */
+@media only screen and (min-width: 1340px) {
+    #myhand_wrap {
+        width: 300px;
+        height: 145px;
+        margin-top: 315px;
+    }
+}
+
+
 
 .stp_discard {
     position: absolute;
@@ -94,18 +131,18 @@
 }
 
 .stp_selected {
-    border: 3px solid red ! important;
+    border: 2px solid red ! important;
     border-radius: 10px;
 }
 
 .stp_selectable {
-    border: 3px solid blue ! important;
+    border: 2px solid blue ! important;
     border-radius: 10px;
     cursor: pointer;
 }
 
 .stockitem_select {
-    border: 3px solid red ! important;
+    border: 2px solid red ! important;
 }
 
 .stp_rubleicon {
@@ -148,7 +185,28 @@
     position: absolute;
     width: 70px;
     height: 112px;
+    top: 40px;
     background-image: url('img/cardbacks_big.jpg');
+}
+
+.stp_deck_worker {
+    left: 185px;
+    background-position: 0px 0px;
+}
+
+.stp_deck_building {
+    left: 327px;
+    background-position: -70px 0px;
+}
+
+.stp_deck_aristocrat {
+    left: 473px;
+    background-position: -140px 0px;
+}
+
+.stp_deck_trading {
+    left: 617px;
+    background-position: -210px 0px;
 }
 
 .stp_emptydeck {

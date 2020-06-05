@@ -25,33 +25,34 @@
 </div>
 
 <!-- Game board, card stacks and play area -->
-<div id="stp_gameboard">
-    <div id="discard_pile" class="stp_discard"></div>
-    <div id="decks">
-        <div id="deck_Worker" class="stp_deck" style="left: 185px; top: 40px; background-position: 0px 0px;"></div>
-        <div id="deck_Building" class="stp_deck" style="left: 327px; top: 40px; background-position: -70px 0px;"></div>
-        <div id="deck_Aristocrat" class="stp_deck" style="left: 473px; top: 40px; background-position: -140px 0px;"></div>
-        <div id="deck_Trading" class="stp_deck" style="left: 617px; top: 40px; background-position: -210px 0px;"></div>
-        <div id="deck_counts" class="stp_deckcount">
-            <span id="count_Worker" style="left: 230px; top: 128px">0</span>
-            <span id="count_Building" style="left: 372px; top: 128px">0</span>
-            <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>
-            <span id="count_Trading" style="left: 661px; top: 128px">0</span>
+<div id="stp_game_area">
+    <div id="stp_gameboard">
+        <div id="discard_pile" class="stp_discard"></div>
+        <div id="decks">
+            <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
+            <div id="deck_Building" class="stp_deck stp_deck_building"></div>
+            <div id="deck_Aristocrat" class="stp_deck stp_deck_aristocrat"></div>
+            <div id="deck_Trading" class="stp_deck stp_deck_trading"></div>
+            <div id="deck_counts" class="stp_deckcount">
+                <span id="count_Worker" style="left: 230px; top: 128px">0</span>
+                <span id="count_Building" style="left: 372px; top: 128px">0</span>
+                <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>
+                <span id="count_Trading" style="left: 661px; top: 128px">0</span>
+            </div>
+        </div>
+
+        <!-- BEGIN square -->
+        <div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}px; top: {TOP}px;"></div>
+        <!-- END square -->
+
+        <div id="cards">
         </div>
     </div>
-
-    <!-- BEGIN square -->
-    <div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}px; top: {TOP}px;"></div>
-    <!-- END square -->
-
-    <div id="cards">
+    <!-- Current player hand -->
+    <div id="myhand_wrap" class="whiteblock">
+        <h3>{MY_HAND}</h3>
+        <div id="myhand"></div>
     </div>
-</div>
-
-<!-- Current player hand -->
-<div id="myhand_wrap" class="whiteblock">
-    <h3>{MY_HAND}</h3>
-    <div id="myhand"></div>
 </div>
 
 <!-- Player tables -->
