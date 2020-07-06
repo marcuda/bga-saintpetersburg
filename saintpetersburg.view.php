@@ -78,7 +78,7 @@ class view_saintpetersburg_saintpetersburg extends game_view
         $publisher = html_entity_decode('Hans im Gl&uuml;ck'); // NOI18N
         $msg = self::_("A word from");
         $msg .= ' ' . $publisher . ': ';
-        $msg .= self::_("the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the final product is ready.");
+        $msg .= self::_("the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the new artwork is ready.");
         $this->tpl['PUBLISHER_MSG'] = $msg;
         $this->tpl['PUBLISHER_ACK'] = self::_("Okay, got it!");
 
