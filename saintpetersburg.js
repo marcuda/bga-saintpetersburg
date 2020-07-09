@@ -390,7 +390,7 @@ function (dojo, declare) {
             board.create(this, $(elem), this.cardwidth, this.cardheight);
             board.image_items_per_row = this.card_art_row_size;
             for (var i = 0; i < 66; i++) {
-                board.addItemType(i, i, g_gamethemeurl+'img/cards.jpg', i);
+                board.addItemType(i, i, g_gamethemeurl+'img/cards.png', i);
             }
             board.setSelectionMode(mode);
             return board;

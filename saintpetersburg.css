@@ -126,7 +126,7 @@
     position: absolute;
     width: 70px;
     height: 112px;
-    background-image: url('img/cards.jpg');
+    background-image: url('img/cards.png');
     cursor: pointer;
 }
 
@@ -290,7 +290,7 @@
 .stp_cardart_small {
     width: 70px;
     height: 112px;
-    background-image: url('img/cards.jpg');
+    background-image: url('img/cards.png');
     margin: 1px;
     border: 1px solid black;
     border-radius: 10px
