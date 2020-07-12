@@ -97,7 +97,8 @@ $machinestates = array(
         "updateGameProgression" => false,
         "transitions" => array(
             "nextTurn" => STATE_PLAYER_TURN,
-            "cantPlay" => STATE_NEXT_PLAYER
+            "cantPlay" => STATE_NEXT_PLAYER,
+            "allPass" => STATE_SCORE_PHASE,
         )
     ),
 

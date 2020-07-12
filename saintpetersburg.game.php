@@ -20,6 +20,16 @@
 require_once(APP_GAMEMODULE_PATH.'module/table/table.game.php');
 
 
+/*
+ * Comparison function for sorting cards by type,
+ * which will naturlly sort by cost as well
+ */
+function cmpCard($a, $b)
+{
+    return $a['type_arg'] - $b['type_arg'];
+}
+
+
 class SaintPetersburg extends Table
 {
     function __construct()
@@ -175,9 +185,7 @@ class SaintPetersburg extends Table
         self::setGameStateInitialValue("activated_observatory", -1);
 
         // Starting draw based on number of players
-        for ($i=0; $i<($num_players * 2); $i++) {
-            $this->cards->pickCardForLocation('deck_' . PHASE_WORKER, TOP_ROW, $i);
-        }
+        $this->drawCards($num_players * 2, 0, PHASE_WORKER);
 
         // Activate first player (which is in general a good idea :))
         $this->gamestate->changeActivePlayer(self::getGameStateValue("starting_player_" . PHASE_WORKER));
@@ -209,6 +217,7 @@ class SaintPetersburg extends Table
         $tables = array();
         $hands = array();
         $hand_size = array();
+        $aristocrats = array();
         foreach ($players as $player_id => $player)
         {
             $tables[$player_id] = $this->cards->getCardsInLocation('table', $player_id);
@@ -221,11 +230,12 @@ class SaintPetersburg extends Table
                 // Default only send count of cards in hand for other players
                 $hand_size[$player_id] = count($this->cards->getPlayerHand($player_id));
             }
-
+            $aristocrats[$player_id] = $this->uniqueAristocrats($player_id);
         }
         $result['player_tables'] = $tables;
         $result['player_hands'] = $hands;
         $result['player_hand_size'] = $hand_size;
+        $result['aristocrats'] = $aristocrats;
 
         // Get number of rubles for current or all players
         // Separate query to avoid sending possible secret info in 'players' above
@@ -507,6 +517,24 @@ class SaintPetersburg extends Table
     function isTrading($card) { return $card['type'] == PHASE_TRADING; }
 
     /*
+     * Count the number of different aristocrats the given player owns
+     */
+    function uniqueAristocrats($player_id)
+    {
+        // Get all aristocrat cards on player table
+        $table = $this->cards->getCardsInLocation('table', $player_id);
+        $aristocrats = array();
+        foreach ($table as $card) {
+            if ($this->isAristocrat($card)) {
+                $aristocrats[] = $card['type_arg'];
+            }
+        }
+
+        // Return unique count
+        return count(array_unique($aristocrats));
+    }
+
+    /*
      * Compute the scores at the end of the given phase
      */
     function scorePhase($phase)
@@ -597,19 +625,10 @@ class SaintPetersburg extends Table
         $players = self::loadPlayersBasicInfos();
         $scores = array();
         foreach ($players as $player_id => $player) {
-            // Count number of aristocrats
-            $table = $this->cards->getCardsInLocation('table', $player_id);
-            $aristocrats = array();
-            foreach ($table as $card) {
-                if ($this->isAristocrat($card)) {
-                    $aristocrats[] = $card['type_arg'];
-                }
-            }
-
             // Each different aristocrat (up to 10) is worth that many points
             // 1 = 1, 2 = 1+2 = 3, 3 = 1+2+3 = 6, ... 10 = 1+2+3+...+10 = 55
             // or more simply: n(n+1)/2
-            $num_ari = count(array_unique($aristocrats));
+            $num_ari = $this->uniqueAristocrats($player_id);
             $points_ari = min(55, $num_ari * ($num_ari + 1) / 2);
             self::dbIncScore($player_id, $points_ari);
             self::setStat($points_ari, 'points_aristocrats_end', $player_id);
@@ -650,6 +669,31 @@ class SaintPetersburg extends Table
         }
 
         self::notifyAllPlayers('newScores', "", array('scores' => $scores));
+    }
+
+    /*
+     * Draw and sort a given number of cards from the given phase stack
+     * onto the top row of the board, starting at the given location
+     */
+    function drawCards($nbr, $start_idx, $phase)
+    {
+        // Draw cards from phase stack
+        $unsorted = $this->cards->pickCardsForLocation($nbr, 'deck_' . $phase, TOP_ROW);
+
+        // Sort by type/cost
+        usort($unsorted, 'cmpCard');
+
+        // Update location_arg for board position
+        $sorted = array();
+        foreach ($unsorted as $i => $card) {
+            $loc = $start_idx + $i;
+            if ($card['location_arg'] != $loc) {
+                $this->cards->moveCard($card['id'], TOP_ROW, $loc);
+            }
+            $sorted[$loc] = $card['type_arg'];
+        }
+
+        return $sorted;
     }
 
     /*
@@ -1042,7 +1086,8 @@ class SaintPetersburg extends Table
             'card_row' => $card_row,
             'card_cost' => $card_cost,
             'trade_id' => $trade_id,
-            'trade_name' => $trade_name
+            'trade_name' => $trade_name,
+            'aristocrats' => $this->uniqueAristocrats($player_id)
         ));
 
         // Reset globals
@@ -1057,8 +1102,15 @@ class SaintPetersburg extends Table
     function pass()
     {
         self::checkAction('pass');
+        $this->passActivePlayer('nextPlayer');
+    }
 
-        // All players much pass in turn order to end current phase
+    /*
+     * Record pass action and check if all players have passed
+     */
+    function passActivePlayer($next_state)
+    {
+        // All players must pass in turn order to end current phase
         // Increment global pass counter to track when this happens
         $num_pass = self::incGameStateValue('num_pass', 1);
         self::notifyAllPlayers('message', clienttranslate('${player_name} passes'), array(
@@ -1073,7 +1125,7 @@ class SaintPetersburg extends Table
             $this->gamestate->nextState('allPass');
         } else {
             // One or more players left to pass => next player
-            $this->gamestate->nextState('nextPlayer');
+            $this->gamestate->nextState($next_state);
         }
     }
 
@@ -1351,10 +1403,22 @@ class SaintPetersburg extends Table
      */
     function stNextPlayer()
     {
-        //TODO: auto pass if no action?
+        // Next player
         $player_id = self::activeNextPlayer();
-        self::giveExtraTime($player_id);
-        $this->gamestate->nextState('nextTurn');
+
+        // Check if any cards available
+        $hand = $this->cards->getPlayerHand($player_id);
+        $board = array_merge($this->cards->getCardsInLocation(TOP_ROW),
+                    $this->cards->getCardsInLocation(BOTTOM_ROW));
+        $nbr_cards = count($hand) + count($board);
+
+        if ($nbr_cards == 0) {
+            // Must pass since no cards left to play
+            $this->passActivePlayer('cantPlay');
+        } else {
+            self::giveExtraTime($player_id);
+            $this->gamestate->nextState('nextTurn');
+        }
     }
 
     /*
@@ -1446,14 +1510,7 @@ class SaintPetersburg extends Table
         $num_cards = $this->shiftCardsRight();
 
         // Draw up to 8 new cards from current deck
-        $new_cards = array();
-        for ($num_cards; $num_cards<8; $num_cards++) {
-            $card = $this->cards->pickCardForLocation('deck_' . $phase, TOP_ROW, $num_cards);
-            if ($card == null) // empty deck
-                break;
-
-            $new_cards[$num_cards] = $card['type_arg'];
-        }
+        $new_cards = $this->drawCards(8 - $num_cards, $num_cards, $phase);
 
         // Check if deck was emptied to trigger final round
         if ($this->cards->countCardInLocation('deck_' . $phase) <= 0) {

@@ -39,6 +39,7 @@ function (dojo, declare) {
             this.player_tables = [];        // Stocks for all player tables
             this.player_hands = [];         // Cards held in each player's hand
             this.player_hand_counts = [];   // Counters for all player hands
+            this.player_aristocrats = [];   // Counters for all player aristocrats
             this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading']; // Game phases in order
             this.pub_points = 0;            // Current number of points to buy with Pub
             this.max_pub_points = 0;        // Upper limit on Pub points
@@ -107,6 +108,14 @@ function (dojo, declare) {
                     this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
                     this.addTooltip('handcount_icon_p' + player_id, _("Number of cards in hand"), "");
                 }
+
+                // Player aristocrat counters
+                var ari_counter = new ebg.counter();
+                ari_counter.create('aricount_p' + player_id);
+                ari_counter.setValue(gamedatas.aristocrats[player_id]);
+                this.player_aristocrats[player_id] = ari_counter;
+                this.addTooltip('aricount_p' + player_id, _("Number of different aristocrats"), "");
+                this.addTooltip('aricount_icon_p' + player_id, _("Number of different aristocrats"), "");
 
                 // Player tables and cards
                 this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0);
@@ -1219,6 +1228,8 @@ function (dojo, declare) {
                 // (either their own or with game option enabled for others)
                 this.player_rubles[notif.args.player_id].incValue(-notif.args.card_cost);
             }
+
+            this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
         },
 
         /*
@@ -1300,6 +1311,8 @@ function (dojo, declare) {
 
             // Update hand count on player board
             this.player_hand_counts[notif.args.player_id].incValue(-1);
+
+            this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
 
             // Update hand tooltip if show cards option enabled
             if (this.player_hands[notif.args.player_id]) {
