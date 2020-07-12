@@ -92,8 +92,11 @@ var jstpl_player_board =
         '<img id="handcount_icon_p${id}" class="imgtext" src="${url}/img/hand.png">' +
         '<span id="handcount_p${id}">0</span>' +
         '&nbsp;' +
-        '<span id="rublecount_icon_p${id}" class="stp_iconspan">&#8381;</span>' +
+        '<img id="rublecount_icon_p${id}" class="imgtext" src="${url}/img/ruble.png">' +
         '<span id="rublecount_p${id}">??</span>' +
+        '&nbsp;' +
+        '<span id="aricount_icon_p${id}" class=imgtext">A</span>' +
+        '<span id="aricount_p${id}">0</span>' +
         '&nbsp;' +
         '<div id="token_wrap_p${id}">' +
             '<div id="token_p${id}" class="imgtext stp_token_small"></div>' +
