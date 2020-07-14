@@ -1678,7 +1678,6 @@ class SaintPetersburg extends Table
     
     function upgradeTableDb($from_version)
     {
-        //XXX TODO
         // $from_version is the current version of this game database, in numerical form.
         // For example, if the game was running with a release of your game named "140430-1345",
         // $from_version is equal to 1404301345
@@ -1702,6 +1701,10 @@ class SaintPetersburg extends Table
 //
 //
 
+        if ($from_version <= 2007120623) {
+            $sql = "ALTER TABLE DBPREFIX_player ADD COLUMN `autopass` tinyint(1) unsigned NOT NULL DEFAULT 0";
+            self::applyDbUpgradeToAllDB($sql);
+        }
 
     }    
 }
