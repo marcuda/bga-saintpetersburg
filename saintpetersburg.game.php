@@ -250,6 +250,8 @@ class SaintPetersburg extends Table
             );
         }
 
+        // Current player automatically passing?
+        $result['autopass'] = $this->dbGetAutoPass($current_player_id);
 
         // Get starting player tokens for each phase
         $tokens = array();
@@ -985,6 +987,14 @@ class SaintPetersburg extends Table
         return false;
     }
 
+    /*
+     * Return whether player is automatically passing turns
+     */
+    function dbGetAutoPass($player_id)
+    {
+        return $this->getUniqueValueFromDB("SELECT autopass FROM player WHERE player_id='$player_id'");
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
@@ -1139,7 +1149,8 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Player passes their turn
+     * Player passes their turn, and all subsequent turns until the
+     * next phase if auto is true
      */
     function pass($auto=false)
     {
@@ -1175,6 +1186,14 @@ class SaintPetersburg extends Table
             // One or more players left to pass => next player
             $this->gamestate->nextState($next_state);
         }
+    }
+
+    /*
+     * Player stops automatically passing their turns
+     */
+    function cancelPass($player_id)
+    {
+        $this->DbQuery("UPDATE player SET autopass=0 WHERE player_id='$player_id'");
     }
 
     /*
@@ -1454,8 +1473,7 @@ class SaintPetersburg extends Table
         // Next player
         $player_id = self::activeNextPlayer();
 
-        $autopass = $this->getUniqueValueFromDB("SELECT autopass FROM player WHERE player_id='$player_id'");
-        if ($autopass || !$this->canPlay($player_id)) {
+        if ($this->dbGetAutoPass($player_id) || !$this->canPlay($player_id)) {
             // Player is auto passing or must pass since no available play
             $this->passActivePlayer('cantPlay');
         } else {

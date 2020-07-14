@@ -69,6 +69,15 @@ class action_saintpetersburg extends APP_GameAction
         self::ajaxResponse();
     }
 
+    // Player clicks the 'Cancel' button on auto pass banner
+    public function cancelPass()
+    {
+        self::setAjaxMode();
+        $player_id = self::getArg("id", AT_posint, true);
+        $result = $this->game->cancelPass($player_id);
+        self::ajaxResponse();
+    }
+
     // Player clicks a card in their hand
     public function playCard()
     {
