@@ -299,6 +299,7 @@ function (dojo, declare) {
                     case 'playerTurn':
                         // Options: pass
                         this.addActionButton("button_1", _("Pass"), "onPass");
+                        this.addActionButton("button_2", _("Auto pass"), "onAutoPass", null, false, "red");
                         break;
                     case 'client_selectCard':
                         // Options: buy, add, cancel
@@ -908,6 +909,20 @@ function (dojo, declare) {
             this.ajaxcall(
                 "/saintpetersburg/saintpetersburg/pass.html",
                 {lock:true}, this, function (result) {});
+        },
+
+        /*
+         * Player clicks 'Auto pass' button
+         */
+        onAutoPass: function (evt)
+        {
+            dojo.stopEvent(evt);
+            if (!this.checkAction('pass'))
+                return;
+
+            this.ajaxcall(
+                "/saintpetersburg/saintpetersburg/pass.html",
+                {lock:true, auto:true}, this, function (result) {});
         },
 
         /*

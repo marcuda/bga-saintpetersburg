@@ -27,3 +27,6 @@ CREATE TABLE IF NOT EXISTS `card` (
   `card_location_arg` int(11) NOT NULL,
   PRIMARY KEY (`card_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- Track if player is auto passing
+ALTER TABLE `player` ADD COLUMN `autopass` tinyint(1) unsigned NOT NULL DEFAULT 0;

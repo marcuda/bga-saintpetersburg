@@ -1141,9 +1141,15 @@ class SaintPetersburg extends Table
     /*
      * Player passes their turn
      */
-    function pass()
+    function pass($auto=false)
     {
         self::checkAction('pass');
+
+        if ($auto) {
+            $player_id = self::getActivePlayerId();
+            $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
+        }
+
         $this->passActivePlayer('nextPlayer');
     }
 
@@ -1448,12 +1454,14 @@ class SaintPetersburg extends Table
         // Next player
         $player_id = self::activeNextPlayer();
 
-        if ($this->canPlay($player_id)) {
+        $autopass = $this->getUniqueValueFromDB("SELECT autopass FROM player WHERE player_id='$player_id'");
+        if ($autopass || !$this->canPlay($player_id)) {
+            // Player is auto passing or must pass since no available play
+            $this->passActivePlayer('cantPlay');
+        } else {
+            // Next player turn
             self::giveExtraTime($player_id);
             $this->gamestate->nextState('nextTurn');
-        } else {
-            // Must pass since no available play
-            $this->passActivePlayer('cantPlay');
         }
     }
 
@@ -1514,6 +1522,9 @@ class SaintPetersburg extends Table
         // Get phase (already incremented from scoring)
         $next_phase = self::getGameStateValue('current_phase') % 4;
         $phase = $this->phases[$next_phase];
+
+        // Clear any automatic passing
+        $this->DbQuery("UPDATE player SET autopass=0");
 
         // Handle new round (Trading -> Worker)
         if ($next_phase == 0) {
@@ -1667,6 +1678,7 @@ class SaintPetersburg extends Table
     
     function upgradeTableDb($from_version)
     {
+        //XXX TODO
         // $from_version is the current version of this game database, in numerical form.
         // For example, if the game was running with a release of your game named "140430-1345",
         // $from_version is equal to 1404301345
