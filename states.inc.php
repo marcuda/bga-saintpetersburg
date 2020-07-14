@@ -151,7 +151,8 @@ $machinestates = array(
         "action" => "stNextPhase",
         "updateGameProgression" => true,
         "transitions" => array(
-            "nextTurn" => STATE_PLAYER_TURN
+            "nextTurn" => STATE_PLAYER_TURN,
+            "cantPlay" => STATE_NEXT_PLAYER
         )
     ),
 

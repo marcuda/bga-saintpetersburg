@@ -943,6 +943,48 @@ class SaintPetersburg extends Table
         }
     }
 
+    /*
+     * Return true if player has a potential (though not necessarily valid)
+     * move to make, and false otherwise.
+     */
+    function canPlay($player_id)
+    {
+        // Count cards available to play
+        $hand = count($this->cards->getPlayerHand($player_id));
+        $board = count($this->cards->getCardsInLocation(TOP_ROW));
+        $board += count($this->cards->getCardsInLocation(BOTTOM_ROW));
+
+        // Money is secret, but it would always be known if a player has none
+        $rubles = self::dbGetRubles($player_id);
+
+        // Can play if any card is available with any money to spend
+        if ($rubles > 0 && ($board + $hand) > 0) {
+            // Do not check against card costs to protect secret information
+            return true;
+        }
+
+        // Can play if any card is available to take in hand
+        if ($rubles == 0 && $board > 0 && !$this->isHandFull($player_id)) {
+            return true;
+        }
+
+        // Can play if Observatory can be used
+        $current_phase = self::getGameStateValue('current_phase') % 4;
+        if ($this->phases[$current_phase] == PHASE_BUILDING) {
+            $cards = $this->cards->getCardsOfTypeInLocation(
+                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
+            foreach ($cards as $card) {
+                $obs = $this->getObservatory($card['id']);
+                if (!$obs['used']) {
+                    return true;
+                }
+            }
+        }
+
+        // No play available
+        return false;
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
@@ -1397,43 +1439,6 @@ class SaintPetersburg extends Table
 //////////// Game state actions
 ////////////
 
-    function canPlay($player_id)
-    {
-        // Count cards available to play
-        $hand = count($this->cards->getPlayerHand($player_id));
-        $board = count($this->cards->getCardsInLocation(TOP_ROW));
-        $board += count($this->cards->getCardsInLocation(BOTTOM_ROW));
-
-        // Money is secret, but it would always be known if a player has none
-        $rubles = self::dbGetRubles($player_id);
-
-        // Can play if any card is available with any money to spend
-        if ($rubles > 0 && ($board + $hand) > 0) {
-            return true;
-        }
-
-        // Can play if any card is available to take in hand
-        if ($rubles == 0 && $board > 0 && !$this->isHandFull($player_id)) {
-            return true;
-        }
-
-        // Can play if Observatory can be used
-        $current_phase = self::getGameStateValue('current_phase') % 4;
-        if ($this->phases[$current_phase] == PHASE_BUILDING) {
-            $cards = $this->cards->getCardsOfTypeInLocation(
-                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
-            foreach ($cards as $card) {
-                $obs = $this->getObservatory($card['id']);
-                if (!$obs['used']) {
-                    return true;
-                }
-            }
-        }
-
-        // No play available
-        return false;
-    }
-
     /*
      * Game state: nextPlayer
      * Give more time and activate next player
@@ -1443,12 +1448,12 @@ class SaintPetersburg extends Table
         // Next player
         $player_id = self::activeNextPlayer();
 
-        if (!$this->canPlay($player_id)) {
-            // Must pass since no available play
-            $this->passActivePlayer('cantPlay');
-        } else {
+        if ($this->canPlay($player_id)) {
             self::giveExtraTime($player_id);
             $this->gamestate->nextState('nextTurn');
+        } else {
+            // Must pass since no available play
+            $this->passActivePlayer('cantPlay');
         }
     }
 
@@ -1557,7 +1562,6 @@ class SaintPetersburg extends Table
         // Activate starting player (_not_ next player) for next phase
         $starting_player = self::getGameStateValue("starting_player_" . $phase);
         $this->gamestate->changeActivePlayer($starting_player);
-        self::giveExtraTime($starting_player);
 
         $msg = clienttranslate('${phase} phase begins, starting with ${player_name}');
         self::notifyAllPlayers('nextPhase', $msg, array(
@@ -1566,7 +1570,12 @@ class SaintPetersburg extends Table
             'cards' => $new_cards
         ));
 
-        $this->gamestate->nextState('nextTurn');
+        if ($this->canPlay($starting_player)) {
+            self::giveExtraTime($starting_player);
+            $this->gamestate->nextState('nextTurn');
+        } else {
+            $this->gamestate->nextState('cantPlay');
+        }
     }
 
 //////////////////////////////////////////////////////////////////////////////
