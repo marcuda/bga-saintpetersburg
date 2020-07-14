@@ -74,6 +74,9 @@ class view_saintpetersburg_saintpetersburg extends game_view
         // Translate title for hand block
         $this->tpl['MY_HAND'] = self::_("My hand");
 
+        // Active automatic pass message
+        $this->tpl['AUTOPASS_MSG'] = self::_("You will automatically pass your turn until the next phase begins!");
+
         // Temporary publisher notice
         $publisher = html_entity_decode('Hans im Gl&uuml;ck'); // NOI18N
         $msg = self::_("A word from");

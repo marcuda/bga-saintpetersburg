@@ -77,6 +77,13 @@ function (dojo, declare) {
                 dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
             }
 
+            // Auto pass banner
+            dojo.connect($('button_cancel_pass'), 'onclick', this, 'onCancelAutoPass');
+            if (parseInt(gamedatas.autopass)) {
+                // Show banner
+                dojo.style('autopass_msg', 'display', '');
+            }
+
             // Store full card details for tooltips
             // Used in game board setup
             this.card_infos = gamedatas.card_infos;
@@ -256,6 +263,8 @@ function (dojo, declare) {
                     this.showObservatoryChoice(args.args);
                     break;
                 case 'usePub':
+                    // Pub negates auto pass
+                    dojo.style('autopass_msg', 'display', 'none');
                     if (args.args[this.player_id] === undefined) {
                         // Should not get here...
                         this.max_pub_points = 0;
@@ -920,9 +929,30 @@ function (dojo, declare) {
             if (!this.checkAction('pass'))
                 return;
 
+            // Turn on warning banner
+            dojo.style('autopass_msg', 'display', '');
+
             this.ajaxcall(
                 "/saintpetersburg/saintpetersburg/pass.html",
                 {lock:true, auto:true}, this, function (result) {});
+        },
+
+        /*
+         * Player clicks 'Cancel' button on auto pass banner
+         */
+        onCancelAutoPass: function (evt)
+        {
+            dojo.stopEvent(evt);
+
+            // No action check (player is not active)
+
+            // Turn off warning banner
+            dojo.style('autopass_msg', 'display', 'none');
+
+            // Do NOT lock interface
+            this.ajaxcall(
+                "/saintpetersburg/saintpetersburg/cancelPass.html",
+                {id:this.player_id}, this, function (result) {});
         },
 
         /*
@@ -1404,6 +1434,9 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('notif next phase');
             if (this.debug) console.log(notif);
+
+            // Remove auto pass banners
+            dojo.style('autopass_msg', 'display', 'none');
 
             // Rotate card stacks
             this.setPhase(notif.args.phase);
