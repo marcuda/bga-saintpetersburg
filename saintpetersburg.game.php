@@ -1399,14 +1399,21 @@ class SaintPetersburg extends Table
 
     function canPlay($player_id)
     {
-        // Check if any cards available
-        $hand = $this->cards->getPlayerHand($player_id);
-        $board = array_merge($this->cards->getCardsInLocation(TOP_ROW),
-                    $this->cards->getCardsInLocation(BOTTOM_ROW));
-        $nbr_cards = count($hand) + count($board);
+        // Count cards available to play
+        $hand = count($this->cards->getPlayerHand($player_id));
+        $board = count($this->cards->getCardsInLocation(TOP_ROW));
+        $board += count($this->cards->getCardsInLocation(BOTTOM_ROW));
 
-        // Can play if any card is available
-        if ($nbr_cards > 0) {
+        // Money is secret, but it would always be known if a player has none
+        $rubles = self::dbGetRubles($player_id);
+
+        // Can play if any card is available with any money to spend
+        if ($rubles > 0 && ($board + $hand) > 0) {
+            return true;
+        }
+
+        // Can play if any card is available to take in hand
+        if ($rubles == 0 && $board > 0 && !$this->isHandFull($player_id)) {
             return true;
         }
 
@@ -1423,6 +1430,7 @@ class SaintPetersburg extends Table
             }
         }
 
+        // No play available
         return false;
     }
 
