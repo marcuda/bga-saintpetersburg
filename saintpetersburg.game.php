@@ -1397,6 +1397,35 @@ class SaintPetersburg extends Table
 //////////// Game state actions
 ////////////
 
+    function canPlay($player_id)
+    {
+        // Check if any cards available
+        $hand = $this->cards->getPlayerHand($player_id);
+        $board = array_merge($this->cards->getCardsInLocation(TOP_ROW),
+                    $this->cards->getCardsInLocation(BOTTOM_ROW));
+        $nbr_cards = count($hand) + count($board);
+
+        // Can play if any card is available
+        if ($nbr_cards > 0) {
+            return true;
+        }
+
+        // Can play if Observatory can be used
+        $current_phase = self::getGameStateValue('current_phase') % 4;
+        if ($this->phases[$current_phase] == PHASE_BUILDING) {
+            $cards = $this->cards->getCardsOfTypeInLocation(
+                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
+            foreach ($cards as $card) {
+                $obs = $this->getObservatory($card['id']);
+                if (!$obs['used']) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /*
      * Game state: nextPlayer
      * Give more time and activate next player
@@ -1406,14 +1435,8 @@ class SaintPetersburg extends Table
         // Next player
         $player_id = self::activeNextPlayer();
 
-        // Check if any cards available
-        $hand = $this->cards->getPlayerHand($player_id);
-        $board = array_merge($this->cards->getCardsInLocation(TOP_ROW),
-                    $this->cards->getCardsInLocation(BOTTOM_ROW));
-        $nbr_cards = count($hand) + count($board);
-
-        if ($nbr_cards == 0) {
-            // Must pass since no cards left to play
+        if (!$this->canPlay($player_id)) {
+            // Must pass since no available play
             $this->passActivePlayer('cantPlay');
         } else {
             self::giveExtraTime($player_id);
