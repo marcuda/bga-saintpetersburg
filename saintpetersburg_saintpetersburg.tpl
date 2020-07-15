@@ -100,13 +100,13 @@ var jstpl_card_content =
 
 var jstpl_player_board =
     '<div class="stp_board">' +
-        '<img id="handcount_icon_p${id}" class="imgtext" src="${url}/img/hand.png">' +
+        '<div id="handcount_icon_p${id}" class="imgtext stp_token_small stp_token_hand"></div>' +
         '<span id="handcount_p${id}">0</span>' +
         '&nbsp;' +
-        '<img id="rublecount_icon_p${id}" class="imgtext" src="${url}/img/ruble.png">' +
+        '<div id="rublecount_icon_p${id}" class="imgtext stp_token_small stp_token_ruble"></div>' +
         '<span id="rublecount_p${id}">??</span>' +
         '&nbsp;' +
-        '<img id="aricount_icon_p${id}" class="imgtext" src="${url}/img/aristocrat.png">' +
+        '<div id="aricount_icon_p${id}" class="imgtext stp_token_small stp_token_aricount"></div>' +
         '<span id="aricount_p${id}">0</span>' +
         '&nbsp;' +
         '<div id="token_wrap_p${id}">' +

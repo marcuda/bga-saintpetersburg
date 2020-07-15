@@ -243,25 +243,53 @@
     width: 16px;
     height: 16px;
     z-index: 99;
-    background-image: url('img/tokens_small.png');
-    background-position: -64px 0px; /* empty */
+    background-image: url('img/icons.png');
+    background-position: -176px 0px; /* empty */
     margin-right: 5px;
 }
 
-.stp_token_Worker {
+.stp_token_hand {
     background-position: 0px 0px;
 }
 
-.stp_token_Building {
+.stp_token_ruble {
     background-position: -16px 0px;
 }
 
-.stp_token_Aristocrat {
+.stp_token_aricount {
     background-position: -32px 0px;
 }
 
-.stp_token_Trading {
+.stp_token_0000ff {
     background-position: -48px 0px;
+}
+
+.stp_token_ff0000 {
+    background-position: -64px 0px;
+}
+
+.stp_token_008000 {
+    background-position: -80px 0px;
+}
+
+.stp_token_ffa500 {
+    background-position: -96px 0px;
+}
+
+.stp_token_Worker {
+    background-position: -112px 0px;
+}
+
+.stp_token_Building {
+    background-position: -128px 0px;
+}
+
+.stp_token_Aristocrat {
+    background-position: -144px 0px;
+}
+
+.stp_token_Trading {
+    background-position: -160px 0px;
 }
 
 .stp_activecard {
