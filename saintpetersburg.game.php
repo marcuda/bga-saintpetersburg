@@ -839,7 +839,7 @@ class SaintPetersburg extends Table
 
             $has_trade = true; // At least one valid card, ignoring cost
 
-            if ($cost - $p_info['card_value'] > $rubles) {
+            if (max($cost - $p_info['card_value'], 1) > $rubles) {
                 continue; // Not enough value/rubles
             }
 
