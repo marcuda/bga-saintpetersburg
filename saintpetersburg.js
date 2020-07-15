@@ -452,8 +452,12 @@ function (dojo, declare) {
             card.card_name = _(card.card_name);
 
             // Sprite index
-            card.artx = this.cardwidth_big * (card_type_id % this.card_art_row_size);
-            card.arty = this.cardheight_big * Math.floor(card_type_id / this.card_art_row_size);
+            // Image is a bit funky so need to tweak positions
+            var x = card_type_id % this.card_art_row_size;
+            var y = Math.floor(card_type_id / this.card_art_row_size);
+            card.artx = this.cardwidth_big * x + Math.floor(x / 3);
+            card.arty = this.cardheight_big * y;
+            if (y == 1) card.arty -= 1;
 
             // card type = <type> [(<worker type> | Trading card [- <worker type>])]
             if (card.card_type == "Worker") {
