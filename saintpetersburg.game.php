@@ -1519,15 +1519,30 @@ class SaintPetersburg extends Table
      */
     function stUsePub()
     {
+        $player_infos = self::loadPlayersBasicInfos();
+        $player_id = null;
+        $pub_players = array();
+
         // Allow any players that own a Pub to use it
-        $players = array();
-        $pubs = $this->cards->getCardsOfTypeInLocation(
-            PHASE_BUILDING, CARD_PUB, 'table');
+        $pubs = $this->cards->getCardsOfTypeInLocation(PHASE_BUILDING, CARD_PUB, 'table');
         foreach ($pubs as $card) {
-            $players[] = $card['location_arg'];
+            if ($player_id == $card['location_arg']) {
+                // Same player owns both
+                break;
+            }
+
+            $player_id = $card['location_arg'];
+            if ($this->dbGetRubles($player_id) > 0) {
+                $pub_players[] = $player_id;
+            } else {
+                // Player has no money and must pass
+                self::notifyAllPlayers('message', clienttranslate('${player_name} declines to use the Pub bonus'), array(
+                    'player_name' => $player_infos[$player_id]['player_name']
+                ));
+            }
         }
 
-        $this->gamestate->setPlayersMultiactive($players, 'nextPhase', true);
+        $this->gamestate->setPlayersMultiactive($pub_players, 'nextPhase', true);
     }
 
     /*
