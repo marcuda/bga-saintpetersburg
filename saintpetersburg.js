@@ -153,14 +153,14 @@ function (dojo, declare) {
             // Find active player in current order
             for (var i in gamedatas.playerorder) {
                 if (gamedatas.playerorder[i] == gamedatas.gamestate.active_player) {
-                    idx = i + num_players;
+                    idx = i + num_players; // pad value so it can decrement and stay positive
                     break;
                 }
             }
             // Mark previous players passed
             for (var i=0; i<parseInt(gamedatas.num_pass); i++) {
-                idx = (idx - 1) % num_players;
-                this.disablePlayerPanel(gamedatas.playerorder[idx]);
+                idx -= 1;
+                this.disablePlayerPanel(gamedatas.playerorder[idx % num_players]);
             }
 
             // Set up player table unless spectating
