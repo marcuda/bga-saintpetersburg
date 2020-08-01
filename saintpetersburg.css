@@ -110,8 +110,8 @@
 .stp_maskcard {
     width: 70px;
     height: 112px;
-    background-color: rgba(255, 228, 196, 0.75);
-    filter: alpha(opacity=20); /* IE8 */
+    background-color: rgba(255, 228, 196, 0.5);
+    filter: alpha(opacity=50); /* IE8 */
     display: none;
 }
 
