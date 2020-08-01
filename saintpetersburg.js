@@ -337,7 +337,13 @@ function (dojo, declare) {
                         // Options: buy, add, cancel
                         var buy_color = args.can_buy ? "blue" : "gray";
                         var add_color = args.can_add ? "blue" : "gray";
-                        this.addActionButton("button_1", _("Buy") + " (" + args.cost + ")", "onBuyCard", null, false, buy_color);
+                        var buy_text = _("Buy");
+                        if (args.is_trading) {
+                            buy_text += " (" + args.cost + " - ?)";
+                        } else {
+                            buy_text += " (" + args.cost + ")";
+                        }
+                        this.addActionButton("button_1", buy_text, "onBuyCard", null, false, buy_color);
                         this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                         this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
