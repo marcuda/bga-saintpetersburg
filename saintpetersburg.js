@@ -230,8 +230,7 @@ function (dojo, declare) {
             for (var i in gamedatas.observatory) {
                 var card = gamedatas.observatory[i];
                 if (card.used == 1) {
-                    // Remove link and mask card to show it is used
-                    dojo.style('card_content_active_' + card.id, 'display', 'none');
+                    // Mask card to show it is used
                     dojo.style('card_content_mask_' + card.id, 'display', 'block');
                 }
             }
@@ -318,15 +317,21 @@ function (dojo, declare) {
         onUpdateActionButtons: function (stateName, args)
         {
             if (this.debug) console.log('onUpdateActionButtons: ' + stateName);
+            if (this.debug) console.log(args);
                       
             if(this.isCurrentPlayerActive())
             {            
                 switch(stateName)
                 {
                     case 'playerTurn':
-                        // Options: pass
-                        this.addActionButton("button_1", _("Pass"), "onPass");
-                        this.addActionButton("button_2", _("Auto pass"), "onAutoPass", null, false, "red");
+                        // Options: observatory?, pass
+                        if (args[this.constants.observatory].length === undefined) {
+                            // args is possible moves and will have an object, which has no length,
+                            // for Observatory if valid, otherwise it will be an empty array (length == 0)
+                            this.addActionButton("button_1", _("Observatory"), "onButtonObservatory");
+                        }
+                        this.addActionButton("button_2", _("Pass"), "onPass");
+                        this.addActionButton("button_3", _("Auto pass"), "onAutoPass", null, false, "red");
                         break;
                     case 'client_selectCard':
                         // Options: buy, add, cancel
@@ -449,12 +454,11 @@ function (dojo, declare) {
                 dojo.place(this.format_block('jstpl_card_content', {id:id}), card_div.id);
 
                 if (player_id == this.player_id) {
-                    // Active player, set link text and connect action
-                    dojo.query('#card_content_active_' + id + '>a')[0].textContent = _("Activate");
+                    // Active player can click on card
                     dojo.connect(card_div, 'onclick', this, 'onClickObservatory');
                 } else {
                     // Other player, no active content
-                    dojo.style('card_content_activewrap_' + id, 'display', 'none');
+                    dojo.style('card_content_active_' + id, 'display', 'none');
                 }
             }
         },
@@ -784,7 +788,6 @@ function (dojo, declare) {
 
             // Disable Observatory
             dojo.style('card_content_mask_' + args.obs_id, 'display', 'block');
-            dojo.style('card_content_active_' + args.obs_id, 'display', 'none');
 
             // Remove one card from selected deck
             var num_cards = this.deck_counters[args.card.type].incValue(-1);
@@ -1168,20 +1171,48 @@ function (dojo, declare) {
                 return;
             }
 
+            var obs_id = evt.currentTarget.id.split('_')[3];
+            if (this.client_state_args.obs_id == obs_id) {
+                // Already in client state for Observatory
+                // Player needs to click choose a deck or cancel
+                this.showMessage(_("You must select a card stack on the board"), "error");
+                return;
+            }
+
+            if (dojo.getStyle('card_content_mask_' + obs_id, 'display') != 'none') {
+                // Observatory card already used (mask is on)
+                this.showMessage(_("You can only use an Observatory once per round"), "error");
+                return;
+            }
+
+            this.useObservatory(obs_id);
+        },
+
+        /*
+         * Player clicks Observatory button
+         */
+        onButtonObservatory: function (evt)
+        {
+            dojo.stopEvent(evt);
+
+            // No card event to pull id from so just use first listed card in moves
+            for (var i in this.possible_moves[this.constants.observatory]) {
+                this.useObservatory(i);
+                return;
+            }
+        },
+
+        /*
+         * Player uses Observatory (card or button)
+         */
+        useObservatory: function(obs_id)
+        {
             if (!this.checkAction('useObservatory'))
                 return;
 
             if (this.current_phase != this.phases[1]) {
                 // Not building phase, can't use
                 this.showMessage(_("You can only use the Observatory during the Building phase"), "error");
-                return;
-            }
-
-            var obs_id = evt.currentTarget.id.split('_')[3];
-            if (this.client_state_args.obs_id == obs_id) {
-                // Already in client state for Observatory
-                // Player needs to click choose a deck or cancel
-                this.showMessage(_("You must select a card stack on the board"), "error");
                 return;
             }
 
@@ -1566,7 +1597,6 @@ function (dojo, declare) {
 
             // Reset Observatory cards to be usable
             dojo.query('.stp_maskcard').style('display', 'none');
-            dojo.query('.stp_activecard').style('display', 'block');
         },
 
         /*
