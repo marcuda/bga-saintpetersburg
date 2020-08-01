@@ -26,7 +26,7 @@ require_once(APP_GAMEMODULE_PATH.'module/table/table.game.php');
  */
 function cmpCard($a, $b)
 {
-    return $a['type_arg'] - $b['type_arg'];
+    return $b['type_arg'] - $a['type_arg'];
 }
 
 
