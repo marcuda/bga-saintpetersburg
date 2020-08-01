@@ -70,6 +70,7 @@ function (dojo, declare) {
         setup: function (gamedatas)
         {
             if (this.debug) console.log("Starting game setup");
+            if (this.debug) console.log(gamedatas);
 
             if (this.prefs[100].value == 0) {
                 // Show message from publisher player has not seen/acknowledged
@@ -143,6 +144,23 @@ function (dojo, declare) {
                     this.addTooltip('rublecount_p' + player_id, _("Number of rubles (secret)"), "");
                     this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles (secret)"), "");
                 }
+            }
+
+            // Passed players
+            // Game doesn't track specific players to have to work back from active player
+            var idx;
+            var num_players = gamedatas.playerorder.length;
+            // Find active player in current order
+            for (var i in gamedatas.playerorder) {
+                if (gamedatas.playerorder[i] == gamedatas.gamestate.active_player) {
+                    idx = i + num_players;
+                    break;
+                }
+            }
+            // Mark previous players passed
+            for (var i=0; i<parseInt(gamedatas.num_pass); i++) {
+                idx = (idx - 1) % num_players;
+                this.disablePlayerPanel(gamedatas.playerorder[idx]);
             }
 
             // Set up player table unless spectating
@@ -1224,6 +1242,7 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('notifications subscriptions setup');
             
+            dojo.subscribe('pass', this, 'notif_pass');
             dojo.subscribe('buyCard', this, 'notif_buyCard');
             dojo.subscribe('addCard', this, 'notif_addCard');
             dojo.subscribe('playCard', this, 'notif_playCard');
@@ -1241,6 +1260,19 @@ function (dojo, declare) {
             dojo.subscribe('newRound', this, 'notif_newRound');
             dojo.subscribe('buyPoints', this, 'notif_buyPoints');
         },  
+
+        /*
+         * Message for player passing
+         */
+        notif_pass: function (notif)
+        {
+            if (this.debug) console.log('pass notif');
+            if (this.debug) console.log(notif);
+
+            // Shade player panel to indicate pass
+            this.disablePlayerPanel(notif.args.player_id);
+        },
+
         
         /*
          * Message for player buying card
@@ -1249,6 +1281,9 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('buy card notif');
             if (this.debug) console.log(notif);
+
+            // Clear all pass
+            this.enableAllPlayerPanels();
 
             // Card position on board
             var row = notif.args.card_row;
@@ -1288,6 +1323,9 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('add card notif');
             if (this.debug) console.log(notif);
+
+            // Clear all pass
+            this.enableAllPlayerPanels();
 
             // Card position on board
             var row = notif.args.card_row;
@@ -1332,6 +1370,9 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('buy card notif');
             if (this.debug) console.log(notif);
+
+            // Clear all pass
+            this.enableAllPlayerPanels();
 
             if (notif.args.trade_id > 0) {
                 // Remove displaced card from table
@@ -1439,7 +1480,8 @@ function (dojo, declare) {
             if (this.debug) console.log('notif next phase');
             if (this.debug) console.log(notif);
 
-            // Remove auto pass banners
+            // Clear pass and remove auto pass banners
+            this.enableAllPlayerPanels();
             dojo.style('autopass_msg', 'display', 'none');
 
             // Rotate card stacks
@@ -1488,6 +1530,9 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('notif discard');
             if (this.debug) console.log(notif);
+
+            // Clear all pass
+            this.enableAllPlayerPanels();
 
             for (var i in notif.args.cards) {
                 var card = notif.args.cards[i];

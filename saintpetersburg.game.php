@@ -253,6 +253,9 @@ class SaintPetersburg extends Table
         // Current player automatically passing?
         $result['autopass'] = $this->dbGetAutoPass($current_player_id);
 
+        // Number players already passed this turn
+        $result['num_pass'] = $this->getGameStateValue('num_pass');
+
         // Get starting player tokens for each phase
         $tokens = array();
         foreach ($this->phases as $token_phase) {
@@ -1172,8 +1175,9 @@ class SaintPetersburg extends Table
         // All players must pass in turn order to end current phase
         // Increment global pass counter to track when this happens
         $num_pass = self::incGameStateValue('num_pass', 1);
-        self::notifyAllPlayers('message', clienttranslate('${player_name} passes'), array(
-            'player_name' => self::getActivePlayerName()
+        self::notifyAllPlayers('pass', clienttranslate('${player_name} passes'), array(
+            'player_name' => self::getActivePlayerName(),
+            'player_id' => self::getActivePlayerId(),
         ));
 
         // Determine if phase should end
