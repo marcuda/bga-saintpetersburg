@@ -93,9 +93,7 @@ var jstpl_card = '<div class="stp_card" id="card_${col}_${row}" style="backgroun
 var jstpl_card_content =
     '<div id="card_content_${id}">' +
         '<div id="card_content_mask_${id}" class="stp_maskcard"></div>' +
-        '<div id="card_content_activewrap_${id}" class="stp_clickcard">' +
-            '<div id="card_content_active_${id}" class="stp_activecard"><a href="#"></a></div>' +
-        '</div>' +
+        '<div id="card_content_active_${id}" class="stp_clickcard"></div>' +
      '</div>';
 
 var jstpl_player_board =
