@@ -281,7 +281,8 @@ function (dojo, declare) {
                 dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
             }
 
-            var duplicate_overlap = 60;
+            // Overlap duplicate cards if preferred
+            var duplicate_overlap = this.prefs[101].value == 0 ? 60 : 0;
 
             // Auto pass banner
             dojo.connect($('button_cancel_pass'), 'onclick', this, 'onCancelAutoPass');
