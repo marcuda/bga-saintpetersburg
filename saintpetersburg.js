@@ -15,6 +15,209 @@
  *
  */
 
+
+/*
+ * Modified version of (minified) ebg.stock.updateDisplay
+ * Horizontally overlaps items of the same type while leaving other unaffected
+ *
+ * This version excludes some options including vertical overlap and centering items
+ *
+ * Minified variables renamed where possible to determine something reasonable
+ */
+var customStockUpdateDisplay = function(from)
+{
+    if (!$(this.control_name)) {
+        return;
+    }
+    var control_box = dojo.marginBox(this.control_name);
+    var _item_width = this.item_width;
+    var dup_item_width = this.item_width;
+    var item_width_diff = 0;
+    var zindex = "auto";
+    if (this.horizontal_overlap != 0) {
+        _item_width = Math.round(this.item_width * this.horizontal_overlap / 100);
+        dup_item_width = _item_width;
+        item_width_diff = this.item_width - _item_width;
+        zindex = 1;
+    }
+    var extra_height = 0;
+    if (this.vertical_overlap != 0) {
+        extra_height = Math.round(this.item_height * this.vertical_overlap / 100) * (this.use_vertical_overlap_as_offset ? 1 : -1);
+    }
+    var control_width = control_box.w;
+    if (this.autowidth) {
+        var page_box = dojo.marginBox($("page-content"));
+        control_width = page_box.w;
+    }
+    var item_top = 0;
+    var item_left = 0;
+    var items_per_row = Math.max(1, Math.floor((control_width - item_width_diff) / (_item_width + this.item_margin)));
+    var rows = 0;
+    var final_width = 0;
+    var n = 0;
+
+/* BEGIN MOD */
+    var dup_item_width = Math.round(this.item_width * this.duplicate_overlap / 100);
+    var num_dup = 0;
+    var item_types = [];
+    zindex = 1;
+
+    for (var i in this.items) {
+        var item = this.items[i];
+        var item_div = this.getItemDivId(item.id);
+
+        // Check for duplicates
+        var is_dup = false;
+        if (item_types.includes(item.type) && item.type != this.observatory_type) {
+            is_dup = true;
+            num_dup++;
+        } else {
+            item_types.push(item.type);
+        }
+
+        if (zindex != "auto") {
+            zindex++;
+        }
+
+        // Determine position with duplicate overlap
+        if (typeof item.loc == "undefined") {
+            item_left = n * (_item_width + this.item_margin) - dup_item_width * num_dup;
+            if (item_left + _item_width > control_width) {
+                // Next row, reset all counters
+                rows += 1;
+                n = 0;
+                num_dup = 0;
+                item_left = 0;
+            }
+            final_width = Math.max(final_width, item_left + _item_width);
+            item_top = rows * (this.item_height + extra_height + this.item_margin);
+
+            /*
+             * XXX
+             * This logic is no longer valid. vertical_overlap and centerIems now broken and excluded
+            var current_row = Math.floor(n / items_per_row);
+            rows = Math.max(rows, current_row);
+            if (this.vertical_overlap != 0 && n % 2 == 0 && this.use_vertical_overlap_as_offset) {
+                item_top += extra_height;
+            }
+            if (this.centerItems) {
+                var _115a = (current_row == Math.floor(this.count() / items_per_row) ? this.count() % items_per_row : items_per_row);
+                item_left += (control_width - _115a * (_item_width + this.item_margin)) / 2;
+            }
+            */
+
+            n++;
+        }
+
+/* END MOD */
+        var item_div_obj = $(item_div);
+        if (item_div_obj) {
+            if (typeof item.loc == "undefined") {
+                dojo.fx.slideTo({
+                    node: item_div_obj,
+                    top: item_top,
+                    left: item_left,
+                    duration: 1000,
+                    unit: "px"
+                }).play();
+            } else {
+                this.page.slideToObject(item_div_obj, item.loc, 1000).play();
+            }
+            if (zindex != "auto") {
+                dojo.style(item_div_obj, "zIndex", zindex);
+            }
+        } else {
+            var type = this.item_type[item.type];
+            if (!type) {
+                console.error("Stock control: Unknow type: " + type);
+            }
+            if (typeof item_div == "undefined") {
+                console.error("Stock control: Undefined item id");
+            } else {
+                if (typeof item_div == "object") {
+                    console.error("Stock control: Item id with 'object' type");
+                    console.error(item_div);
+                }
+            }
+            additional_style = "";
+            if (this.backgroundSize !== null) {
+                additional_style += "background-size:" + this.backgroundSize;
+            }
+            var _115c = dojo.trim(dojo.string.substitute(this.jstpl_stock_item, {
+                id: item_div,
+                width: this.item_width,
+                height: this.item_height,
+                top: item_top,
+                left: item_left,
+                image: type.image,
+                position: (zindex == "auto") ? "" : ("z-index:" + zindex),
+                extra_classes: this.extraClasses,
+                additional_style: additional_style
+            }));
+            dojo.place(_115c, this.control_name);
+            item_div_obj = $(item_div);
+            if (typeof item.loc != "undefined") {
+                this.page.placeOnObject(item_div_obj, item.loc);
+            }
+            if (this.selectable == 0) {
+                dojo.addClass(item_div_obj, "stockitem_unselectable");
+            }
+            dojo.connect(item_div_obj, "onclick", this, "onClickOnItem");
+            if (toint(type.image_position) !== 0) {
+                var _115d = 0;
+                var _115e = 0;
+                if (this.image_items_per_row) {
+                    var row = Math.floor(type.image_position / this.image_items_per_row);
+                    if (!this.image_in_vertical_row) {
+                        _115d = (type.image_position - (row * this.image_items_per_row)) * 100;
+                        _115e = row * 100;
+                    } else {
+                        _115e = (type.image_position - (row * this.image_items_per_row)) * 100;
+                        _115d = row * 100;
+                    }
+                    dojo.style(item_div_obj, "backgroundPosition", "-" + _115d + "% -" + _115e + "%");
+                } else {
+                    _115d = type.image_position * 100;
+                    dojo.style(item_div_obj, "backgroundPosition", "-" + _115d + "% 0%");
+                }
+            }
+            if (this.onItemCreate) {
+                this.onItemCreate(item_div_obj, item.type, item_div);
+            }
+            if (typeof from != "undefined") {
+                this.page.placeOnObject(item_div_obj, from);
+                if (typeof item.loc == "undefined") {
+                    var anim = dojo.fx.slideTo({
+                        node: item_div_obj,
+                        top: item_top,
+                        left: item_left,
+                        duration: 1000,
+                        unit: "px"
+                    });
+                    anim = this.page.transformSlideAnimTo3d(anim, item_div_obj, 1000, null);
+                    anim.play();
+                } else {
+                    this.page.slideToObject(item_div_obj, item.loc, 1000).play();
+                }
+            } else {
+                dojo.style(item_div_obj, "opacity", 0);
+                dojo.fadeIn({
+                    node: item_div_obj
+                }).play();
+            }
+        }
+    }
+    var _115f = (rows + 1) * (this.item_height + extra_height + this.item_margin);
+    dojo.style(this.control_name, "height", _115f + "px");
+    if (this.autowidth) {
+        if (final_width > 0) {
+            final_width += (this.item_width - _item_width);
+        }
+        dojo.style(this.control_name, "width", final_width + "px");
+    }
+};
+
+
 define([
     "dojo","dojo/_base/declare",
     "ebg/core/gamegui",
@@ -78,6 +281,8 @@ function (dojo, declare) {
                 dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
             }
 
+            var duplicate_overlap = 60;
+
             // Auto pass banner
             dojo.connect($('button_cancel_pass'), 'onclick', this, 'onCancelAutoPass');
             if (parseInt(gamedatas.autopass)) {
@@ -126,7 +331,7 @@ function (dojo, declare) {
                 this.addTooltip('aricount_icon_p' + player_id, _("Number of different aristocrats"), "");
 
                 // Player tables and cards
-                this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0);
+                this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0, duplicate_overlap);
                 this.player_tables[player_id].onItemCreate = dojo.hitch(this, 'setupNewCard');
                 for (var i in gamedatas.player_tables[player_id]) {
                     var card = gamedatas.player_tables[player_id][i];
@@ -207,7 +412,7 @@ function (dojo, declare) {
 
             // Player hand
             if (!this.spectator) { // Spectator has no hand element
-                this.playerHand = this.createCardStock('myhand', 1);
+                this.playerHand = this.createCardStock('myhand', 1, 0);
                 this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
                 for (var i in gamedatas.player_hands[this.player_id]) {
                     var card = gamedatas.player_hands[this.player_id][i];
@@ -432,9 +637,14 @@ function (dojo, declare) {
         /*
          * Build stock element for player hand and tables
          */
-        createCardStock: function (elem, mode)
+        createCardStock: function (elem, mode, overlap)
         {
             var board = new ebg.stock();
+            if (overlap != 0) {
+                board.updateDisplay = customStockUpdateDisplay;
+                board.duplicate_overlap = overlap;
+                board.observatory_type = this.constants.observatory; // needed to not overlap observatory
+            }
             board.create(this, $(elem), this.cardwidth, this.cardheight);
             board.image_items_per_row = this.card_art_row_size;
             for (var i = 0; i < 66; i++) {
