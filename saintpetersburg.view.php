@@ -52,7 +52,8 @@ class view_saintpetersburg_saintpetersburg extends game_view
                 $this->page->insert_block("square", array(
                     'X' => $x,
                     'Y' => $y,
-                    'LEFT' => round((7 - $x) * $hor_scale + 20), // count right to left
+                    // count right to left; slight adjust for one misaligned column
+                    'LEFT' => round((7 - $x) * $hor_scale + 20) + ($x==6?2:0),
                     'TOP' => round($y * $ver_scale + 232)
                 ));
             }
