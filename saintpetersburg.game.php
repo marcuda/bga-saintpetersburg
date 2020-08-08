@@ -864,8 +864,7 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Return array of possible moves the active player can take for
-     * each card on board, in hand, and special actions
+     * Return info on possible moves the player can take for this specific card
      */
     function getPossibleMoves($player_id, $card, $rubles, $hand_full=true, $row=0)
     {
@@ -889,6 +888,58 @@ class SaintPetersburg extends Table
             'has_trade' => $has_trade,
             'trades' => $trades
         );
+    }
+
+    /*
+     * Return array of possible moves the player can take for
+     * each card on board, in hand, and special actions
+     */
+    function getAllPossibleMoves($player_id)
+    {
+        $rubles = self::dbGetRubles($player_id);
+        $hand_full = $this->isHandFull($player_id);
+        $possible_moves = array(
+            0 => array(),
+            1 => array(),
+            ROW_HAND => array(),
+            ROW_OBSERVATORY => array()
+        );
+
+        // Cards on board
+        $row = 0;
+        foreach (array(TOP_ROW, BOTTOM_ROW) as $row_loc) {
+            $board = $this->cards->getCardsInLocation($row_loc);
+            foreach ($board as $card) {
+                $col = $card['location_arg'];
+                $possible_moves[$row][$col] = $this->getPossibleMoves(
+                    $player_id, $card, $rubles, $hand_full, $row);
+            }
+            $row += 1;
+        }
+
+        // Cards in hand
+        $cards = $this->cards->getPlayerHand($player_id);
+        foreach ($cards as $card) {
+            $possible_moves[ROW_HAND][$card['id']] = $this->getPossibleMoves(
+                $player_id, $card, $rubles);
+        }
+
+        // Observatory
+        $current_phase = self::getGameStateValue('current_phase') % 4;
+        if ($this->phases[$current_phase] == PHASE_BUILDING) {
+            $cards = $this->cards->getCardsOfTypeInLocation(
+                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
+            foreach ($cards as $card) {
+                $obs = $this->getObservatory($card['id']);
+                if (!$obs['used']) {
+                    $possible_moves[ROW_OBSERVATORY][$card['id']] = array(
+                        'can_add' => true // to trigger possible move styling
+                    );
+                }
+            }
+        }
+
+        return $possible_moves;
     }
 
     /*
@@ -958,6 +1009,27 @@ class SaintPetersburg extends Table
         $hand = count($this->cards->getPlayerHand($player_id));
         $board = count($this->cards->getCardsInLocation(TOP_ROW));
         $board += count($this->cards->getCardsInLocation(BOTTOM_ROW));
+
+        // If both options are set there is no private info in the game,
+        // then autopass can be more aggressive and validate every play
+        if ($this->gamestate->table_globals[OPT_SHOW_HANDS] &&
+            $this->gamestate->table_globals[OPT_SHOW_RUBLES])
+        {
+            // Function used for player turn highlights all possible moves
+            // Can play if any card available to buy or add
+            // This also covers any usable Observatory
+            $moves = $this->getAllPossibleMoves($player_id);
+            foreach ($moves as $cards) {
+                foreach ($cards as $card) {
+                    if ($card['can_buy'] || $card['can_add']) {
+                        return true;
+                    }
+                }
+            }
+
+            // No legal move
+            return false;
+        }
 
         // Money is secret, but it would always be known if a player has none
         $rubles = self::dbGetRubles($player_id);
@@ -1358,51 +1430,7 @@ class SaintPetersburg extends Table
     function argPlayerTurn()
     {
         $player_id = self::getActivePlayerId();
-
-        $rubles = self::dbGetRubles($player_id);
-        $hand_full = $this->isHandFull($player_id);
-        $possible_moves = array(
-            0 => array(),
-            1 => array(),
-            ROW_HAND => array(),
-            ROW_OBSERVATORY => array()
-        );
-
-        // Cards on board
-        $row = 0;
-        foreach (array(TOP_ROW, BOTTOM_ROW) as $row_loc) {
-            $board = $this->cards->getCardsInLocation($row_loc);
-            foreach ($board as $card) {
-                $col = $card['location_arg'];
-                $possible_moves[$row][$col] = $this->getPossibleMoves(
-                    $player_id, $card, $rubles, $hand_full, $row);
-            }
-            $row += 1;
-        }
-
-        // Cards in hand
-        $cards = $this->cards->getPlayerHand($player_id);
-        foreach ($cards as $card) {
-            $possible_moves[ROW_HAND][$card['id']] = $this->getPossibleMoves(
-                $player_id, $card, $rubles);
-        }
-
-        // Observatory
-        $current_phase = self::getGameStateValue('current_phase') % 4;
-        if ($this->phases[$current_phase] == PHASE_BUILDING) {
-            $cards = $this->cards->getCardsOfTypeInLocation(
-                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
-            foreach ($cards as $card) {
-                $obs = $this->getObservatory($card['id']);
-                if (!$obs['used']) {
-                    $possible_moves[ROW_OBSERVATORY][$card['id']] = array(
-                        'can_add' => true // to trigger possible move styling
-                    );
-                }
-            }
-        }
-
-        return $possible_moves;
+        return $this->getAllPossibleMoves($player_id);
     }
 
     /*
