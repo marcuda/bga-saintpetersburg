@@ -1188,6 +1188,9 @@ class SaintPetersburg extends Table
         self::incStat($card_cost, 'rubles_spent', $player_id);
         if ($dest == 'table') {
             self::incStat(1, 'cards_bought', $player_id);
+            if ($trade_id > 0) {
+                self::incStat(1, 'cards_traded', $player_id);
+            }
         } else if ($dest == 'hand') {
             self::incStat(1, 'cards_added', $player_id);
         }
