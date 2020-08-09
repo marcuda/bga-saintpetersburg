@@ -73,7 +73,7 @@ $stats_type = array(
                     "name" => totranslate("Points from Rubles"),
                     "type" => "int" ),
         "points_hand_end" => array("id"=> 13,
-                    "name" => totranslate("Points from cards in hand"),
+                    "name" => totranslate("Loss from cards in hand"),
                     "type" => "int" ),
         "points_total" => array("id"=> 14,
                     "name" => totranslate("Points from played cards"),
