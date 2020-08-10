@@ -39,6 +39,7 @@
 <div id="stp_game_area">
     <div id="stp_gameboard">
         <div id="discard_pile" class="stp_discard"></div>
+        <div id="aristocrat_table" class="stp_aritable"></div>
         <div id="decks">
             <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
             <div id="deck_Building" class="stp_deck stp_deck_building"></div>
@@ -136,6 +137,36 @@ var jstpl_hand_tooltip =
             '<div class="stp_cardart_small" style="background-position: -${artx.2}px -${arty.2}px; display: ${disp.2}"></div>' +
             '<div class="stp_cardart_small" style="background-position: -${artx.3}px -${arty.3}px; display: ${disp.3}"></div>' +
         '</div>' +
+    '</div>';
+
+var jstpl_ari_tooltip =
+    '<div class="stp_aritooltip">' +
+        '<p>${text}</p>' +
+        '<table><tbody><tr style="background-color:rgb(252,185,115);">' +
+            '<th>${aristocrats}</th>' +
+            '<td>1</td>' +
+            '<td>2</td>' +
+            '<td>3</td>' +
+            '<td>4</td>' +
+            '<td>5</td>' +
+            '<td>6</td>' +
+            '<td>7</td>' +
+            '<td>8</td>' +
+            '<td>9</td>' +
+            '<td>10+</td>' +
+        '</tr><tr>' +
+            '<th>${points}</th>' +
+            '<td>1</td>' +
+            '<td>3</td>' +
+            '<td>6</td>' +
+            '<td>10</td>' +
+            '<td>15</td>' +
+            '<td>21</td>' +
+            '<td>28</td>' +
+            '<td>36</td>' +
+            '<td>45</td>' +
+            '<td>55</td>' +
+        '</tr></tbody></table>' +
     '</div>';
 
 </script>
