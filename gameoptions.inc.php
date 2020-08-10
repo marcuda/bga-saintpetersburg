@@ -83,8 +83,9 @@ $game_preferences = array(
         'name' => totranslate('Overlap duplicate cards'),
         'needReload' => true,
         'values' => array(
-            0 => array('name' => totranslate('Yes')),
-            1 => array('name' => totranslate('No')),
+            0 => array('name' => totranslate('Horizontal')),
+            1 => array('name' => totranslate('None')),
+            2 => array('name' => totranslate('Vertical')),
         )
     ),
 );
