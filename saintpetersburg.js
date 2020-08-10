@@ -444,6 +444,13 @@ function (dojo, declare) {
                 }
             }
 
+            // Aristocrat table helper tooltip
+            this.addTooltipHtml('aristocrat_table', this.format_block('jstpl_ari_tooltip', {
+                text:_('Players score end game bonus points for each different type of Aristocrat they own, which is tracked in the player panel.'),
+                aristocrats:_('Unique Aristocrats'),
+                points:_('Bonus Points'),
+            }), 'aristocrat_table');
+
             // Player hand
             if (!this.spectator) { // Spectator has no hand element
                 this.playerHand = this.createCardStock('myhand', 1, 0);

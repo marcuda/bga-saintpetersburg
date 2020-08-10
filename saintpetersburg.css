@@ -101,6 +101,35 @@
     top: 26px;
 }
 
+.stp_aritable {
+    position: absolute;
+    width: 149px;
+    height: 52px;
+    left: 7px;
+    top: 156px;
+}
+
+.stp_aritooltip {
+    max-width: 300px;
+}
+
+.stp_aritooltip table {
+    margin: auto;
+}
+
+.stp_aritooltip th {
+    border: 1px solid black;
+    padding: 5px 4px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.stp_aritooltip td {
+    border: 1px solid black;
+    padding: 3px 4px;
+    text-align: center;
+}
+
 .stp_square {
     width: 70px;
     height: 112px;
