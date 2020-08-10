@@ -58,9 +58,12 @@ var customStockUpdateDisplay = function(from)
 
 /* BEGIN MOD */
     var dup_item_width = Math.round(this.item_width * this.duplicate_overlap / 100);
+    var dup_item_height = Math.round(this.item_height * this.duplicate_overlap / 100);
     var num_dup = 0;
     var item_types = [];
-    zindex = 1;
+    zindex = this.duplicate_vertical ? 100 : 1;
+    var current_row_height = this.item_height;
+    var full_rows_height = 0;
 
     for (var i in this.items) {
         var item = this.items[i];
@@ -73,24 +76,47 @@ var customStockUpdateDisplay = function(from)
             num_dup++;
         } else {
             item_types.push(item.type);
+            if (this.duplicate_vertical) num_dup = 0;
         }
 
         if (zindex != "auto") {
-            zindex++;
+            if (this.duplicate_vertical) {
+                zindex--;
+            } else {
+                zindex++;
+            }
         }
 
         // Determine position with duplicate overlap
         if (typeof item.loc == "undefined") {
-            item_left = n * (_item_width + this.item_margin) - dup_item_width * num_dup;
-            if (item_left + _item_width > control_width) {
-                // Next row, reset all counters
-                rows += 1;
-                n = 0;
-                num_dup = 0;
-                item_left = 0;
+            if (this.duplicate_vertical) {
+                if (is_dup) {
+                    n--;
+                    current_row_height = Math.max(current_row_height, this.item_height + num_dup * dup_item_height);
+                }
+                item_left = n * (_item_width + this.item_margin);
+                if (item_left + _item_width > control_width) {
+                    // Next row, reset all counters
+                    n = 0;
+                    num_dup = 0;
+                    item_left = 0;
+                    full_rows_height += current_row_height + this.item_margin;
+                    current_row_height = this.item_height;
+                }
+                final_width = Math.max(final_width, item_left + _item_width);
+                item_top = full_rows_height + dup_item_height * num_dup;
+            } else { // horizontal overlap
+                item_left = n * (_item_width + this.item_margin) - dup_item_width * num_dup;
+                if (item_left + _item_width > control_width) {
+                    // Next row, reset all counters
+                    n = 0;
+                    num_dup = 0;
+                    item_left = 0;
+                    full_rows_height += this.item_height + this.item_margin;
+                }
+                final_width = Math.max(final_width, item_left + _item_width);
+                item_top = full_rows_height;
             }
-            final_width = Math.max(final_width, item_left + _item_width);
-            item_top = rows * (this.item_height + extra_height + this.item_margin);
 
             /*
              * XXX
@@ -207,8 +233,8 @@ var customStockUpdateDisplay = function(from)
             }
         }
     }
-    var _115f = (rows + 1) * (this.item_height + extra_height + this.item_margin);
-    dojo.style(this.control_name, "height", _115f + "px");
+    var final_height = full_rows_height + current_row_height + this.item_margin; /* MOD */
+    dojo.style(this.control_name, "height", final_height + "px");
     if (this.autowidth) {
         if (final_width > 0) {
             final_width += (this.item_width - _item_width);
@@ -282,7 +308,14 @@ function (dojo, declare) {
             }
 
             // Overlap duplicate cards if preferred
-            var duplicate_overlap = this.prefs[101].value == 0 ? 60 : 0;
+            var duplicate_overlap = 0;
+            this.duplicate_vertical = false;
+            if (this.prefs[101].value == 0) {
+                duplicate_overlap = 60;
+            } else if (this.prefs[101].value == 2) {
+                duplicate_overlap = 30;
+                this.duplicate_vertical = true;
+            }
 
             // Auto pass banner
             dojo.connect($('button_cancel_pass'), 'onclick', this, 'onCancelAutoPass');
@@ -645,6 +678,7 @@ function (dojo, declare) {
                 board.updateDisplay = customStockUpdateDisplay;
                 board.duplicate_overlap = overlap;
                 board.observatory_type = this.constants.observatory; // needed to not overlap observatory
+                board.duplicate_vertical = this.duplicate_vertical;
             }
             board.create(this, $(elem), this.cardwidth, this.cardheight);
             board.image_items_per_row = this.card_art_row_size;
