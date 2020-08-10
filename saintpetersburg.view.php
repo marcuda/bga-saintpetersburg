@@ -77,6 +77,7 @@ class view_saintpetersburg_saintpetersburg extends game_view
 
         // Active automatic pass message
         $this->tpl['AUTOPASS_MSG'] = self::_("You will automatically pass your turn until the next phase begins!");
+        $this->tpl['CANCEL'] = self::_("Cancel");
 
         // Temporary publisher notice
         $publisher = html_entity_decode('Hans im Gl&uuml;ck'); // NOI18N

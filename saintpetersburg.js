@@ -319,7 +319,8 @@ function (dojo, declare) {
 
             // Auto pass banner
             dojo.connect($('button_cancel_pass'), 'onclick', this, 'onCancelAutoPass');
-            if (parseInt(gamedatas.autopass)) {
+            gamedatas.autopass = parseInt(gamedatas.autopass);
+            if (gamedatas.autopass) {
                 // Show banner
                 dojo.style('autopass_msg', 'display', '');
             }
@@ -577,7 +578,9 @@ function (dojo, declare) {
                             this.addActionButton("button_1", _("Observatory"), "onButtonObservatory");
                         }
                         this.addActionButton("button_2", _("Pass"), "onPass");
-                        this.addActionButton("button_3", _("Auto pass"), "onAutoPass", null, false, "red");
+                        if (!this.gamedatas.autopass) {
+                            this.addActionButton("button_3", _("Auto pass..."), "onAutoPass", null, false, "red");
+                        }
                         break;
                     case 'client_selectCard':
                         // Options: buy, add, cancel
@@ -1209,15 +1212,20 @@ function (dojo, declare) {
         onAutoPass: function (evt)
         {
             dojo.stopEvent(evt);
-            if (!this.checkAction('pass'))
+            if (!this.checkAction('autopass'))
                 return;
 
             // Turn on warning banner
             dojo.style('autopass_msg', 'display', '');
+            this.gamedatas.autopass = true;
+
+            // Remove Auto pass action button
+            this.removeActionButtons();
+            this.addActionButton("button_2", _("Pass"), "onPass");
 
             this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/pass.html",
-                {lock:true, auto:true}, this, function (result) {});
+                "/saintpetersburg/saintpetersburg/autopass.html",
+                {lock:true}, this, function (result) {});
         },
 
         /*
@@ -1227,15 +1235,20 @@ function (dojo, declare) {
         {
             dojo.stopEvent(evt);
 
-            // No action check (player is not active)
+            // No action check (player may not be active)
 
             // Turn off warning banner
             dojo.style('autopass_msg', 'display', 'none');
+            this.gamedatas.autopass = false;
 
-            // Do NOT lock interface
+            if (this.isCurrentPlayerActive()) {
+                // Restore Auto pass action button
+                this.addActionButton("button_3", _("Auto pass..."), "onAutoPass", null, false, "red");
+            }
+
             this.ajaxcall(
                 "/saintpetersburg/saintpetersburg/cancelPass.html",
-                {id:this.player_id}, this, function (result) {});
+                {lock:true, id:this.player_id}, this, function (result) {});
         },
 
         /*
@@ -1772,6 +1785,7 @@ function (dojo, declare) {
             // Clear pass and remove auto pass banners
             this.enableAllPlayerPanels();
             dojo.style('autopass_msg', 'display', 'none');
+            this.gamedatas.autopass = false;
 
             // Rotate card stacks
             this.setPhase(notif.args.phase);

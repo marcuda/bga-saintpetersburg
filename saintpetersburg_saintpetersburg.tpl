@@ -29,7 +29,7 @@
         <div class=roundedboxinner">
             <div id="autopass" class="stp_banner_msg">
                 <span>{AUTOPASS_MSG}</span>
-                <a href="#" class="action-button bgabutton bgabutton_red" style="line-height:normal;" onclick="return false;" id="button_cancel_pass">Cancel</a>
+                <a href="#" class="action-button bgabutton bgabutton_red" style="line-height:normal;" onclick="return false;" id="button_cancel_pass">{CANCEL}</a>
             </div>
         </div>
     </div>
