@@ -82,6 +82,7 @@
 <div id="button_2"></div>
 <div id="button_3"></div>
 <div id="button_4"></div>
+<div id="button_autopass"></div>
 
 <script type="text/javascript">
 

@@ -1262,16 +1262,15 @@ class SaintPetersburg extends Table
     }
 
     /*
-     * Player chooses that, after the next action, they will automatically
-     * pass all subsequent turns until the next phase
+     * Player chooses that (after the next action if active) they will
+     * automatically pass all subsequent turns until the next phase
      */
     function enableAutoPass()
     {
-        self::checkAction('autopass');
-
-        $player_id = self::getActivePlayerId();
+        // No action check
+        $player_id = self::getCurrentPlayerId(); // CURRENT: player can do this out of turn
         $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
-        self::notifyPlayer($player_id, 'log', clienttranslate('Auto pass: ON'), array());
+        self::notifyPlayer($player_id, 'autopass', '', array('enable' => true));
 
         // No state change, player continues to take normal action
     }
@@ -1279,12 +1278,12 @@ class SaintPetersburg extends Table
     /*
      * Player stops automatically passing their turns
      */
-    function cancelPass($player_id)
+    function cancelAutoPass()
     {
-        // This can happen at any point, even when not active
-        // There is no danger of cheating here so no checks, just disable it
+        // No action check
+        $player_id = self::getCurrentPlayerId(); // CURRENT: player can do this out of turn
         $this->DbQuery("UPDATE player SET autopass=0 WHERE player_id='$player_id'");
-        self::notifyPlayer($player_id, 'log', clienttranslate('Auto pass: off'), array());
+        self::notifyPlayer($player_id, 'autopass', '', array('enable' => false));
     }
 
     /*
