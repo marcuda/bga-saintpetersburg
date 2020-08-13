@@ -923,6 +923,18 @@ function (dojo, declare) {
                 this.setDeckTooltip(prev_phase, this.deck_counters[prev_phase].getValue());
             }
 
+            // Update label with current phase and matching color
+            $('phase_label').textContent = _('Current phase') + ': ' + _(phase);
+            if (phase == 'Worker') {
+                dojo.style('phase_label', 'color', 'green');
+            } else if (phase == 'Building') {
+                dojo.style('phase_label', 'color', 'blue');
+            } else if (phase == 'Aristocrat') {
+                dojo.style('phase_label', 'color', 'orangered');
+            } else if (phase == 'Trading') {
+                dojo.style('phase_label', 'color', 'black');
+            }
+
             // Get platform-specific animation
             var transform;
             dojo.forEach(

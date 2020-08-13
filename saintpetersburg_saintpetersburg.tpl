@@ -40,12 +40,13 @@
     <div id="stp_gameboard">
         <div id="discard_pile" class="stp_discard"></div>
         <div id="aristocrat_table" class="stp_aritable"></div>
+        <div id="phase_label" class="stp_label" style="left: 303px; top: 10px"></div>
         <div id="decks">
             <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
             <div id="deck_Building" class="stp_deck stp_deck_building"></div>
             <div id="deck_Aristocrat" class="stp_deck stp_deck_aristocrat"></div>
             <div id="deck_Trading" class="stp_deck stp_deck_trading"></div>
-            <div id="deck_counts" class="stp_deckcount">
+            <div id="deck_counts" class="stp_label">
                 <span id="count_Worker" style="left: 230px; top: 128px">0</span>
                 <span id="count_Building" style="left: 372px; top: 128px">0</span>
                 <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>

@@ -242,7 +242,8 @@
     background: rgba(200,0,0,0.4);
 }
 
-.stp_deckcount {
+.stp_label {
+    position: absolute;
     color: black;
     text-shadow: -1px 0 white,
     0 1px white,
@@ -252,7 +253,7 @@
     font-weight: bold;
 }
 
-.stp_deckcount > span {
+.stp_label > span {
     position: absolute;
 }
 
