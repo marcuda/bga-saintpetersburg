@@ -393,7 +393,7 @@ function (dojo, declare) {
             // Find active player in current order
             for (var i in gamedatas.playerorder) {
                 if (gamedatas.playerorder[i] == gamedatas.gamestate.active_player) {
-                    idx = i + num_players; // pad value so it can decrement and stay positive
+                    idx = parseInt(i) + num_players; // pad value so it can decrement and stay positive
                     break;
                 }
             }
