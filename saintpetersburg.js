@@ -579,7 +579,7 @@ function (dojo, declare) {
                         }
                         this.addActionButton("button_2", _("Pass"), "onPass");
                         if (!this.gamedatas.autopass) {
-                            this.addActionButton("button_3", _("Auto pass..."), "onAutoPass", null, false, "red");
+                            this.addActionButton("button_autopass", _("Enable auto pass"), "onAutoPass", null, false, "red");
                         }
                         break;
                     case 'client_selectCard':
@@ -623,6 +623,10 @@ function (dojo, declare) {
                         this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                         this.addActionButton("button_3", _("Discard"), "onDiscardCard");
                         break;
+                }
+            } else {
+                if (stateName == 'playerTurn' && !this.gamedatas.autopass) {
+                    this.addActionButton("button_autopass", _("Enable auto pass"), "onAutoPass", null, false, "red");
                 }
             }
         },        
@@ -1212,16 +1216,8 @@ function (dojo, declare) {
         onAutoPass: function (evt)
         {
             dojo.stopEvent(evt);
-            if (!this.checkAction('autopass'))
-                return;
 
-            // Turn on warning banner
-            dojo.style('autopass_msg', 'display', '');
-            this.gamedatas.autopass = true;
-
-            // Remove Auto pass action button
-            this.removeActionButtons();
-            this.addActionButton("button_2", _("Pass"), "onPass");
+            // No action check (player may not be active)
 
             this.ajaxcall(
                 "/saintpetersburg/saintpetersburg/autopass.html",
@@ -1237,18 +1233,9 @@ function (dojo, declare) {
 
             // No action check (player may not be active)
 
-            // Turn off warning banner
-            dojo.style('autopass_msg', 'display', 'none');
-            this.gamedatas.autopass = false;
-
-            if (this.isCurrentPlayerActive()) {
-                // Restore Auto pass action button
-                this.addActionButton("button_3", _("Auto pass..."), "onAutoPass", null, false, "red");
-            }
-
             this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/cancelPass.html",
-                {lock:true, id:this.player_id}, this, function (result) {});
+                "/saintpetersburg/saintpetersburg/cancelAutoPass.html",
+                {lock:true}, this, function (result) {});
         },
 
         /*
@@ -1544,6 +1531,7 @@ function (dojo, declare) {
         {
             if (this.debug) console.log('notifications subscriptions setup');
             
+            dojo.subscribe('autopass', this, 'notif_autoPass');
             dojo.subscribe('pass', this, 'notif_pass');
             dojo.subscribe('buyCard', this, 'notif_buyCard');
             dojo.subscribe('addCard', this, 'notif_addCard');
@@ -1562,6 +1550,31 @@ function (dojo, declare) {
             dojo.subscribe('newRound', this, 'notif_newRound');
             dojo.subscribe('buyPoints', this, 'notif_buyPoints');
         },  
+
+        /*
+         * Message for player toggling auto pass
+         */
+        notif_autoPass: function (notif)
+        {
+            if (this.debug) console.log('autopass notif');
+            if (this.debug) console.log(notif);
+
+            if (notif.args.enable) {
+                // Turn on warning banner
+                dojo.style('autopass_msg', 'display', '');
+                this.gamedatas.autopass = true;
+
+                // Remove Auto pass action button
+                dojo.destroy("button_autopass");
+            } else {
+                // Turn off warning banner
+                dojo.style('autopass_msg', 'display', 'none');
+                this.gamedatas.autopass = false;
+
+                // Restore Auto pass action button
+                this.addActionButton("button_autopass", _("Enable auto pass"), "onAutoPass", null, false, "red");
+            }
+        },
 
         /*
          * Message for player passing
