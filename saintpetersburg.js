@@ -1122,6 +1122,9 @@ function (dojo, declare) {
             if (!this.checkAction('selectCard'))
                 return;
 
+            // Clear any previous selection
+            this.client_state_args = {lock:true};
+
             // Card location
             var coords = evt.currentTarget.id.split('_');
             var col = coords[1];
@@ -1352,6 +1355,9 @@ function (dojo, declare) {
 
             if (items.length > 0) {
                 if (this.checkAction('playCard')) {
+                    // Clear any previous selection
+                    this.client_state_args = {lock:true};
+
                     // Play card from hand
                     var card_id = items[0].id;
                     this.client_state_args.col = card_id;
