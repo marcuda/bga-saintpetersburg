@@ -508,11 +508,12 @@ function (dojo, declare) {
                         this.setSelections();
                     }
                     break;
-                case 'client_selectCard':
-                    this.setSelections();
-                    break;
                 case 'client_tradeCard':
                     this.is_trading = true;
+                    // fallthru
+                case 'client_playCard':
+                    // fallthru
+                case 'client_selectCard':
                     this.setSelections();
                     break;
                 case 'client_useObservatory':
@@ -595,6 +596,18 @@ function (dojo, declare) {
                         this.addActionButton("button_1", buy_text, "onBuyCard", null, false, buy_color);
                         this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                         this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
+                        break;
+                    case 'client_playCard':
+                        // Options: buy, cancel
+                        var buy_color = args.can_buy ? "blue" : "gray";
+                        var buy_text = _("Buy");
+                        if (args.is_trading) {
+                            buy_text += " (" + args.cost + " - ?)";
+                        } else {
+                            buy_text += " (" + args.cost + ")";
+                        }
+                        this.addActionButton("button_1", buy_text, "onPlayCard", null, false, buy_color);
+                        this.addActionButton("button_2", _("Cancel"), "onCancelCard", null, false, "red");
                         break;
                     case 'client_tradeCard':
                         // Options: cancel
@@ -1199,6 +1212,50 @@ function (dojo, declare) {
         },
 
         /*
+         * Player clicks 'Buy' button for card (from hand)
+         */
+        onPlayCard: function (evt)
+        {
+            dojo.stopEvent(evt);
+            if (!this.checkAction('playCard')) {
+                this.playerHand.unselectAll();
+                return;
+            }
+
+            // Get card to be played
+            var col = this.client_state_args.col;
+            var row = this.client_state_args.row;
+            var card = this.possible_moves[row][col];
+
+            if (!card.can_buy) {
+                // Player cannot play this card
+                // Check if trading card to give most accurate error message
+                if (card.is_trading && !card.has_trade) {
+                    this.showMessage(_("You do not have any valid cards to trade"), "error");
+                } else {
+                    this.showMessage(_("You do not have enough rubles"), "error");
+                }
+                this.playerHand.unselectAll();
+                return;
+            }
+
+            if (card.is_trading) {
+                // Player needs to select card to displace
+                this.setClientState('client_tradeCard', {
+                    descriptionmyturn: _('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+                    args: card
+                });
+            } else {
+                // Send play action to server
+                this.ajaxcall(
+                    "/saintpetersburg/saintpetersburg/playCard.html",
+                    this.client_state_args, this, function (result) {});
+            }
+
+            this.playerHand.unselectAll();
+        },
+
+        /*
          * Player clicks 'Cancel' button (several actions)
          */
         onCancelCard: function (evt)
@@ -1358,42 +1415,17 @@ function (dojo, declare) {
                     // Clear any previous selection
                     this.client_state_args = {lock:true};
 
-                    // Play card from hand
+                    // Store card details
                     var card_id = items[0].id;
                     this.client_state_args.col = card_id;
                     this.client_state_args.row = this.constants.hand;
-
                     var card = this.possible_moves[this.constants.hand][card_id];
-                    if (card === undefined) {
-                        alert("Unexpected error playing card from hand");
-                    }
 
-                    if (!card.can_buy) {
-                        // Player cannot play this card
-                        // Check if trading card to give most accurate error message
-                        if (card.is_trading && !card.has_trade) {
-                            this.showMessage(_("You do not have any valid cards to trade"), "error");
-                        } else {
-                            this.showMessage(_("You do not have enough rubles"), "error");
-                        }
-                        this.playerHand.unselectAll();
-                        return;
-                    }
-                    
-                    if (card.is_trading) {
-                        // Player needs to select card to displace
-                        this.setClientState('client_tradeCard', {
-                            descriptionmyturn: _('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
-                            args: card
-                        });
-                    } else {
-                        // Send play action to server
-                        this.ajaxcall(
-                            "/saintpetersburg/saintpetersburg/playCard.html",
-                            this.client_state_args, this, function (result) {});
-                    }
-
-                    this.playerHand.unselectAll();
+                    // Allow player to see cost and confirm buy
+                    this.setClientState('client_playCard', {
+                        descriptionmyturn: _('${card_name}: ${you} may buy'),
+                        args: card
+                    });
                 } else {
                     // Cannot play from hand right now
                     this.playerHand.unselectAll();
