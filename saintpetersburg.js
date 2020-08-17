@@ -524,7 +524,11 @@ function (dojo, declare) {
                     this.possible_moves = {};
                     this.possible_moves[this.constants.observatory] = {};
                     this.possible_moves[this.constants.observatory][0] = args.args;
-                    this.client_state_args = {lock:true};
+                    this.client_state_args = {
+                        lock: true,
+                        row: this.constants.observatory,
+                        col: 0
+                    };
                     this.showObservatoryChoice(args.args);
                     break;
                 case 'usePub':
@@ -1060,11 +1064,6 @@ function (dojo, declare) {
          */
         showObservatoryChoice: function (args)
         {
-            // Sprite index
-            var idx = args.card.type_arg;
-            var x = this.cardwidth * (idx % this.card_art_row_size);
-            var y = this.cardheight * Math.floor(idx / this.card_art_row_size);
-
             var card_id = this.getCardDiv(this.constants.observatory, 0);
             if ($(card_id)) {
                 // Card already exists on board
@@ -1073,15 +1072,17 @@ function (dojo, declare) {
                 return;
             }
 
-            this.client_state_args.row = this.constants.observatory;
-            this.client_state_args.col = 0;
-
             // Disable Observatory
             dojo.style('card_content_mask_' + args.obs_id, 'display', 'block');
 
             // Remove one card from selected deck
             var num_cards = this.deck_counters[args.card.type].incValue(-1);
             this.setDeckTooltip(args.card.type, num_cards);
+
+            // Sprite index
+            var idx = args.card.type_arg;
+            var x = this.cardwidth * (idx % this.card_art_row_size);
+            var y = this.cardheight * Math.floor(idx / this.card_art_row_size);
 
             // Place and animate card draw
             dojo.place(this.format_block('jstpl_card', {
