@@ -1207,6 +1207,7 @@ class SaintPetersburg extends Table
         }
 
         self::notifyAllPlayers($notif, $msg, array(
+            'i18n' => array('card_name', 'trade_name'),
             'player_id' => $player_id,
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
@@ -1380,6 +1381,7 @@ class SaintPetersburg extends Table
 
         $msg = clienttranslate('Observatory: ${player_name} draws ${card_name} from the ${phase} stack');
         self::notifyAllPlayers('message', $msg, array(
+            'i18n' => array('card_name', 'phase'),
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
             'phase' => $phase
@@ -1415,6 +1417,7 @@ class SaintPetersburg extends Table
 
         $msg = clienttranslate('${player_name} discards ${card_name}');
         self::notifyAllPlayers('discard', $msg, array(
+            'i18n' => array('card_name'),
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
             'cards' => $location
@@ -1469,6 +1472,7 @@ class SaintPetersburg extends Table
         $possible_moves['card'] = $card;
         $possible_moves['obs_id'] = self::getGameStateValue('observatory_' . $obs_id . '_id');
         $possible_moves['player_id'] = $player_id;
+        $possible_moves['i18n'] = array('card_name');
 
         return $possible_moves;
     }
@@ -1644,6 +1648,7 @@ class SaintPetersburg extends Table
                 self::setGameStateValue("last_round", 1);
                 $msg = clienttranslate('Final round! ${phase} deck is empty');
                 self::notifyAllPlayers('lastRound', $msg, array(
+                    'i18n' => array('phase'),
                     'phase' => $phase
                 ));
             }
@@ -1655,8 +1660,10 @@ class SaintPetersburg extends Table
 
         $msg = clienttranslate('${phase} phase begins, starting with ${player_name}');
         self::notifyAllPlayers('nextPhase', $msg, array(
+            'i18n' => array('phase'),
             'player_name' => self::getActivePlayerName(),
             'phase' => $phase,
+            'phase_arg' => $phase, // non-translated arg used in client (i18n came late)
             'cards' => $new_cards
         ));
 
@@ -1706,6 +1713,7 @@ class SaintPetersburg extends Table
                     // Notify client to clear UI for other players
                     $msg = clienttranslate('${card_name} is discarded automatically');
                     self::notifyAllPlayers('discard', $msg, array(
+                        'i18n' => array('card_name'),
                         'card_name' => $this->getCardName($card),
                         'cards' => array(array('row' => ROW_OBSERVATORY))
                     ));

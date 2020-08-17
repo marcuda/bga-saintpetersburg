@@ -910,7 +910,7 @@ function (dojo, declare) {
                 } else {
                     // Immediately switch token to next player
                     dojo.addClass(next, 'stp_token_' + phase);
-                    var txt = _("Starting player for") + " " + _(phase) + " " + _("phase");
+                    var txt = dojo.string.substitute(_("Starting player for ${phase} phase"), {phase: _(phase)});
                     this.addTooltip(next, txt, "");
                 }
             }
@@ -1110,13 +1110,17 @@ function (dojo, declare) {
                 txt += "<b>" + _("Current phase") + ":</b> ";
             }
 
-            txt += _(phase) + " " + _("stack") + " ";
 
             if (cards == 0) {
                 // Special message if stack is empty (end game trigger)
-                txt += _("is empty meaning game will end soon");
+                txt += dojo.string.substitute(_("${phase} stack is empty meaning game will end soon"), {
+                    phase: _(phase)
+                });
             } else {
-                txt += _("has") + " " + cards + " " + _("cards");
+                txt += dojo.string.substitute(_("${phase} stack has ${cards} cards"), {
+                    phase: _(phase),
+                    cards: cards
+                });
             }
 
             this.addTooltip('deck_' + phase, txt, "");
@@ -1147,8 +1151,10 @@ function (dojo, declare) {
             this.client_state_args.col = col;
             this.client_state_args.row = row;
 
+
+            var desc = _(card_info.card_name) + ': ' + _('${you} may buy or add to hand');
             this.setClientState('client_selectCard', {
-                descriptionmyturn: _('${card_name}: ${you} may buy or add to hand'),
+                descriptionmyturn: desc,
                 args: card_info
             });
         },
@@ -1199,8 +1205,9 @@ function (dojo, declare) {
 
             if (card_info.is_trading) {
                 // Player needs to select card to displace
+                var desc = _(card_info.card_name) + ': ' + _('${you} must choose a card to displace (base cost: ${cost})');
                 this.setClientState('client_tradeCard', {
-                    descriptionmyturn: _('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+                    descriptionmyturn: desc,
                     args: card_info
                 });
             } else {
@@ -1241,8 +1248,9 @@ function (dojo, declare) {
 
             if (card.is_trading) {
                 // Player needs to select card to displace
+                var desc = _(card.card_name) + ': ' + _('${you} must choose a card to displace (base cost: ${cost})');
                 this.setClientState('client_tradeCard', {
-                    descriptionmyturn: _('${card_name}: ${you} must choose a card to displace (base cost: ${cost})'),
+                    descriptionmyturn: desc,
                     args: card
                 });
             } else {
@@ -1422,8 +1430,9 @@ function (dojo, declare) {
                     var card = this.possible_moves[this.constants.hand][card_id];
 
                     // Allow player to see cost and confirm buy
+                    var desc = _(card.card_name) + ': ' + _('${you} may buy');
                     this.setClientState('client_playCard', {
-                        descriptionmyturn: _('${card_name}: ${you} may buy'),
+                        descriptionmyturn: desc,
                         args: card
                     });
                 } else {
@@ -1851,8 +1860,8 @@ function (dojo, declare) {
             this.gamedatas.autopass = false;
 
             // Rotate card stacks
-            this.setPhase(notif.args.phase);
-            var deck = 'deck_' + notif.args.phase;
+            this.setPhase(notif.args.phase_arg);
+            var deck = 'deck_' + notif.args.phase_arg;
 
             // Draw new cards onto board
             var draw = 0;
@@ -1864,12 +1873,12 @@ function (dojo, declare) {
             // TODO: Possible issue where deck counter value goes too low?
             // Noticed in one game (off by one) and not yet reproduced
             // Update deck counters and tooltips
-            var num_cards = this.deck_counters[notif.args.phase].incValue(-draw);
-            this.setDeckTooltip(notif.args.phase, num_cards);
+            var num_cards = this.deck_counters[notif.args.phase_arg].incValue(-draw);
+            this.setDeckTooltip(notif.args.phase_arg, num_cards);
             if (num_cards == 0) {
                 // Highlight that stack is empty and game is in end state
                 dojo.addClass(deck, 'stp_emptydeck')
-                dojo.style('count_' + notif.args.phase, 'color', 'red');
+                dojo.style('count_' + notif.args.phase_arg, 'color', 'red');
             }
         },
 
