@@ -245,10 +245,10 @@
 .stp_label {
     position: absolute;
     color: black;
-    text-shadow: -1px 0 white,
-    0 1px white,
-    1px 0 white,
-    0 -1px white;
+    text-shadow: 2px 0 2px #fff,
+        0 -2px 2px #fff,
+        0 2px 2px #fff,
+        -2px 0 2px #fff;
     font-size: 18px;
     font-weight: bold;
 }
