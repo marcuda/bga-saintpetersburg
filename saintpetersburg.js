@@ -276,7 +276,6 @@ function (dojo, declare) {
             this.card_infos = null;         // Full list of card details
             this.deck_counters = [];        // Counters for cards in each phase stack
                                             // N.B. terms deck and stack are used interchangably
-            this.spectator = false;         // Is current player a spectator
             this.client_state_args = {lock:true};    // Object to hold argument during client state changes
             this.possible_moves = null;     // All possible moves for current player
             this.constants = null;          // Constant values between client and server
@@ -405,11 +404,7 @@ function (dojo, declare) {
 
             // Set up player table unless spectating
             this.playerTable = this.player_tables[this.player_id];
-            if (this.playerTable === undefined) {
-                // Spectator - hide player hand area
-                this.spectator = true;
-                dojo.style('myhand_wrap', 'display', 'none');
-            } else {
+            if (this.playerTable !== undefined) { // no table for spectator
                 dojo.connect(this.playerTable, 'onChangeSelection', this, 'onPlayerTableSelectionChanged' );
             }
 
@@ -453,7 +448,7 @@ function (dojo, declare) {
             }), 'aristocrat_table');
 
             // Player hand
-            if (!this.spectator) { // Spectator has no hand element
+            if (!this.isSpectator) { // Spectator has no hand element
                 this.playerHand = this.createCardStock('myhand', 1, 0);
                 this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
                 for (var i in gamedatas.player_hands[this.player_id]) {
@@ -461,6 +456,9 @@ function (dojo, declare) {
                     this.playerHand.addToStockWithId(card.type_arg, card.id);
                 }
                 dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
+            } else {
+                // Hide player hand area for spectators
+                dojo.style('myhand_wrap', 'display', 'none');
             }
             
             // Game board cards
@@ -553,7 +551,7 @@ function (dojo, declare) {
 
             // Reset selections for all items
             // No special handling for any state
-            if (!this.spectator) {
+            if (!this.isSpectator) {
                 // Spectator has no hand or board!
                 this.playerHand.unselectAll();
                 this.playerTable.setSelectionMode(0);
@@ -642,7 +640,7 @@ function (dojo, declare) {
                         break;
                 }
             } else {
-                if (stateName == 'playerTurn' && !this.gamedatas.autopass) {
+                if (stateName == 'playerTurn' && !this.gamedatas.autopass && !this.isSpectator) {
                     this.addActionButton("button_autopass", _("Enable auto pass"), "onAutoPass", null, false, "red");
                 }
             }
