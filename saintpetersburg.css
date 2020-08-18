@@ -204,10 +204,31 @@
     display: inline-block;
 }
 
-.stp_cardicon {
-    width: 32px;
-    height: 32px;
-    background-image: url('img/cardicon.png');
+[class^="stp_cardicon_"] {
+    width: 15px;
+    height: 24px;
+    background-image: url('img/cardbacks_big.jpg');
+    background-size: cover;
+    display: inline-block;
+    margin: 2px;
+    position: relative;
+    top: 5px;
+}
+
+.stp_cardicon_Worker {
+    background-position: 0px 0px;
+}
+
+.stp_cardicon_Building {
+    background-position: -15px 0px;
+}
+
+.stp_cardicon_Aristocrat {
+    background-position: -30px 0px;
+}
+
+.stp_cardicon_Trading {
+    background-position: -45px 0px;
 }
 
 .stp_deck {
@@ -279,6 +300,7 @@
 }
 
 .stp_token_hand {
+    margin-top: 12px;
     background-position: 0px 0px;
 }
 

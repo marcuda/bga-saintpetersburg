@@ -101,9 +101,6 @@ var jstpl_card_content =
 
 var jstpl_player_board =
     '<div class="stp_board">' +
-        '<div id="handcount_icon_p${id}" class="imgtext stp_token_small stp_token_hand"></div>' +
-        '<span id="handcount_p${id}">0</span>' +
-        '&nbsp;' +
         '<div id="rublecount_icon_p${id}" class="imgtext stp_token_small stp_token_ruble"></div>' +
         '<span id="rublecount_p${id}">??</span>' +
         '&nbsp;' +
@@ -116,6 +113,14 @@ var jstpl_player_board =
             '<div id="token2_p${id}" class="imgtext stp_token_small"></div>' +
             '&nbsp;' +
         '</div>' +
+        '<br>' +
+        '<div id="handcount_icon_p${id}" class="imgtext stp_token_small stp_token_hand"></div>' +
+        '<span id="handcount_p${id}">0</span>' +
+        '&nbsp;' +
+        '<div id="cardicon_p${id}_0"></div>' +
+        '<div id="cardicon_p${id}_1"></div>' +
+        '<div id="cardicon_p${id}_2"></div>' +
+        '<div id="cardicon_p${id}_3"></div>' +
     '</div>';
 
 var jstpl_card_tooltip =

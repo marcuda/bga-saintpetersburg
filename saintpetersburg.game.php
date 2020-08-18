@@ -217,24 +217,30 @@ class SaintPetersburg extends Table
         $tables = array();
         $hands = array();
         $hand_size = array();
+        $hand_type = array();
         $aristocrats = array();
         foreach ($players as $player_id => $player)
         {
             $tables[$player_id] = $this->cards->getCardsInLocation('table', $player_id);
+            $cards = $this->cards->getPlayerHand($player_id);
             if ($player_id == $current_player_id || $this->gamestate->table_globals[OPT_SHOW_HANDS]) {
                 // Always send full hand details for current player
                 // Send all others if game option is enabled
                 $hands[$player_id] = $this->cards->getPlayerHand($player_id);
-                $hand_size[$player_id] = count($hands[$player_id]);
-            } else {
-                // Default only send count of cards in hand for other players
-                $hand_size[$player_id] = count($this->cards->getPlayerHand($player_id));
             }
+
+            // Players always get to see how many cards and what types are in other hands
+            $hand_size[$player_id] = count($hands[$player_id]);
+            foreach ($cards as $card) {
+                $hand_type[$player_id][] = $card['type'];
+            }
+
             $aristocrats[$player_id] = $this->uniqueAristocrats($player_id);
         }
         $result['player_tables'] = $tables;
         $result['player_hands'] = $hands;
         $result['player_hand_size'] = $hand_size;
+        $result['player_hand_type'] = $hand_type;
         $result['aristocrats'] = $aristocrats;
 
         // Get number of rubles for current or all players
