@@ -1248,6 +1248,7 @@ class SaintPetersburg extends Table
         self::notifyAllPlayers('pass', clienttranslate('${player_name} passes'), array(
             'player_name' => self::getActivePlayerName(),
             'player_id' => self::getActivePlayerId(),
+            'state' => $next_state, // to track auto pass in debug
         ));
 
         // Determine if phase should end
