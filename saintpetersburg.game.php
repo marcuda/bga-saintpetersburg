@@ -230,7 +230,8 @@ class SaintPetersburg extends Table
             }
 
             // Players always get to see how many cards and what types are in other hands
-            $hand_size[$player_id] = count($hands[$player_id]);
+            $hand_size[$player_id] = count($this->cards->getPlayerHand($player_id));
+            $hand_type[$player_id] = array();
             foreach ($cards as $card) {
                 $hand_type[$player_id][] = $card['type'];
             }
