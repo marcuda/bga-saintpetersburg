@@ -262,6 +262,8 @@ class SaintPetersburg extends Table
 
         // Number players already passed this turn
         $result['num_pass'] = $this->getGameStateValue('num_pass');
+        // Player order to mark passing (needed for spectator when playerorder not set)
+        $result['players_in_order'] = $this->getPlayersInOrder();
 
         // Get starting player tokens for each phase
         $tokens = array();

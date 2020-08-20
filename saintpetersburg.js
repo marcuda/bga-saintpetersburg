@@ -394,10 +394,10 @@ function (dojo, declare) {
             // Passed players
             // Game doesn't track specific players to have to work back from active player
             var idx;
-            var num_players = gamedatas.playerorder.length;
+            var num_players = gamedatas.players_in_order.length;
             // Find active player in current order
-            for (var i in gamedatas.playerorder) {
-                if (gamedatas.playerorder[i] == gamedatas.gamestate.active_player) {
+            for (var i in gamedatas.players_in_order) {
+                if (gamedatas.players_in_order[i] == gamedatas.gamestate.active_player) {
                     idx = parseInt(i) + num_players; // pad value so it can decrement and stay positive
                     break;
                 }
@@ -405,7 +405,7 @@ function (dojo, declare) {
             // Mark previous players passed
             for (var i=0; i<parseInt(gamedatas.num_pass); i++) {
                 idx -= 1;
-                this.disablePlayerPanel(gamedatas.playerorder[idx % num_players]);
+                this.disablePlayerPanel(gamedatas.players_in_order[idx % num_players]);
             }
 
             // Set up player table unless spectating
