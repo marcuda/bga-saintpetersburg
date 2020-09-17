@@ -223,7 +223,7 @@ class SaintPetersburg extends Table
         {
             $tables[$player_id] = $this->cards->getCardsInLocation('table', $player_id);
             $cards = $this->cards->getPlayerHand($player_id);
-            if ($player_id == $current_player_id || $this->gamestate->table_globals[OPT_SHOW_HANDS]) {
+            if ($player_id == $current_player_id || $this->optShowHands()) {
                 // Always send full hand details for current player
                 // Send all others if game option is enabled
                 $hands[$player_id] = $this->cards->getPlayerHand($player_id);
@@ -246,7 +246,7 @@ class SaintPetersburg extends Table
 
         // Get number of rubles for current or all players
         // Separate query to avoid sending possible secret info in 'players' above
-        if ($this->gamestate->table_globals[OPT_SHOW_RUBLES]) {
+        if ($this->optShowRubles()) {
             // Option to see all player rubles enabled
             $sql = "SELECT player_id, player_score_aux FROM player";
             $result['rubles'] = self::getCollectionFromDb($sql, true);
@@ -1028,9 +1028,7 @@ class SaintPetersburg extends Table
 
         // If both options are set there is no private info in the game,
         // then autopass can be more aggressive and validate every play
-        if ($this->gamestate->table_globals[OPT_SHOW_HANDS] &&
-            $this->gamestate->table_globals[OPT_SHOW_RUBLES])
-        {
+        if ($this->optShowHands() && $this->optShowRubles()) {
             // Function used for player turn highlights all possible moves
             // Can play if any card available to buy or add
             // This also covers any usable Observatory
@@ -1084,6 +1082,22 @@ class SaintPetersburg extends Table
     function dbGetAutoPass($player_id)
     {
         return $this->getUniqueValueFromDB("SELECT autopass FROM player WHERE player_id='$player_id'");
+    }
+
+    /*
+     * Returns true if game option to show player hands is enabled
+     */
+    function optShowHands()
+    {
+        return $this->gamestate->table_globals[OPT_SHOW_HANDS] == 1;
+    }
+
+    /*
+     * Returns true if game option to show player rubles is enabled
+     */
+    function optShowRubles()
+    {
+        return $this->gamestate->table_globals[OPT_SHOW_RUBLES] == 1;
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1688,7 +1702,8 @@ class SaintPetersburg extends Table
             self::giveExtraTime($starting_player);
             $this->gamestate->nextState('nextTurn');
         } else {
-            $this->gamestate->nextState('cantPlay');
+            // Player must pass since no available play
+            $this->passActivePlayer('cantPlay');
         }
     }
 
