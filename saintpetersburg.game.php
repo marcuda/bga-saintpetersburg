@@ -638,6 +638,7 @@ class SaintPetersburg extends Table
     {
         $players = self::loadPlayersBasicInfos();
         $scores = array();
+        $rubles = array();
         foreach ($players as $player_id => $player) {
             // Each different aristocrat (up to 10) is worth that many points
             // 1 = 1, 2 = 1+2 = 3, 3 = 1+2+3 = 6, ... 10 = 1+2+3+...+10 = 55
@@ -655,9 +656,12 @@ class SaintPetersburg extends Table
             ));
 
             // 1 per 10 rubles, ignoring any remainder
+            // Players trade these rubles for points
             $num_rubles = self::dbGetRubles($player_id);
             $points_rubles = intdiv($num_rubles, 10);
+            $num_rubles = 10 * $points_rubles;
             self::dbIncScore($player_id, $points_rubles);
+            $rubles[$player_id] = self::dbIncRubles($player_id, -1 * $num_rubles);
             self::setStat($points_rubles, 'points_rubles_end', $player_id);
 
             $msg = clienttranslate('Final scoring: ${player_name} earns ${points_rubles} Point(s) for ${num_rubles} Ruble(s)');
@@ -682,7 +686,10 @@ class SaintPetersburg extends Table
 
         }
 
-        self::notifyAllPlayers('newScores', "", array('scores' => $scores));
+        self::notifyAllPlayers('newScores', "", array(
+            'scores' => $scores,
+            'rubles' => $rubles,
+        ));
     }
 
     /*
