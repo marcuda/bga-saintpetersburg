@@ -522,7 +522,13 @@ function (dojo, declare) {
                     break;
                 case 'client_useObservatory':
                     // Highlight decks for selection
-                    dojo.query('.stp_deck').addClass('stp_selectable');
+                    // Cannot select if empty or last card
+                    for (var i in this.phases) {
+                        var phase = this.phases[i];
+                        if (this.deck_counters[phase].getValue() > 1) {
+                            dojo.addClass('deck_' + phase, 'stp_selectable');
+                        }
+                    }
                     break;
                 case 'useObservatory':
                     this.possible_moves = {};
