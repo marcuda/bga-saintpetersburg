@@ -1572,8 +1572,7 @@ class SaintPetersburg extends Table
     {
         // Get phase status
         $current_phase = self::getGameStateValue('current_phase') % 4;
-        $next_phase = self::incGameStateValue('current_phase', 1) % 4;
-        $new_round = ($next_phase == 0);
+        $new_round = ($current_phase == 3);
 
         // End game if last phase of final round just finished
         if ($new_round && self::getGameStateValue("last_round")) {
@@ -1633,8 +1632,8 @@ class SaintPetersburg extends Table
      */
     function stNextPhase()
     {
-        // Get phase (already incremented from scoring)
-        $next_phase = self::getGameStateValue('current_phase') % 4;
+        // Increment phase
+        $next_phase = self::incGameStateValue('current_phase', 1) % 4;
         $phase = $this->phases[$next_phase];
 
         // Clear any automatic passing
