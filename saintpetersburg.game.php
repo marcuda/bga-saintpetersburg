@@ -136,6 +136,8 @@ class SaintPetersburg extends Table
         }
 
         // Init game statistics
+        self::initStat('table', "turns_number", 1); // count first turn
+        self::initStat('table', "rounds_number", 1); // count first round
         self::initStat('player', "actions_taken", 0);
         self::initStat('player', "rubles_spent", 0);
         self::initStat('player', "rubles_total", 0);
@@ -1554,6 +1556,14 @@ class SaintPetersburg extends Table
         // Next player
         $player_id = self::activeNextPlayer();
 
+        // Count one turn when it gets back to the player that started this phase
+        $current_phase = self::getGameStateValue('current_phase') % 4;
+        $phase = $this->phases[$current_phase];
+        $starting_player = self::getGameStateValue("starting_player_" . $phase);
+        if ($player_id == $starting_player) {
+            self::incStat(1, 'turns_number');
+        }
+
         if ($this->dbGetAutoPass($player_id) || !$this->canPlay($player_id)) {
             // Player is auto passing or must pass since no available play
             $this->passActivePlayer('cantPlay');
@@ -1663,6 +1673,8 @@ class SaintPetersburg extends Table
             self::setGameStateValue('observatory_0_used', 0);
             self::setGameStateValue('observatory_1_used', 0);
 
+            self::incStat(1, 'rounds_number');
+
             self::notifyAllPlayers('newRound', "", array('tokens' => $tokens));
         }
 
@@ -1687,6 +1699,7 @@ class SaintPetersburg extends Table
         // Activate starting player (_not_ next player) for next phase
         $starting_player = self::getGameStateValue("starting_player_" . $phase);
         $this->gamestate->changeActivePlayer($starting_player);
+        self::incStat(1, 'turns_number');
 
         $msg = clienttranslate('${phase} phase begins, starting with ${player_name}');
         self::notifyAllPlayers('nextPhase', $msg, array(

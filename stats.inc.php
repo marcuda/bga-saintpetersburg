@@ -52,11 +52,12 @@ $stats_type = array(
     // Statistics global to table
     "table" => array(
 
-        /*
-        "turns_number" => array("id"=> 10,
+        "turns_number" => array("id"=> 20,
                     "name" => totranslate("Number of turns"),
                     "type" => "int" ),
-        */
+        "rounds_number" => array("id"=> 30,
+                    "name" => totranslate("Number of rounds"),
+                    "type" => "int" ),
 
     ),
     
