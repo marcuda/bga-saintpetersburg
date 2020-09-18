@@ -1930,7 +1930,8 @@ function (dojo, declare) {
             {
                 var newScore = notif.args.scores[player_id];
                 this.scoreCtrl[player_id].toValue(newScore);
-                if (notif.args.rubles) {
+                if (notif.args.rubles && this.player_rubles[player_id]) {
+                    // End game only when rubles are traded for points
                     var newRubles = notif.args.rubles[player_id];
                     this.player_rubles[player_id].toValue(newRubles);
                 }
