@@ -955,7 +955,7 @@ function (dojo, declare) {
             var players = {};
 
             // Clear existing tokens
-            dojo.query('.stp_token_small').removeClass('stp_token_Worker stp_token_Building stp_token_Aristocrat stp_token_Trading');
+            dojo.query('.stp_token').removeClass('stp_token_Worker stp_token_Building stp_token_Aristocrat stp_token_Trading');
 
             // Determine current and next player for each token
             for (var phase in tokens) {
@@ -972,7 +972,7 @@ function (dojo, declare) {
 
                 if (animate) {
                     // Use temp object to show tokens rotating between boards
-                    var tmp = '<div id="tmp_token_'+phase+'" class="stp_token_small stp_token_'+phase+'"></div>';
+                    var tmp = '<div id="tmp_token_'+phase+'" class="stp_token stp_token_'+phase+'"></div>';
                     this.slideTemporaryObject(tmp, 'token_wrap_p' + token.current, curr, next, delay, 0);
                 } else {
                     // Immediately switch token to next player

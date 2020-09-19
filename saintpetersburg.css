@@ -279,86 +279,84 @@
 }
 
 .stp_token {
-    position: relative;
-    display: inline-block;
     width: 32px;
     height: 32px;
     z-index: 99;
-    background-image: url('img/tokens.png');
-    background-position: -128px 0px; /* empty */
+    background-position: -128px -16px; /* empty */
 }
 
-.stp_token_small {
-    position: relative;
-    display: inline-block;
+.stp_icon {
     width: 16px;
     height: 16px;
-    z-index: 99;
+}
+
+.stp_icon, .stp_token {
+    position: relative;
+    display: inline-block;
     background-image: url('img/icons.png');
-    background-position: -176px 0px; /* empty */
     margin-right: 5px;
 }
 
-.stp_token_hand {
+.stp_token_Worker {
+    background-position: 0px -16px;
+}
+
+.stp_token_Building {
+    background-position: -32px -16px;
+}
+
+.stp_token_Aristocrat {
+    background-position: -64px -16px;
+}
+
+.stp_token_Trading {
+    background-position: -96px -16px;
+}
+
+.stp_icon_hand {
     margin-top: 12px;
     background-position: 0px 0px;
 }
 
-.stp_token_ruble {
+.stp_icon_ruble {
     background-position: -16px 0px;
 }
 
-.stp_token_aricount {
+.stp_icon_aricount {
     background-position: -32px 0px;
 }
 
-.stp_token_0000ff {
+.stp_icon_0000ff {
     background-position: -48px 0px;
 }
 
-.stp_token_ff0000 {
+.stp_icon_ff0000 {
     background-position: -64px 0px;
 }
 
-.stp_token_008000 {
+.stp_icon_008000 {
     background-position: -80px 0px;
 }
 
-.stp_token_ffa500 {
+.stp_icon_ffa500 {
     background-position: -96px 0px;
 }
 
-.stp_token_Worker {
-    background-position: -112px 0px;
+.stp_icon_points {
+    background-position: -160px -16px;
 }
 
-.stp_token_Building {
-    background-position: -128px 0px;
+.stp_icon_rubles {
+    background-position: -180px -16px;
 }
 
-.stp_token_Aristocrat {
-    background-position: -144px 0px;
-}
-
-.stp_token_Trading {
-    background-position: -160px 0px;
-}
-
-.stp_token_points {
-    background-position: -192px 0px;
+.stp_icon_rubles, .stp_icon_points {
     width: 20px;
     height: 20px;
     margin-top: 5px;
 }
 
-.stp_token_rubles {
-    background-position: -212px 0px;
-    width: 20px;
-    height: 20px;
-    margin-top: 5px;
-}
-
-[class^="stp_token_"] > span {
+.stp_icon > span {
     font-size:18px;
     font-weight:bold;
     text-shadow: 1px 0 1px #fff, 0 -1px 1px #fff, 0 1px 1px #fff, -1px 0 1px #fff;

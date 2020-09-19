@@ -101,20 +101,13 @@ var jstpl_card_content =
 
 var jstpl_player_board =
     '<div class="stp_board">' +
-        '<div id="rublecount_icon_p${id}" class="imgtext stp_token_small stp_token_ruble"></div>' +
+        '<div id="rublecount_icon_p${id}" class="imgtext stp_icon stp_icon_ruble"></div>' +
         '<span id="rublecount_p${id}">?</span>' +
         '&nbsp;' +
-        '<div id="aricount_icon_p${id}" class="imgtext stp_token_small stp_token_aricount"></div>' +
+        '<div id="aricount_icon_p${id}" class="imgtext stp_icon stp_icon_aricount"></div>' +
         '<span id="aricount_p${id}">0</span>' +
         '&nbsp;' +
-        '<div id="token_wrap_p${id}">' +
-            '<div id="token_p${id}" class="imgtext stp_token_small"></div>' +
-            '&nbsp;' +
-            '<div id="token2_p${id}" class="imgtext stp_token_small"></div>' +
-            '&nbsp;' +
-        '</div>' +
-        '<br>' +
-        '<div id="handcount_icon_p${id}" class="imgtext stp_token_small stp_token_hand"></div>' +
+        '<div id="handcount_icon_p${id}" class="imgtext stp_icon stp_icon_hand"></div>' +
         '<span id="handcount_p${id}">0</span>' +
         '&nbsp;' +
         '<div id="cardicon_p${id}_0"></div>' +
@@ -122,18 +115,25 @@ var jstpl_player_board =
         '<div id="cardicon_p${id}_2"></div>' +
         '<div id="cardicon_p${id}_3"></div>' +
         '<br>' +
-        '<div id="income_icon_rubles_p${id}" class="stp_token_small stp_token_rubles"><span>+</span></div>' +
-        '<div id="income_wrap_rubles_p${id}">' +
-        '<span id="income_rubles_p${id}_0">0</span>/' +
-        '<span id="income_rubles_p${id}_1">0</span>/' +
-        '<span id="income_rubles_p${id}_2">0</span>' +
+        '<div id="income_wrap_p${id}">' +
+            '<div id="income_icon_rubles_p${id}" class="stp_icon stp_icon_rubles"><span>+</span></div>' +
+            '<div id="income_wrap_rubles_p${id}" style="display: inline-block;">' +
+                '<span id="income_rubles_p${id}_0">0</span>/' +
+                '<span id="income_rubles_p${id}_1">0</span>/' +
+                '<span id="income_rubles_p${id}_2">0</span>' +
+            '</div>' +
+            '<br>' +
+            '<div id="income_icon_points_p${id}" class="stp_icon stp_icon_points"><span>+</span></div>' +
+            '<div id="income_wrap_points_p${id}" style="display: inline-block;">' +
+                '<span id="income_points_p${id}_0">0</span>/' +
+                '<span id="income_points_p${id}_1">0</span>/' +
+                '<span id="income_points_p${id}_2">0</span>' +
+            '</div>' +
         '</div>' +
-        '<br>' +
-        '<div id="income_icon_points_p${id}" class="stp_token_small stp_token_points"><span>+</span></div>' +
-        '<div id="income_wrap_points_p${id}">' +
-        '<span id="income_points_p${id}_0">0</span>/' +
-        '<span id="income_points_p${id}_1">0</span>/' +
-        '<span id="income_points_p${id}_2">0</span>' +
+        '<div id="token_wrap_p${id}" style="margin-left: 15px; position: relative; top: -6px">' +
+            '<div id="token_p${id}" class="imgtext stp_token"></div>' +
+            '&nbsp;' +
+            '<div id="token2_p${id}" class="imgtext stp_token"></div>' +
         '</div>' +
     '</div>';
 
