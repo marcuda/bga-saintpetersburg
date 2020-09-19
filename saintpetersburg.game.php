@@ -221,6 +221,7 @@ class SaintPetersburg extends Table
         $hand_size = array();
         $hand_type = array();
         $aristocrats = array();
+        $income = array();
         foreach ($players as $player_id => $player)
         {
             $tables[$player_id] = $this->cards->getCardsInLocation('table', $player_id);
@@ -239,12 +240,15 @@ class SaintPetersburg extends Table
             }
 
             $aristocrats[$player_id] = $this->uniqueAristocrats($player_id);
+
+            $income[$player_id] = $this->getIncome($player_id);
         }
         $result['player_tables'] = $tables;
         $result['player_hands'] = $hands;
         $result['player_hand_size'] = $hand_size;
         $result['player_hand_type'] = $hand_type;
         $result['aristocrats'] = $aristocrats;
+        $result['income'] = $income;
 
         // Get number of rubles for current or all players
         // Separate query to avoid sending possible secret info in 'players' above
@@ -551,6 +555,80 @@ class SaintPetersburg extends Table
     }
 
     /*
+     * Compute the scoring potential for a given player/phase
+     */
+    function computeScoring($player_id, $phase)
+    {
+        $points = 0;
+        $rubles = 0;
+
+        $taxman = false;
+        $workers = 0;
+        $theater = false;
+        $aristocrats = 0;
+
+        $cards = $this->cards->getCardsInLocation('table', $player_id);
+        foreach ($cards as $card) {
+            // Only cards from the current phase are scored
+            if ($this->isCardType($card, $phase)) {
+                if ($card['type_arg'] == CARD_OBSERVATORY) {
+                    // Observatory - do not score if used
+                    $obs = $this->getObservatory($card['id']);
+                    if ($obs['used']) continue;
+                }
+
+                $card_info = $this->getCardInfo($card);
+                $points += $card_info['card_points'];
+                $rubles += $card_info['card_rubles'];
+
+                // These two special cards score based on other cards
+                if ($card['type_arg'] == CARD_TAX_MAN) {
+                    $taxman = true;
+                } else if ($card['type_arg'] == CARD_MARIINSKIJ_THEATER) {
+                    $theater = true;
+                }
+            }
+
+            // Count cards for special scoring
+            if ($this->isWorker($card)) {
+                $workers++;
+            } else if ($this->isAristocrat($card)) {
+                $aristocrats++;
+            }
+        }
+
+        // Score special cards
+        if ($taxman) {
+            $rubles += $workers;
+        }
+        if ($theater) {
+            $rubles += $aristocrats;
+        }
+
+        return array($points, $rubles);
+    }
+
+    /*
+     * Get total point and ruble income for a player by phase
+     */
+    function getIncome($player_id)
+    {
+        $phases = array(PHASE_WORKER, PHASE_BUILDING, PHASE_ARISTOCRAT);
+        $points = array();
+        $rubles = array();
+        for ($i = 0; $i < 3; $i++) {
+            list($pts, $rbl) = $this->computeScoring($player_id, $phases[$i]);
+            $points[] = $pts;
+            $rubles[] = $rbl;
+        }
+
+        return array(
+            'points' => $points,
+            'rubles' => $rubles,
+        );
+    }
+
+    /*
      * Compute the scores at the end of the given phase
      */
     function scorePhase($phase)
@@ -562,52 +640,7 @@ class SaintPetersburg extends Table
         $players = self::loadPlayersBasicInfos();
         $scores = array();
         foreach ($players as $player_id => $player) {
-            $points = 0;
-            $rubles = 0;
-
-            $taxman = false;
-            $workers = 0;
-
-            $theater = false;
-            $aristocrats = 0;
-
-            $cards = $this->cards->getCardsInLocation('table', $player_id);
-            foreach ($cards as $card) {
-                // Only cards from the current phase are scored
-                if ($this->isCardType($card, $phase)) {
-                    if ($card['type_arg'] == CARD_OBSERVATORY) {
-                        // Observatory - do not score if used
-                        $obs = $this->getObservatory($card['id']);
-                        if ($obs['used']) continue;
-                    }
-
-                    $card_info = $this->getCardInfo($card);
-                    $points += $card_info['card_points'];
-                    $rubles += $card_info['card_rubles'];
-
-                    // These two special cards score based on other cards
-                    if ($card['type_arg'] == CARD_TAX_MAN) {
-                        $taxman = true;
-                    } else if ($card['type_arg'] == CARD_MARIINSKIJ_THEATER) {
-                        $theater = true;
-                    }
-                }
-
-                // Count cards for special scoring
-                if ($this->isWorker($card)) {
-                    $workers++;
-                } else if ($this->isAristocrat($card)) {
-                    $aristocrats++;
-                }
-            }
-
-            // Score special cards
-            if ($taxman) {
-                $rubles += $workers;
-            }
-            if ($theater) {
-                $rubles += $aristocrats;
-            }
+            list($points, $rubles) = $this->computeScoring($player_id, $phase);
 
             // Update scores, stats, and log
             $scores[$player_id] = self::dbIncScore($player_id, $points); // score to report
@@ -1238,6 +1271,14 @@ class SaintPetersburg extends Table
             $trade_name = '';
         }
 
+        // Income
+        if ($dest == 'table') {
+            $income = $this->getIncome($player_id);
+        } else {
+            // No change to report
+            $income = null;
+        }
+
         self::notifyAllPlayers($notif, $msg, array(
             'i18n' => array('card_name', 'trade_name'),
             'player_id' => $player_id,
@@ -1250,7 +1291,8 @@ class SaintPetersburg extends Table
             'card_cost' => $card_cost,
             'trade_id' => $trade_id,
             'trade_name' => $trade_name,
-            'aristocrats' => $this->uniqueAristocrats($player_id)
+            'aristocrats' => $this->uniqueAristocrats($player_id),
+            'income' => $income,
         ));
 
         // Reset globals
@@ -1413,11 +1455,12 @@ class SaintPetersburg extends Table
         $phase = explode('_', $deck)[1];
 
         $msg = clienttranslate('Observatory: ${player_name} draws ${card_name} from the ${phase} stack');
-        self::notifyAllPlayers('message', $msg, array(
+        self::notifyAllPlayers('observatory', $msg, array(
             'i18n' => array('card_name', 'phase'),
             'player_name' => self::getActivePlayerName(),
             'card_name' => $this->getCardName($card),
-            'phase' => $phase
+            'phase' => $phase,
+            'player_id' => $player_id,
         ));
 
         // Mark Observatrory as used
@@ -1670,12 +1713,22 @@ class SaintPetersburg extends Table
             }
 
             // Reset any used Observatory cards
-            self::setGameStateValue('observatory_0_used', 0);
-            self::setGameStateValue('observatory_1_used', 0);
+            // and notify players to update score counters
+            $obs_players = array();
+            for ($i=0; $i<2; $i++) {
+                if (self::getGameStateValue('observatory_' . $i . '_used') == 1) {
+                    $card = $this->cards->getCard(self::getGameStateValue('observatory_' . $i . '_id'));
+                    $obs_players[] = $card['location_arg'];
+                    self::setGameStateValue('observatory_' . $i . '_used', 0);
+                }
+            }
 
             self::incStat(1, 'rounds_number');
 
-            self::notifyAllPlayers('newRound', "", array('tokens' => $tokens));
+            self::notifyAllPlayers('newRound', "", array(
+                'tokens' => $tokens,
+                'observatory' => $obs_players,
+            ));
         }
 
         // Move all cards on board as far right as possible

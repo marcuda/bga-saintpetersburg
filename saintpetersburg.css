@@ -344,6 +344,29 @@
     background-position: -160px 0px;
 }
 
+.stp_token_points {
+    background-position: -192px 0px;
+    width: 20px;
+    height: 20px;
+    margin-top: 5px;
+}
+
+.stp_token_rubles {
+    background-position: -212px 0px;
+    width: 20px;
+    height: 20px;
+    margin-top: 5px;
+}
+
+[class^="stp_token_"] > span {
+    font-size:18px;
+    font-weight:bold;
+    text-shadow: 1px 0 1px #fff, 0 -1px 1px #fff, 0 1px 1px #fff, -1px 0 1px #fff;
+    left: 12px;
+    top: 1px;
+    position: relative;
+}
+
 .stp_activecard {
     position:absolute;
     top:7px;

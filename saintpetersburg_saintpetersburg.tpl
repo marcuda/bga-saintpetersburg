@@ -102,7 +102,7 @@ var jstpl_card_content =
 var jstpl_player_board =
     '<div class="stp_board">' +
         '<div id="rublecount_icon_p${id}" class="imgtext stp_token_small stp_token_ruble"></div>' +
-        '<span id="rublecount_p${id}">??</span>' +
+        '<span id="rublecount_p${id}">?</span>' +
         '&nbsp;' +
         '<div id="aricount_icon_p${id}" class="imgtext stp_token_small stp_token_aricount"></div>' +
         '<span id="aricount_p${id}">0</span>' +
@@ -121,6 +121,20 @@ var jstpl_player_board =
         '<div id="cardicon_p${id}_1"></div>' +
         '<div id="cardicon_p${id}_2"></div>' +
         '<div id="cardicon_p${id}_3"></div>' +
+        '<br>' +
+        '<div id="income_icon_rubles_p${id}" class="stp_token_small stp_token_rubles"><span>+</span></div>' +
+        '<div id="income_wrap_rubles_p${id}">' +
+        '<span id="income_rubles_p${id}_0">0</span>/' +
+        '<span id="income_rubles_p${id}_1">0</span>/' +
+        '<span id="income_rubles_p${id}_2">0</span>' +
+        '</div>' +
+        '<br>' +
+        '<div id="income_icon_points_p${id}" class="stp_token_small stp_token_points"><span>+</span></div>' +
+        '<div id="income_wrap_points_p${id}">' +
+        '<span id="income_points_p${id}_0">0</span>/' +
+        '<span id="income_points_p${id}_1">0</span>/' +
+        '<span id="income_points_p${id}_2">0</span>' +
+        '</div>' +
     '</div>';
 
 var jstpl_card_tooltip =

@@ -253,7 +253,7 @@ define([
 function (dojo, declare) {
     return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
         constructor: function (){
-            this.debug = false; // enabled console logs if true
+            this.debug = true; // enabled console logs if true
 
             if (this.debug) console.log('saintpetersburg constructor');
               
@@ -270,6 +270,7 @@ function (dojo, declare) {
             this.player_hand_backs = [];    // Card back types for cards in each player's hand
             this.player_hand_counts = [];   // Counters for all player hands
             this.player_aristocrats = [];   // Counters for all player aristocrats
+            this.player_income = [];        // Counters for all player incomes
             this.phases = ['Worker', 'Building', 'Aristocrat', 'Trading']; // Game phases in order
             this.pub_points = 0;            // Current number of points to buy with Pub
             this.max_pub_points = 0;        // Upper limit on Pub points
@@ -376,6 +377,23 @@ function (dojo, declare) {
                 for (var i in gamedatas.player_tables[player_id]) {
                     var card = gamedatas.player_tables[player_id][i];
                     this.player_tables[player_id].addToStockWithId(card.type_arg, card.id);
+                }
+
+                // Player income
+                // Counters for rubles and points, each an array for Worker/Building/Aristocrat phases
+                this.player_income[player_id] = {'rubles': [], 'points': []};
+                for (var i = 0; i < 3; i++) {
+                    this.player_income[player_id].rubles[i] = new ebg.counter();
+                    this.player_income[player_id].rubles[i].create('income_rubles_p' + player_id + '_' + i);
+                    this.player_income[player_id].rubles[i].setValue(gamedatas.income[player_id].rubles[i]);
+                    this.addTooltip('income_icon_rubles_p' + player_id, _("Number of rubles earned in each phase"), "");
+                    this.addTooltip('income_wrap_rubles_p' + player_id, _("Number of rubles earned in each phase"), "");
+
+                    this.player_income[player_id].points[i] = new ebg.counter();
+                    this.player_income[player_id].points[i].create('income_points_p' + player_id + '_' + i);
+                    this.player_income[player_id].points[i].setValue(gamedatas.income[player_id].points[i]);
+                    this.addTooltip('income_icon_points_p' + player_id, _("Number of points scored in each phase"), "");
+                    this.addTooltip('income_wrap_points_p' + player_id, _("Number of points scored in each phase"), "");
                 }
 
                 // Rubles (default hidden for other players)
@@ -667,6 +685,21 @@ function (dojo, declare) {
             script.
         
         */
+
+        /*
+         * Update all income values for the player
+         */
+        setIncome: function (player_id, income)
+        {
+            var v;
+            for (var i = 0; i < 3; i++) {
+                // Use getValue/incValue rather than setValue to get the change highlights
+                v = this.player_income[player_id].rubles[i].getValue();
+                this.player_income[player_id].rubles[i].incValue(income.rubles[i] - v);
+                v = this.player_income[player_id].points[i].getValue();
+                this.player_income[player_id].points[i].incValue(income.points[i] - v);
+            }
+        },
 
         /*
          * Return the div id for the given card location
@@ -1639,6 +1672,7 @@ function (dojo, declare) {
             dojo.subscribe('lastRound', this, 'notif_lastRound');
             dojo.subscribe('newRound', this, 'notif_newRound');
             dojo.subscribe('buyPoints', this, 'notif_buyPoints');
+            dojo.subscribe('observatory', this, 'notif_observatory');
         },  
 
         /*
@@ -1719,6 +1753,7 @@ function (dojo, declare) {
             }
 
             this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
+            this.setIncome(notif.args.player_id, notif.args.income);
         },
 
         /*
@@ -1810,6 +1845,7 @@ function (dojo, declare) {
             this.player_hand_counts[notif.args.player_id].incValue(-1);
 
             this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
+            this.setIncome(notif.args.player_id, notif.args.income);
 
             // Update hand tooltip and card backs
             if (this.player_hands[notif.args.player_id]) {
@@ -1983,6 +2019,11 @@ function (dojo, declare) {
 
             // Reset Observatory cards to be usable
             dojo.query('.stp_maskcard').style('display', 'none');
+
+            // Update score counters for any used
+            for (var i in notif.args.observatory) {
+                this.player_income[notif.args.observatory[i]].points[1].incValue(1);
+            }
         },
 
         /*
@@ -2001,6 +2042,18 @@ function (dojo, declare) {
                 // (either their own or with game option enabled for others)
                 this.player_rubles[notif.args.player_id].incValue(-notif.args.cost);
             }
+        },
+
+        /*
+         * Message for player drawing a card with Observatory
+         */
+        notif_observatory: function (notif)
+        {
+            if (this.debug) console.log('notif observatory');
+            if (this.debug) console.log(notif);
+
+            // Observatory no longer scores this round
+            this.player_income[notif.args.player_id].points[1].incValue(-1);
         },
 
         /*
