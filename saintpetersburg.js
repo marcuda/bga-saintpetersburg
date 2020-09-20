@@ -483,6 +483,8 @@ function (dojo, declare) {
             } else {
                 // Hide player hand area for spectators
                 dojo.style('myhand_wrap', 'display', 'none');
+                // Re-center game board
+                dojo.style('stp_gameboard', 'margin', 'auto');
             }
             
             // Game board cards
