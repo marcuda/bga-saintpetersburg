@@ -253,7 +253,7 @@ define([
 function (dojo, declare) {
     return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
         constructor: function (){
-            this.debug = true; // enabled console logs if true
+            this.debug = false; // enabled console logs if true
 
             if (this.debug) console.log('saintpetersburg constructor');
               
@@ -768,7 +768,7 @@ function (dojo, declare) {
          */
         setupNewCard: function (card_div, card_type_id, card_id)
         {
-            this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id));
+            this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id, 0));
 
             // Observatory is only card needing extra elements
             if (card_type_id == this.constants.observatory && card_div.id.substring(0, 6) != 'myhand') {
@@ -791,7 +791,7 @@ function (dojo, declare) {
         /*
          * Generate HTML tooltip for given card
          */
-        getCardTooltip: function (card_type_id)
+        getCardTooltip: function (card_type_id, eff_cost)
         {
             // Get card info and copy to modify
             var card = dojo.clone(this.card_infos[card_type_id]);
@@ -824,6 +824,9 @@ function (dojo, declare) {
 
             // Cost and benefits
             var txt = "<p>" + _("Cost") + ": " + card.card_cost + "</p>";
+            if (eff_cost > 0) {
+                txt += "<p>" + _("Effective Cost") + ": " + eff_cost + "</p>";
+            }
             if (card.card_rubles > 0) {
                 txt += "<p>+" + card.card_rubles + " " + _("rubles") + "</p>";
             }
@@ -942,7 +945,7 @@ function (dojo, declare) {
             this.placeOnObject(card_div, src);
             this.slideToObject(card_div, this.getBoardDiv(row, col)).play();
 
-            this.addTooltipHtml(card_div, this.getCardTooltip(idx));
+            this.addTooltipHtml(card_div, this.getCardTooltip(idx, 0));
             dojo.connect($(card_div), 'onclick', this, 'onSelectCard');
         },
 
@@ -1093,6 +1096,11 @@ function (dojo, declare) {
                                 div = this.player_tables[this.player_id].getItemDivId(col);
                             }
                             dojo.addClass(div, 'stp_selectable');
+
+                            // Update card tooltip with adjusted cost
+                            if (row != this.constants.observatory) {
+                                this.addTooltipHtml(div, this.getCardTooltip(card.card_type, card.cost));
+                            }
                         }
                     }
                 }
@@ -1157,7 +1165,7 @@ function (dojo, declare) {
             this.placeOnObject(card_id, 'deck_' + args.card.type);
             dojo.addClass(card_id, 'stp_selected');
             this.slideToObject(card_id, 'stp_gameboard').play();
-            this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg));
+            this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg, args.cost));
         },
 
         /*

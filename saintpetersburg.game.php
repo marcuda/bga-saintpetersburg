@@ -931,6 +931,8 @@ class SaintPetersburg extends Table
         }
 
         return array(
+            'card_id' => $card['id'],
+            'card_type' => $card['type_arg'],
             'card_name' => $this->getCardName($card),
             'can_add' => !$hand_full,
             'can_buy' => $can_buy,
