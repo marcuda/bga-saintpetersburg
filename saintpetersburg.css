@@ -142,6 +142,7 @@
     background-color: rgba(255, 228, 196, 0.5);
     filter: alpha(opacity=50); /* IE8 */
     display: none;
+    border-radius: 10px;
 }
 
 .stp_clickcard
@@ -157,16 +158,21 @@
     height: 112px;
     background-image: url('img/cards.png');
     cursor: pointer;
+    box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
+    border-radius: 10px;
+}
+
+.stockitem {
+    box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
+    border-radius: 10px;
 }
 
 .stp_selected {
     border: 2px solid red ! important;
-    border-radius: 10px;
 }
 
 .stp_selectable {
     border: 2px solid blue ! important;
-    border-radius: 10px;
     cursor: pointer;
 }
 
@@ -237,6 +243,8 @@
     height: 112px;
     top: 40px;
     background-image: url('img/cardbacks_big.jpg');
+    box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
+    border-radius: 6px;
 }
 
 .stp_deck_worker {
