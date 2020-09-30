@@ -41,6 +41,7 @@
         <div id="discard_pile" class="stp_discard"></div>
         <div id="aristocrat_table" class="stp_aritable"></div>
         <div id="phase_label" class="stp_label" style="left: 303px; top: 10px"></div>
+        <div id="stp_final_label" class="stp_label" style="display: none;">{FINAL}</div>
         <div id="decks">
             <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
             <div id="deck_Building" class="stp_deck stp_deck_building"></div>

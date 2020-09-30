@@ -287,6 +287,7 @@ class SaintPetersburg extends Table
 
         // Current phase
         $result['phase'] = $this->phases[self::getGameStateValue('current_phase') % 4];
+        $result['last_round'] = self::getGameStateValue("last_round") == 1;
 
         // Cards on board
         $result[TOP_ROW] = $this->cards->getCardsInLocation(TOP_ROW);

@@ -286,6 +286,13 @@
     position: absolute;
 }
 
+#stp_final_label {
+    width: 200px;
+    left: 590px;
+    top: 10px;
+    color: red;
+}
+
 .stp_token {
     width: 32px;
     height: 32px;

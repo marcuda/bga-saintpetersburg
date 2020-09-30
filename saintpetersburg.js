@@ -447,6 +447,9 @@ function (dojo, declare) {
                     this.setDeckTooltip(phase, gamedatas.decks[deck]);
                 }
             }
+            if (gamedatas.last_round) {
+                dojo.style('stp_final_label', 'display', 'block');
+            }
 
             // If a stack is empty it will not be included in gamedatas.decks
             // Ensure the elements are created and set cards to zero
@@ -1186,7 +1189,7 @@ function (dojo, declare) {
 
             if (cards == 0) {
                 // Special message if stack is empty (end game trigger)
-                txt += dojo.string.substitute(_("${phase} stack is empty meaning game will end soon"), {
+                txt += dojo.string.substitute(_("${phase} stack is empty! Game will end when this round completes"), {
                     phase: _(phase)
                 });
             } else {
@@ -2056,6 +2059,7 @@ function (dojo, declare) {
         {
             // In addition to log show message in game window
             this.showMessage(_('This is now the final round!'), 'info');
+            dojo.style('stp_final_label', 'display', 'block');
         },
         
    });             

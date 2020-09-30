@@ -87,6 +87,8 @@ class view_saintpetersburg_saintpetersburg extends game_view
         $this->tpl['PUBLISHER_MSG'] = $msg;
         $this->tpl['PUBLISHER_ACK'] = self::_("Okay, got it!");
 
+        $this->tpl['FINAL'] = self::_("FINAL ROUND");
+
         /*********** Do not change anything below this line  ************/
     }
 }
