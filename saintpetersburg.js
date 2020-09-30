@@ -656,7 +656,6 @@ function (dojo, declare) {
                         this.addActionButton("button_1", "-1", "onOneLessPoint", null, false, "gray");
                         this.addActionButton("button_2", "+1", "onOneMorePoint", null, false, color);
                         this.addActionButton("button_3", _("Buy") + " " + this.pub_points + " (" + this.pub_points * 2 + ")", "onBuyPoints");
-                        this.addActionButton("button_4", _("Pass"), "onBuyNoPoints", null, false, "red");
                         break;
                     case 'client_useObservatory':
                         // Options: cancel
@@ -1466,22 +1465,6 @@ function (dojo, declare) {
             this.ajaxcall(
                 "/saintpetersburg/saintpetersburg/buyPoints.html",
                 {lock:true, points:this.pub_points}, this, function (result) {});
-            this.pub_points = 0;
-        },
-
-        /*
-         * Player clicks 'Pass' button for Pub
-         */
-        onBuyNoPoints: function (evt)
-        {
-            dojo.stopEvent(evt);
-            if (!this.checkAction('buyPoints'))
-                return;
-
-            // Buy zero points
-            this.ajaxcall(
-                "/saintpetersburg/saintpetersburg/buyPoints.html",
-                {lock:true, points:0}, this, function (result) {});
             this.pub_points = 0;
         },
 
