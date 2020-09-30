@@ -1321,11 +1321,18 @@ class SaintPetersburg extends Table
         // All players must pass in turn order to end current phase
         // Increment global pass counter to track when this happens
         $num_pass = self::incGameStateValue('num_pass', 1);
+        $player_id = self::getActivePlayerId();
         self::notifyAllPlayers('pass', clienttranslate('${player_name} passes'), array(
             'player_name' => self::getActivePlayerName(),
-            'player_id' => self::getActivePlayerId(),
+            'player_id' => $player_id,
             'state' => $next_state, // to track auto pass in debug
         ));
+
+        if ($next_state != 'nextPlayer' && !$this->dbGetAutoPass($player_id)) {
+            // Inform player they passed automatically
+            $msg = clienttranslate('You cannot play and were forced to pass automatically');
+            self::notifyPlayer($player_id, 'log', $msg, array());
+        }
 
         // Determine if phase should end
         if ($num_pass == self::getPlayersNumber()) {
@@ -1674,6 +1681,9 @@ class SaintPetersburg extends Table
                 self::notifyAllPlayers('message', clienttranslate('${player_name} declines to use the Pub bonus'), array(
                     'player_name' => $player_infos[$player_id]['player_name']
                 ));
+                // Inform player they passed automatically
+                $msg = clienttranslate('You cannot play and were forced to pass automatically');
+                self::notifyPlayer($player_id, 'log', $msg, array());
             }
         }
 
