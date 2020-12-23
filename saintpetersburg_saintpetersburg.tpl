@@ -37,44 +37,48 @@
 
 <!-- Game board, card stacks and play area -->
 <div id="stp_game_area">
-    <div id="stp_gameboard">
-        <div id="discard_pile" class="stp_discard"></div>
-        <div id="aristocrat_table" class="stp_aritable"></div>
-        <div id="phase_label" class="stp_label" style="left: 303px; top: 10px"></div>
-        <div id="stp_final_label" class="stp_label" style="display: none;">{FINAL}</div>
-        <div id="decks">
-            <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
-            <div id="deck_Building" class="stp_deck stp_deck_building"></div>
-            <div id="deck_Aristocrat" class="stp_deck stp_deck_aristocrat"></div>
-            <div id="deck_Trading" class="stp_deck stp_deck_trading"></div>
-            <div id="deck_counts" class="stp_label">
-                <span id="count_Worker" style="left: 230px; top: 128px">0</span>
-                <span id="count_Building" style="left: 372px; top: 128px">0</span>
-                <span id="count_Aristocrat" style="left: 517px; top: 128px">0</span>
-                <span id="count_Trading" style="left: 661px; top: 128px">0</span>
+    <div id="stp_gameboard_width_sizer">
+        <div id="stp_gameboard_height_sizer">
+            <div id="stp_gameboard">
+                <div id="discard_pile" class="stp_discard"></div>
+                <div id="aristocrat_table" class="stp_aritable"></div>
+                <div id="stp_phase_label" class="stp_label"></div>
+                <div id="stp_final_label" class="stp_label" style="display: none;">{FINAL}</div>
+                <div id="decks">
+                    <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
+                    <div id="deck_Building" class="stp_deck stp_deck_building"></div>
+                    <div id="deck_Aristocrat" class="stp_deck stp_deck_aristocrat"></div>
+                    <div id="deck_Trading" class="stp_deck stp_deck_trading"></div>
+                    <div id="deck_counts">
+                        <span id="stp_count_Worker" class="stp_label">0</span>
+                        <span id="stp_count_Building" class="stp_label">0</span>
+                        <span id="stp_count_Aristocrat" class="stp_label">0</span>
+                        <span id="stp_count_Trading" class="stp_label">0</span>
+                    </div>
+                </div>
+        
+                <!-- BEGIN square -->
+                <div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}%; top: {TOP}%;"></div>
+                <!-- END square -->
+        
+                <div id="stp_cards">
+                </div>
             </div>
-        </div>
-
-        <!-- BEGIN square -->
-        <div id="square_{X}_{Y}" class="stp_square" style="left: {LEFT}px; top: {TOP}px;"></div>
-        <!-- END square -->
-
-        <div id="cards">
         </div>
     </div>
     <!-- Current player hand -->
-    <div id="myhand_wrap" class="whiteblock">
+    <div id="stp_myhand_wrap" class="whiteblock">
         <h3>{MY_HAND}</h3>
-        <div id="myhand"></div>
+        <div id="stp_myhand"></div>
     </div>
 </div>
 
 <!-- Player tables -->
-<div id="playertables">
+<div id="stp_playertables">
     <!-- BEGIN player -->
-    <div id="playertable_{PLAYER_ID}_wrap" class="whiteblock">
+    <div id="stp_playertable_{PLAYER_ID}_wrap" class="whiteblock">
         <h3 style="color:#{PLAYER_COLOR}">{PLAYER_NAME}</h3>
-        <div id="playertable_{PLAYER_ID}"></div>
+        <div id="stp_playertable_{PLAYER_ID}"></div>
     </div>
     <!-- END player -->
 </div>
@@ -91,16 +95,16 @@
 // Javascript HTML templates
 
 // Card on board
-var jstpl_card = '<div class="stp_card" id="card_${col}_${row}" style="background-position:-${x}px -${y}px"></div>';
+const jstpl_card = '<div class="stp_card" id="card_${col}_${row}" style="background-position:${x}% ${y}%"></div>';
 
 // Additional card elements for cards on table (Observatory)
-var jstpl_card_content =
+const jstpl_card_content =
     '<div id="card_content_${id}">' +
         '<div id="card_content_mask_${id}" class="stp_maskcard"></div>' +
         '<div id="card_content_active_${id}" class="stp_clickcard"></div>' +
      '</div>';
 
-var jstpl_player_board =
+const jstpl_player_board =
     '<div class="stp_board">' +
         '<div id="rublecount_icon_p${id}" class="imgtext stp_icon stp_icon_ruble"></div>' +
         '<span id="rublecount_p${id}">?</span>' +
@@ -138,30 +142,30 @@ var jstpl_player_board =
         '</div>' +
     '</div>';
 
-var jstpl_card_tooltip =
+const jstpl_card_tooltip =
     '<div class="stp_cardtooltip">' +
         '<h3>${card_name}</h3>' +
         '<hr/>' +
         '<b>${card_type}</b>\<br/>' +
         '${card_text}' +
         '<div>' +
-            '<div class="stp_cardart" style="background-position: -${artx}px -${arty}px;"></div>' +
+            '<div class="stp_cardart" style="background-position: ${artx}% ${arty}%;"></div>' +
         '</div>' +
         '<i>${card_nbr_label}: ${card_nbr}</i>' +
     '</div>';
 
-var jstpl_hand_tooltip =
+const jstpl_hand_tooltip =
     '<div class="stp_cardtooltip">' +
         '<b>${text}</b>' +
         '<div>' +
-            '<div class="stp_cardart_small" style="background-position: -${artx.0}px -${arty.0}px; display: ${disp.0}"></div>' +
-            '<div class="stp_cardart_small" style="background-position: -${artx.1}px -${arty.1}px; display: ${disp.1}"></div>' +
-            '<div class="stp_cardart_small" style="background-position: -${artx.2}px -${arty.2}px; display: ${disp.2}"></div>' +
-            '<div class="stp_cardart_small" style="background-position: -${artx.3}px -${arty.3}px; display: ${disp.3}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: ${artx.0}% ${arty.0}%; display: ${disp.0}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: ${artx.1}% ${arty.1}%; display: ${disp.1}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: ${artx.2}% ${arty.2}%; display: ${disp.2}"></div>' +
+            '<div class="stp_cardart_small" style="background-position: ${artx.3}% ${arty.3}%; display: ${disp.3}"></div>' +
         '</div>' +
     '</div>';
 
-var jstpl_ari_tooltip =
+const jstpl_ari_tooltip =
     '<div class="stp_aritooltip">' +
         '<p>${text}</p>' +
         '<table><tbody><tr style="background-color:rgb(252,185,115);">' +

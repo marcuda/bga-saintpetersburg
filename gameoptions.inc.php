@@ -50,6 +50,22 @@ $game_options = array(
 
     */
 
+    
+    102 => array(
+        'name' => totranslate('Version'),
+        'values' => array(
+            1 => array(
+                'name' => totranslate('First edition'),
+                'tmdisplay' => totranslate('First edition'),
+            ),
+            2 => array(
+                'name' => totranslate('Second edition'),
+                'tmdisplay' => totranslate('Second edition'),
+            )
+        ),
+        'default' => 2
+    ),
+    
     // These are not in the rules but could make turn-based games better
     // All info is reported in the logs anyway
     100 => array(
@@ -67,7 +83,7 @@ $game_options = array(
             1 => array('name' => totranslate('Yes'))
         )
     ),
-
+    
 );
 
 $game_preferences = array(

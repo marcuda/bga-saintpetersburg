@@ -251,9 +251,10 @@ define([
     "ebg/stock"
 ],
 function (dojo, declare) {
+    'use strict';
     return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
         constructor: function (){
-            this.debug = false; // enabled console logs if true
+            this.debug = true; // enabled console logs if true
 
             if (this.debug) console.log('saintpetersburg constructor');
               
@@ -262,6 +263,7 @@ function (dojo, declare) {
             this.cardwidth = 70;            // Standard card width for stock
             this.cardheight = 112;          // Standard card height for stock
             this.card_art_row_size = 10;    // Number of cards per row in sprite for stock
+            this.card_art_col_size = 5;     // Number of cards per column in sprite for stock
             this.cardwidth_big = 96;        // Large card width for tooltip
             this.cardheight_big = 150;      // Large card height for tooltip
             this.player_rubles = []         // Counters for all player rubles
@@ -299,8 +301,16 @@ function (dojo, declare) {
         
         setup: function (gamedatas)
         {
-            if (this.debug) console.log("Starting game setup");
-            if (this.debug) console.log(gamedatas);
+            if (this.debug) {
+                console.log("Starting game setup");
+                console.log(gamedatas);
+            }
+            
+            if (gamedatas.version == 2) {
+                dojo.addClass(dojo.body(), 'stp_2nd_edition');
+                this.card_art_col_size = 6;
+                this.cardwidth = 73.18;
+            }
 
             if (this.prefs[100].value == 0) {
                 // Show message from publisher player has not seen/acknowledged
@@ -372,10 +382,13 @@ function (dojo, declare) {
                 this.addTooltip('aricount_icon_p' + player_id, _("Number of different aristocrats"), "");
 
                 // Player tables and cards
-                this.player_tables[player_id] = this.createCardStock('playertable_' + player_id, 0, duplicate_overlap);
+                this.player_tables[player_id] = this.createCardStock('stp_playertable_' + player_id, 0, duplicate_overlap);
                 this.player_tables[player_id].onItemCreate = dojo.hitch(this, 'setupNewCard');
                 for (var i in gamedatas.player_tables[player_id]) {
                     var card = gamedatas.player_tables[player_id][i];
+                    if (this.debug) {
+                        console.log('card', card);
+                    }
                     this.player_tables[player_id].addToStockWithId(card.type_arg, card.id);
                 }
 
@@ -442,7 +455,7 @@ function (dojo, declare) {
                     dojo.connect($(deck), 'onclick', this, 'onClickDeck');
                     var phase = deck.split('_')[1];
                     this.deck_counters[phase] = new ebg.counter();
-                    this.deck_counters[phase].create('count_' + phase);
+                    this.deck_counters[phase].create('stp_count_' + phase);
                     this.deck_counters[phase].setValue(gamedatas.decks[deck]);
                     this.setDeckTooltip(phase, gamedatas.decks[deck]);
                 }
@@ -458,11 +471,11 @@ function (dojo, declare) {
                 if (this.deck_counters[phase] == undefined) {
                     // No counter created means deck is empty
                     dojo.addClass('deck_' + phase, 'stp_emptydeck')
-                    dojo.style('count_' + phase, 'color', 'red');
+                    dojo.style('stp_count_' + phase, 'color', 'red');
                     this.setDeckTooltip(phase, 0);
                     // Counter shouldn't be needed but create it just in case
                     this.deck_counters[phase] = new ebg.counter();
-                    this.deck_counters[phase].create('count_' + phase);
+                    this.deck_counters[phase].create('stp_count_' + phase);
                     this.deck_counters[phase].setValue(0);
                 }
             }
@@ -476,7 +489,7 @@ function (dojo, declare) {
 
             // Player hand
             if (!this.isSpectator) { // Spectator has no hand element
-                this.playerHand = this.createCardStock('myhand', 1, 0);
+                this.playerHand = this.createCardStock('stp_myhand', 1, 0);
                 this.playerHand.onItemCreate = dojo.hitch(this, 'setupNewCard');
                 for (var i in gamedatas.player_hands[this.player_id]) {
                     var card = gamedatas.player_hands[this.player_id][i];
@@ -485,12 +498,13 @@ function (dojo, declare) {
                 dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
             } else {
                 // Hide player hand area for spectators
-                dojo.style('myhand_wrap', 'display', 'none');
+                dojo.style('stp_myhand_wrap', 'display', 'none');
                 // Re-center game board
                 dojo.style('stp_gameboard', 'margin', 'auto');
             }
             
             // Game board cards
+            if (this.debug) console.log('board_top', gamedatas.board_top);
             for (var i in gamedatas.board_top) {
                 var card = gamedatas.board_top[i];
                 this.addCardOnBoard(0, card.location_arg, card.type_arg);
@@ -760,8 +774,15 @@ function (dojo, declare) {
             }
             board.create(this, $(elem), this.cardwidth, this.cardheight);
             board.image_items_per_row = this.card_art_row_size;
-            for (var i = 0; i < 66; i++) {
-                board.addItemType(i, i, g_gamethemeurl+'img/cards.png', i);
+            let cards = 'img/cards.png';
+            if (this.gamedatas.version == 2) {
+                cards = 'img/cards2.jpg';
+            }
+            if (this.debug) {
+                console.log('card_infos', this.gamedatas.card_infos);
+            }
+            for (i = 0; i < this.gamedatas.card_infos.length; ++i) {
+                board.addItemType(i, this.gamedatas.card_infos[i].card_model, g_gamethemeurl + cards, i);
             }
             board.setSelectionMode(mode);
             return board;
@@ -775,7 +796,7 @@ function (dojo, declare) {
             this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id, 0));
 
             // Observatory is only card needing extra elements
-            if (card_type_id == this.constants.observatory && card_div.id.substring(0, 6) != 'myhand') {
+            if (card_type_id == this.constants.observatory && card_div.id.substring(0, 10) != 'stp_myhand') {
                 // Get player and card ids to add templated html
                 var player_id = parseInt(card_div.id.split('_')[1]);
                 var id = card_id.split('_');
@@ -791,24 +812,29 @@ function (dojo, declare) {
                 }
             }
         },
-
+        
         /*
          * Generate HTML tooltip for given card
          */
         getCardTooltip: function (card_type_id, eff_cost)
         {
             // Get card info and copy to modify
-            var card = dojo.clone(this.card_infos[card_type_id]);
+            const card = dojo.clone(this.card_infos[card_type_id]);
 
             card.card_name = _(card.card_name);
 
             // Sprite index
-            // Image is a bit funky so need to tweak positions
-            var x = card_type_id % this.card_art_row_size;
-            var y = Math.floor(card_type_id / this.card_art_row_size);
-            card.artx = this.cardwidth_big * x + Math.floor(x / 3);
-            card.arty = this.cardheight_big * y;
-            if (y == 1) card.arty -= 1;
+            const x = card_type_id % this.card_art_row_size;
+            const y = Math.floor(card_type_id / this.card_art_row_size);
+            card.artx = 100 * x / (this.card_art_row_size - 1);
+            card.arty = 100 * y / (this.card_art_col_size - 1);
+            // First version image is a bit funky so need to tweak positions
+            if (this.gamedatas.version == 1) {
+                card.artx += Math.floor(x / 3) * 0.1;
+                if (y == 1) {
+                    card.arty -= 0.13;
+                }
+            }
 
             // card type = <type> [(<worker type> | Trading card [- <worker type>])]
             if (card.card_type == "Worker") {
@@ -898,8 +924,8 @@ function (dojo, declare) {
 
                 // Display correct art for each card in hand
                 for (var i=0; i<hand.length; i++) {
-                    artx[i] = this.cardwidth * (hand[i] % this.card_art_row_size);
-                    arty[i] = this.cardheight * Math.floor(hand[i] / this.card_art_row_size);
+                    artx[i] = 100 * (hand[i] % this.card_art_row_size) / (this.card_art_row_size - 1);
+                    arty[i] = 100 * Math.floor(hand[i] / this.card_art_row_size) / (this.card_art_col_size - 1);
                     disp[i] = 'inline-block';
                 }
 
@@ -933,17 +959,17 @@ function (dojo, declare) {
             }
 
             // Sprite index
-            var x = this.cardwidth * (idx % this.card_art_row_size);
-            var y = this.cardheight * Math.floor(idx / this.card_art_row_size);
+            var x = 100 * (idx % this.card_art_row_size) / (this.card_art_row_size - 1);
+            var y = 100 * Math.floor(idx / this.card_art_row_size) / (this.card_art_col_size - 1);
 
-            if (this.debug) console.log('adding card type '+idx+' at x,y '+col+','+row);
+            if (this.debug) console.log('adding card type '+idx+' at col,row '+col+','+row);
 
             dojo.place(this.format_block('jstpl_card', {
                 x:x,
                 y:y,
                 row: row,
                 col: col
-            }), 'cards');
+            }), 'stp_cards');
 
             var card_div = this.getCardDiv(row, col);
             this.placeOnObject(card_div, src);
@@ -1011,15 +1037,15 @@ function (dojo, declare) {
             }
 
             // Update label with current phase and matching color
-            $('phase_label').textContent = _('Current phase') + ': ' + _(phase);
+            $('stp_phase_label').textContent = _('Current phase') + ': ' + _(phase);
             if (phase == 'Worker') {
-                dojo.style('phase_label', 'color', 'green');
+                dojo.style('stp_phase_label', 'color', 'green');
             } else if (phase == 'Building') {
-                dojo.style('phase_label', 'color', 'blue');
+                dojo.style('stp_phase_label', 'color', 'blue');
             } else if (phase == 'Aristocrat') {
-                dojo.style('phase_label', 'color', 'orangered');
+                dojo.style('stp_phase_label', 'color', 'orangered');
             } else if (phase == 'Trading') {
-                dojo.style('phase_label', 'color', 'black');
+                dojo.style('stp_phase_label', 'color', 'black');
             }
 
             // Get platform-specific animation
@@ -1155,9 +1181,9 @@ function (dojo, declare) {
             this.setDeckTooltip(args.card.type, num_cards);
 
             // Sprite index
-            var idx = args.card.type_arg;
-            var x = this.cardwidth * (idx % this.card_art_row_size);
-            var y = this.cardheight * Math.floor(idx / this.card_art_row_size);
+            const idx = args.card.type_arg;
+            var x = 100 * (idx % this.card_art_row_size) / (this.card_art_row_size - 1);
+            var y = 100 * Math.floor(idx / this.card_art_row_size) / (this.card_art_col_size - 1);
 
             // Place and animate card draw
             dojo.place(this.format_block('jstpl_card', {
@@ -1165,7 +1191,7 @@ function (dojo, declare) {
                 y:y,
                 row: this.constants.observatory,
                 col: 0
-            }), 'cards');
+            }), 'stp_cards');
             this.placeOnObject(card_id, 'deck_' + args.card.type);
             dojo.addClass(card_id, 'stp_selected');
             this.slideToObject(card_id, 'stp_gameboard').play();
@@ -1822,7 +1848,7 @@ function (dojo, declare) {
                 // Active player - move card from hand to table
                 this.playerTable.addToStockWithId(
                     notif.args.card_idx, notif.args.card_id,
-                    'myhand_item_' + notif.args.card_id);
+                    'stp_myhand_item_' + notif.args.card_id);
                 this.playerHand.removeFromStockById(notif.args.card_id);
             } else {
                 // Other players - add card to table
@@ -1946,7 +1972,7 @@ function (dojo, declare) {
             if (num_cards == 0) {
                 // Highlight that stack is empty and game is in end state
                 dojo.addClass(deck, 'stp_emptydeck')
-                dojo.style('count_' + notif.args.phase_arg, 'color', 'red');
+                dojo.style('stp_count_' + notif.args.phase_arg, 'color', 'red');
             }
         },
 
