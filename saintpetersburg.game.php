@@ -331,25 +331,28 @@ class SaintPetersburg extends Table
         // Set progress to inverse of percent left in smallest stack,
         // plus count each phase in the round as 3%
         $val = 0;
+        $oneStackEmpty = false;
 
         // Find percentage of smallest stack
         $counts = $this->cards->countCardsInLocations();
         foreach ($this->phases as $phase) {
             if (key_exists('deck_' . $phase, $counts)) {
-                $percent = $counts['deck_' . $phase] / $this->deck_size[$phase];
-                $val = max($val, 100 * (1 - $percent));
+                $count = $counts['deck_' . $phase];
+                $percent = $count / $this->deck_size[$phase];
+                $val = max($val, 91 * (1 - $percent));
+                if ($count == 0) {
+                    $oneStackEmpty = true;
+                }
             } else {
                 // Stack is empty
-                $val = 100;
+                $val = 91;
+                $oneStackEmpty = true;
             }
         }
-
-        // TODO: Is there a better way to do this? There is an issue where
-        //       progression actually drops when a new round starts and the
-        //       worker deck is not the smallest stack.
-
-        $val -= 9; // allow room for phases
-        $val += 3 * (self::getGameStateValue('current_phase') % 4); // 3% each phase
+        // Add phase progress only if one stack is empty, avoid a drop in progress at the end of the game.
+        if ($oneStackEmpty) {
+            $val += 3 * (self::getGameStateValue('current_phase') % 4); // 3% each phase
+        }
 
         return $val;
     }
