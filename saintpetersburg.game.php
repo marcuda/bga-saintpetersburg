@@ -310,6 +310,7 @@ class SaintPetersburg extends Table
             'observatory' => ROW_OBSERVATORY
         );
 
+        $result['buyOnly'] = $this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0;
   
         return $result;
     }
@@ -623,7 +624,11 @@ class SaintPetersburg extends Table
             $rubles += $workers;
         }
         if ($theater) {
-            $rubles += $aristocrats;
+            if ($this->opt2ndEdition()) {
+                $points += $aristocrats;
+            } else {
+                $rubles += $aristocrats;
+            }
         }
 
         return array($points, $rubles);
@@ -1179,6 +1184,9 @@ class SaintPetersburg extends Table
     {
         self::checkAction('addCard');
 
+        if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
+            throw new BgaUserException(self::_("You must buy on first worker phase"));
+        }
         $card = $this->getSelectedCard($card_row, $card_col);
 
         // Verify player hand is not full
@@ -1341,6 +1349,9 @@ class SaintPetersburg extends Table
     {
         self::checkAction('pass');
 
+        if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
+            throw new BgaUserException(self::_("You must buy on first worker phase"));
+        }
         $this->passActivePlayer('nextPlayer');
     }
 
@@ -1384,6 +1395,9 @@ class SaintPetersburg extends Table
     function enableAutoPass()
     {
         // No action check
+        if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
+            throw new BgaUserException(self::_("You must buy on first worker phase"));
+        }
         $player_id = self::getCurrentPlayerId(); // CURRENT: player can do this out of turn
         $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
         self::notifyPlayer($player_id, 'autopass', '', array('enable' => true));
