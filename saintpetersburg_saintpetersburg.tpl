@@ -42,7 +42,9 @@
             <div id="stp_gameboard">
                 <div id="discard_pile" class="stp_discard"></div>
                 <div id="aristocrat_table" class="stp_aritable"></div>
-                <div id="stp_phase_label" class="stp_label"></div>
+                <div id="stp_game_board_center">
+                    <div id="stp_phase_label" class="stp_label"></div>
+                </div>
                 <div id="stp_final_label" class="stp_label" style="display: none;">{FINAL}</div>
                 <div id="decks">
                     <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>

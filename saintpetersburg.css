@@ -83,13 +83,19 @@
     background-image: url('img/board2.jpg');
 }
 
+#stp_game_board_center {
+    position: absolute;
+    height: 100%;
+    left: 50%;
+}
+
 #stp_phase_label {
-    left: 41%;
+    position: relative;
+    left: -50%;
     top: 2%;
 }
 
 .stp_2nd_edition #stp_phase_label {
-    left: 41%;
     top: 1.5%;
 }
 
@@ -285,12 +291,6 @@
     border: 2px solid red ! important;
 }
 
-.stp_rubleicon {
-    width: 45px;
-    height: 24px;
-    background-image: url('img/ruble.jpg');
-}
-
 .stp_iconspan {
     color: black;
     font-weight: bold;
@@ -327,6 +327,7 @@
 }
 
 .stp_2nd_edition [class^="stp_cardicon_"] {
+    height: 22.9565px;
     background-image: url('img/cardbacks2.jpg');
 }
 
@@ -438,6 +439,10 @@
     background-position: -128px -16px; /* empty */
 }
 
+.stp_2nd_edition .stp_token {
+    visibility: hidden;
+}
+
 .stp_icon {
     width: 16px;
     height: 16px;
@@ -450,20 +455,45 @@
     margin-right: 5px;
 }
 
+.stp_2nd_edition .stp_icon, .stp_2nd_edition .stp_token {
+    background-image: url('img/icons2.png');
+    background-size: 500%;
+}
+
 .stp_token_Worker {
     background-position: 0px -16px;
+}
+
+.stp_2nd_edition .stp_token_Worker {
+    background-position: 0% 100%;
+    visibility: visible;
 }
 
 .stp_token_Building {
     background-position: -32px -16px;
 }
 
+.stp_2nd_edition .stp_token_Building {
+    background-position: 25% 100%;
+    visibility: visible;
+}
+
 .stp_token_Aristocrat {
     background-position: -64px -16px;
 }
 
+.stp_2nd_edition .stp_token_Aristocrat {
+    background-position: 50% 100%;
+    visibility: visible;
+}
+
 .stp_token_Trading {
     background-position: -96px -16px;
+}
+
+.stp_2nd_edition .stp_token_Trading {
+    background-position: 75% 100%;
+    visibility: visible;
 }
 
 .stp_icon_hand {
@@ -475,32 +505,32 @@
     background-position: -16px 0px;
 }
 
+.stp_2nd_edition .stp_icon_ruble {
+    background-position: 25% 0%;
+}
+
 .stp_icon_aricount {
     background-position: -32px 0px;
 }
 
-.stp_icon_0000ff {
-    background-position: -48px 0px;
-}
-
-.stp_icon_ff0000 {
-    background-position: -64px 0px;
-}
-
-.stp_icon_008000 {
-    background-position: -80px 0px;
-}
-
-.stp_icon_ffa500 {
-    background-position: -96px 0px;
+.stp_2nd_edition .stp_icon_aricount {
+    background-position: 50% 0%;
 }
 
 .stp_icon_points {
     background-position: -160px -16px;
 }
 
+.stp_2nd_edition .stp_icon_points {
+    background-position: 75% 0%;
+}
+
 .stp_icon_rubles {
     background-position: -180px -16px;
+}
+
+.stp_2nd_edition .stp_icon_rubles {
+    background-position: 100% 0%;
 }
 
 .stp_icon_rubles, .stp_icon_points {
