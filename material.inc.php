@@ -60,6 +60,7 @@ if (!defined("CARD_PUB")) {
     // Game options
     define("OPT_SHOW_RUBLES", 100);
     define("OPT_SHOW_HANDS", 101);
+    define("OPT_VERSION", 102);
 }
 
 /*

@@ -59,6 +59,7 @@ class SaintPetersburg extends Table
             // Game options
             "show_player_rubles" => OPT_SHOW_RUBLES,
             "show_player_hands" => OPT_SHOW_HANDS,
+            "version" => OPT_VERSION,
         ));        
 
         $this->cards = self::getNew("module.common.deck");
