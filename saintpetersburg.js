@@ -305,9 +305,19 @@ define([
                 }
 
                 if (gamedatas.version == 2) {
+                    this.dontPreloadImage('board_full.jpg');
+                    this.dontPreloadImage('cardbacks_big.jpg');
+                    this.dontPreloadImage('cards.jpg');
+                    this.dontPreloadImage('cards_big.jpg');
+                    this.dontPreloadImage('icons.jpg');
                     dojo.addClass(dojo.body(), 'stp_2nd_edition');
                     this.card_art_col_size = 6;
                     this.cardwidth = 73.18;
+                } else {
+                    this.dontPreloadImage('board2.jpg');
+                    this.dontPreloadImage('cardbacks2.jpg');
+                    this.dontPreloadImage('cards2.jpg');
+                    this.dontPreloadImage('icons2.jpg');
                 }
 
                 if (this.prefs[100].value == 0) {
