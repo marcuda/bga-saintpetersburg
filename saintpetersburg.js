@@ -320,12 +320,6 @@ define([
                     this.dontPreloadImage('icons2.jpg');
                 }
 
-                if (this.prefs[100].value == 0) {
-                    // Show message from publisher player has not seen/acknowledged
-                    dojo.style('publisher_msg', 'display', 'block');
-                    dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
-                }
-
                 // Overlap duplicate cards if preferred
                 var duplicate_overlap = 0;
                 this.duplicate_vertical = false;
@@ -758,17 +752,6 @@ define([
              */
             isButtonDisabled: function(button) {
                 return dojo.hasClass(button.id, 'bgabutton_gray');
-            },
-
-            /*
-             * Player clicks okay on note from publisher
-             */
-            ackPublisherMessage: function(evt) {
-                // Remove message banner
-                dojo.style('publisher_msg', 'display', 'none');
-                // Save user preference to not show banner
-                // See ly_studio.js
-                this.ajaxcall("/table/table/changePreference.html", { id: 100, value: 1, game: this.game_name }, this, function() { });
             },
 
             /*
