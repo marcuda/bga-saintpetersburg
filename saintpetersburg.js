@@ -311,11 +311,11 @@ define([
                     this.dontPreloadImage('cards_big.jpg');
                     this.dontPreloadImage('icons.jpg');
                     dojo.addClass(dojo.body(), 'stp_2nd_edition');
-                    this.card_art_col_size = 6;
+                    this.card_art_row_size = 15;
+                    this.card_art_col_size = 9;
                     this.cardwidth = 73.18;
                 } else {
                     this.dontPreloadImage('board2.jpg');
-                    this.dontPreloadImage('cardbacks2.jpg');
                     this.dontPreloadImage('cards2.jpg');
                     this.dontPreloadImage('icons2.jpg');
                 }

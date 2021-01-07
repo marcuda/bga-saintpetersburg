@@ -257,25 +257,41 @@
     cursor: pointer;
 }
 
-.stp_card {
-    position: absolute;
+.stp_card, .stp_cardart, .stp_cardart_small {
     background-image: url('img/cards.png');
     background-size: 1000%;
+}
+
+.stp_2nd_edition .stp_card, .stp_2nd_edition .stp_cardart, .stp_2nd_edition .stp_cardart_small,
+.stp_2nd_edition [class^="stp_cardicon_"], .stp_2nd_edition .stp_deck {
+    background-image: url('img/cards2.jpg');
+    background-size: 1500%;
+}
+
+.stp_card {
+    position: absolute;
     cursor: pointer;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
     border-radius: 14.3% / 8.93%;
 }
 
 .stp_2nd_edition .stp_card {
-    background-image: url('img/cards2.jpg');
-    box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
     border-radius: 14.3% / 9.33%;
 }
 
+/* Used by stock component.*/
 .stockitem {
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
     border-radius: 10px;
     background-size: 1000%;
+}
+
+.stp_2nd_edition .stockitem {
+    background-size: 1500%;
+}
+
+.stockitem_select {
+    border: 2px solid red ! important;
 }
 
 .stp_selected {
@@ -285,10 +301,6 @@
 .stp_selectable {
     border: 2px solid blue ! important;
     cursor: pointer;
-}
-
-.stockitem_select {
-    border: 2px solid red ! important;
 }
 
 .stp_iconspan {
@@ -320,31 +332,55 @@
     height: 24px;
     background-image: url('img/cardbacks_big.jpg');
     background-size: cover;
+    background-position-y: 0px;
     display: inline-block;
     margin: 2px;
     position: relative;
     top: 5px;
 }
 
-.stp_2nd_edition [class^="stp_cardicon_"] {
-    height: 22.9565px;
-    background-image: url('img/cardbacks2.jpg');
-}
-
 .stp_cardicon_Worker {
-    background-position: 0px 0px;
+    background-position-x: 0px;
 }
 
 .stp_cardicon_Building {
-    background-position: -15px 0px;
+    background-position-x: -15px;
 }
 
 .stp_cardicon_Aristocrat {
-    background-position: -30px 0px;
+    background-position-x: -30px;
 }
 
 .stp_cardicon_Trading {
-    background-position: -45px 0px;
+    background-position-x: -45px;
+}
+
+.stp_2nd_edition [class^="stp_cardicon_"] {
+    height: 22.9565px;
+}
+
+.stp_2nd_edition [class^="stp_cardicon_"], .stp_2nd_edition .stp_deck {
+    background-position-y: 100%;
+}
+
+.stp_2nd_edition .stp_cardicon_Worker, .stp_2nd_edition .stp_deck_worker {
+    background-position-x: 50%;
+}
+
+.stp_2nd_edition .stp_cardicon_Building, .stp_2nd_edition .stp_deck_building {
+    background-position-x: 57.14%;
+}
+
+.stp_2nd_edition .stp_cardicon_Aristocrat, .stp_2nd_edition .stp_deck_aristocrat {
+    background-position-x: 64.29%;
+}
+
+.stp_2nd_edition .stp_cardicon_Trading, .stp_2nd_edition .stp_deck_trading {
+    background-position-x: 71.43%;
+}
+
+.stp_2nd_edition .stp_cardicon_Market, .stp_2nd_edition .stp_deck_market {
+    background-position-x: 78.57%;
 }
 
 .stp_deck {
@@ -352,20 +388,19 @@
     top: 40px;
     background-image: url('img/cardbacks_big.jpg');
     background-size: 400%;
+    background-position-y: 0%;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
     border-radius: 6px;
 }
 
 .stp_2nd_edition .stp_deck {
     top: 6.3%;
-    background-image: url('img/cardbacks2.jpg');
-    background-size: 900%;
-    border-radius: 6px;
+    background-position-y: 100%;
 }
 
 .stp_deck_worker {
     left: 185px;
-    background-position: 0% 0%;
+    background-position-x: 0%;
 }
 
 .stp_2nd_edition .stp_deck_worker {
@@ -374,32 +409,29 @@
 
 .stp_deck_building {
     left: 327px;
-    background-position: 33.33% 0%;
+    background-position-x: 33.33%;
 }
 
 .stp_2nd_edition .stp_deck_building {
     left: 38.5%;
-    background-position-x: 12.5%;
 }
 
 .stp_deck_aristocrat {
     left: 473px;
-    background-position: 66.67% 0%;
+    background-position-x: 66.67%;
 }
 
 .stp_2nd_edition .stp_deck_aristocrat {
     left: 58.5%;
-    background-position-x: 25%;
 }
 
 .stp_deck_trading {
     left: 617px;
-    background-position: 100% 0%;
+    background-position-x: 100%;
 }
 
 .stp_2nd_edition .stp_deck_trading {
     left: 78.6%;
-    background-position-x: 37.5%;
 }
 
 .stp_emptydeck {
@@ -564,7 +596,6 @@
 .stp_cardart {
     display:inline-block;
     background-image:url('img/cards_big.jpg');
-    background-size: 1000%;
     width:96px;
     height:150px;
     margin:10px;
@@ -573,21 +604,17 @@
 }
 
 .stp_2nd_edition .stp_cardart {
-    background-image:url('img/cards2.jpg');
     width:130.68px;
     height:200px;
 }
 
 .stp_cardart_small {
-    background-image: url('img/cards.png');
-    background-size: 1000%;
     margin: 1px;
     border: 1px solid black;
     border-radius: 14.3% / 8.93%;
 }
 
 .stp_2nd_edition .stp_cardart_small {
-    background-image: url('img/cards2.jpg');
     border-radius: 14.3% / 9.33%;
 }
 
