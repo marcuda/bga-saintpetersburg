@@ -473,11 +473,13 @@
 
 .stp_2nd_edition .stp_token {
     visibility: hidden;
+    background-position-y: 50%;
 }
 
 .stp_icon {
     width: 16px;
     height: 16px;
+    background-position-y: 0%;
 }
 
 .stp_icon, .stp_token {
@@ -493,60 +495,65 @@
 }
 
 .stp_token_Worker {
-    background-position: 0px -16px;
+    background-position-x: 0px;
 }
 
 .stp_2nd_edition .stp_token_Worker {
-    background-position: 0% 100%;
+    background-position-x: 0%;
     visibility: visible;
 }
 
 .stp_token_Building {
-    background-position: -32px -16px;
+    background-position-x: -32px;
 }
 
 .stp_2nd_edition .stp_token_Building {
-    background-position: 25% 100%;
+    background-position-x: 25%;
     visibility: visible;
 }
 
 .stp_token_Aristocrat {
-    background-position: -64px -16px;
+    background-position-x: -64px;
 }
 
 .stp_2nd_edition .stp_token_Aristocrat {
-    background-position: 50% 100%;
+    background-position-x: 50%;
     visibility: visible;
 }
 
 .stp_token_Trading {
-    background-position: -96px -16px;
+    background-position-x: -96px;
 }
 
 .stp_2nd_edition .stp_token_Trading {
-    background-position: 75% 100%;
+    background-position-x: 75%;
+    visibility: visible;
+}
+
+.stp_2nd_edition .stp_token_Market {
+    background-position-x: 100%;
     visibility: visible;
 }
 
 .stp_icon_hand {
     margin-top: 12px;
-    background-position: 0px 0px;
+    background-position-x: 0px;
 }
 
 .stp_icon_ruble {
-    background-position: -16px 0px;
+    background-position-x: -16px;
 }
 
 .stp_2nd_edition .stp_icon_ruble {
-    background-position: 25% 0%;
+    background-position-x: 25% 0%;
 }
 
 .stp_icon_aricount {
-    background-position: -32px 0px;
+    background-position-x: -32px;
 }
 
 .stp_2nd_edition .stp_icon_aricount {
-    background-position: 50% 0%;
+    background-position-x: 50%;
 }
 
 .stp_icon_points {
