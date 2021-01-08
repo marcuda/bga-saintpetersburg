@@ -574,7 +574,7 @@ $this->card_infos = array(
  */
 $this->card_infos2nd_delta = array(
     CARD_SHIP => array(
-        "card_good" => MARKET_SACK,
+        "card_good" => MARKET_CHICKEN,
         "card_nbr" => 1
     ),
     5 => array(
@@ -584,7 +584,7 @@ $this->card_infos2nd_delta = array(
         "card_name" => clienttranslate("Potemkin village"),
     ),
     CARD_MARKET => array(
-        "card_good" => MARKET_SACK,
+        "card_good" => MARKET_CHICKEN,
         "card_nbr" => 1
     ),
     CARD_OBSERVATORY => array(
@@ -624,7 +624,7 @@ $this->card_infos2nd_delta = array(
     ),
     49 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_CHICKEN,
+        "card_good" => MARKET_SACK,
     ),
     50 => array(
         "card_model" => CARD_SHIP,
@@ -632,11 +632,11 @@ $this->card_infos2nd_delta = array(
     ),
     51 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_CABBAGE,
+        "card_good" => MARKET_FISH,
     ),
     52 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_FISH,
+        "card_good" => MARKET_CABBAGE,
     ),
     53 => array(
         "card_model" => CARD_SHIP,
@@ -644,7 +644,7 @@ $this->card_infos2nd_delta = array(
     ),
     54 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_CHICKEN,
+        "card_good" => MARKET_SACK,
     ),
     55 => array(
         "card_model" => CARD_MARKET,
@@ -652,11 +652,11 @@ $this->card_infos2nd_delta = array(
     ),
     56 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_CABBAGE,
+        "card_good" => MARKET_FISH,
     ),
     57 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_FISH,
+        "card_good" => MARKET_CABBAGE,
     ),
 );
 
