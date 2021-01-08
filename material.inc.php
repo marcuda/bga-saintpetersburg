@@ -208,7 +208,6 @@ $this->card_infos = array(
     CARD_PUB => array( 
         "card_name" => clienttranslate("Pub"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => PHASE_BUILDING,
         "card_cost" => 1,
         "card_rubles" => 0,
         "card_points" => 0,
@@ -218,7 +217,6 @@ $this->card_infos = array(
     CARD_WAREHOUSE => array(
         "card_name" => clienttranslate("Warehouse"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => PHASE_BUILDING,
         "card_cost" => 2,
         "card_rubles" => 0,
         "card_points" => 0,
@@ -228,7 +226,6 @@ $this->card_infos = array(
     13 => array( 
         "card_name" => clienttranslate("Potjomkin's Village"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => PHASE_BUILDING,
         "card_cost" => 2,
         "card_value" => 6,
         "card_rubles" => 0,
@@ -239,7 +236,6 @@ $this->card_infos = array(
     CARD_MARKET => array( 
         "card_name" => clienttranslate("Market"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 5,
         "card_rubles" => 0,
         "card_points" => 1,
@@ -248,7 +244,6 @@ $this->card_infos = array(
     CARD_OBSERVATORY => array( 
         "card_name" => clienttranslate("Observatory"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 6,
         "card_rubles" => 0,
         "card_points" => 1,
@@ -258,7 +253,6 @@ $this->card_infos = array(
     16 => array( 
         "card_name" => clienttranslate("Customs House"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 8,
         "card_rubles" => 0,
         "card_points" => 2,
@@ -267,7 +261,6 @@ $this->card_infos = array(
     17 => array( 
         "card_name" => clienttranslate("Firehouse"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 11,
         "card_rubles" => 0,
         "card_points" => 3,
@@ -276,7 +269,6 @@ $this->card_infos = array(
     18 => array( 
         "card_name" => clienttranslate("Hospital"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 14,
         "card_rubles" => 0,
         "card_points" => 4,
@@ -285,7 +277,6 @@ $this->card_infos = array(
     19 => array( 
         "card_name" => clienttranslate("Library"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 17,
         "card_rubles" => 0,
         "card_points" => 5,
@@ -294,7 +285,6 @@ $this->card_infos = array(
     20 => array( 
         "card_name" => clienttranslate("Theater"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 20,
         "card_rubles" => 0,
         "card_points" => 6,
@@ -303,7 +293,6 @@ $this->card_infos = array(
     21 => array( 
         "card_name" => clienttranslate("Academy"),
         "card_type" => PHASE_BUILDING,
-        "card_trade_type" => 6,
         "card_cost" => 23,
         "card_rubles" => 0,
         "card_points" => 7,
@@ -403,7 +392,6 @@ $this->card_infos = array(
     32 => array( 
         "card_name" => clienttranslate("Author"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 4,
         "card_rubles" => 1,
         "card_points" => 0,
@@ -412,7 +400,6 @@ $this->card_infos = array(
     33 => array( 
         "card_name" => clienttranslate("Administrator"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 7,
         "card_rubles" => 2,
         "card_points" => 0,
@@ -421,7 +408,6 @@ $this->card_infos = array(
     34 => array( 
         "card_name" => clienttranslate("Warehouse Manager"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 10,
         "card_rubles" => 3,
         "card_points" => 0,
@@ -430,7 +416,6 @@ $this->card_infos = array(
     35 => array( 
         "card_name" => clienttranslate("Secretary"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 12,
         "card_rubles" => 4,
         "card_points" => 0,
@@ -439,7 +424,6 @@ $this->card_infos = array(
     36 => array( 
         "card_name" => clienttranslate("Controller"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 14,
         "card_rubles" => 4,
         "card_points" => 1,
@@ -448,7 +432,6 @@ $this->card_infos = array(
     37 => array( 
         "card_name" => clienttranslate("Judge"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 16,
         "card_rubles" => 5,
         "card_points" => 2,
@@ -457,7 +440,6 @@ $this->card_infos = array(
     38 => array( 
         "card_name" => clienttranslate("Mistress of Ceremonies"),
         "card_type" => PHASE_ARISTOCRAT,
-        "card_trade_type" => 7,
         "card_cost" => 18,
         "card_rubles" => 6,
         "card_points" => 3,
@@ -574,17 +556,12 @@ $this->card_infos = array(
  */
 $this->card_infos2nd_delta = array(
     CARD_SHIP => array(
-        "card_good" => MARKET_CHICKEN,
         "card_nbr" => 1
-    ),
-    5 => array(
-        "card_good" => MARKET_JOKER,
     ),
     13 => array(
         "card_name" => clienttranslate("Potemkin village"),
     ),
     CARD_MARKET => array(
-        "card_good" => MARKET_CHICKEN,
         "card_nbr" => 1
     ),
     CARD_OBSERVATORY => array(
@@ -601,21 +578,6 @@ $this->card_infos2nd_delta = array(
         "card_cost" => 15,
         "card_text" => clienttranslate("+1 point per red aristocrat in your play area")
     ),
-    23 => array(
-        "card_good" => MARKET_SACK,
-    ),
-    24 => array(
-        "card_good" => MARKET_CHICKEN,
-    ),
-    25 => array(
-        "card_good" => MARKET_APPLE,
-    ),
-    26 => array(
-        "card_good" => MARKET_CABBAGE,
-    ),
-    27 => array(
-        "card_good" => MARKET_FISH,
-    ),
     39 => array(
         "card_name" => clienttranslate("Abbot"),
     ),
@@ -624,40 +586,302 @@ $this->card_infos2nd_delta = array(
     ),
     49 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_SACK,
     ),
     50 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_APPLE,
     ),
     51 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_FISH,
     ),
     52 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_CABBAGE,
     ),
     53 => array(
         "card_model" => CARD_SHIP,
-        "card_good" => MARKET_JOKER,
     ),
     54 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_SACK,
     ),
     55 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_APPLE,
     ),
     56 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_FISH,
     ),
     57 => array(
         "card_model" => CARD_MARKET,
-        "card_good" => MARKET_CABBAGE,
     ),
+);
+
+$this->card_infosMarket_delta = array(
+    CARD_SHIP => array(
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 1
+    ),
+    5 => array(
+        "card_good" => MARKET_JOKER,
+        "card_good_qt" => 1
+    ),
+    CARD_MARKET => array(
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 1
+    ),
+    23 => array(
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 1
+    ),
+    24 => array(
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 1
+    ),
+    25 => array(
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 1
+    ),
+    26 => array(
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 1
+    ),
+    27 => array(
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 1
+    ),
+    49 => array(
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 1
+    ),
+    50 => array(
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 1
+    ),
+    51 => array(
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 1
+    ),
+    52 => array(
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 1
+    ),
+    53 => array(
+        "card_good" => MARKET_JOKER,
+        "card_good_qt" => 1
+    ),
+    54 => array(
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 1
+    ),
+    55 => array(
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 1
+    ),
+    56 => array(
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 1
+    ),
+    57 => array(
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 1
+    ),
+    58 => array(
+        "card_name" => clienttranslate("Chicken box"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 1,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 4
+    ),
+    59 => array(
+        "card_name" => clienttranslate("Chick"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 5,
+        "card_rubles" => 2,
+        "card_points" => 0,
+        "card_nbr" => 3,
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 1
+    ),
+    60 => array(
+        "card_name" => clienttranslate("Hen"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 4,
+        "card_rubles" => 1,
+        "card_points" => 0,
+        "card_nbr" => 2,
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 2
+    ),
+    61 => array(
+        "card_name" => clienttranslate("Chicken coop"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 3,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_CHICKEN,
+        "card_good_qt" => 3
+    ),
+    62 => array(
+        "card_name" => clienttranslate("Grain sack box"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 1,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 4
+    ),
+    63 => array(
+        "card_name" => clienttranslate("Ear of wheat"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 5,
+        "card_rubles" => 2,
+        "card_points" => 0,
+        "card_nbr" => 3,
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 1
+    ),
+    64 => array(
+        "card_name" => clienttranslate("Grain sack"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 4,
+        "card_rubles" => 1,
+        "card_points" => 0,
+        "card_nbr" => 2,
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 2
+    ),
+    65 => array(
+        "card_name" => clienttranslate("Field"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 3,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_SACK,
+        "card_good_qt" => 3
+    ),
+    66 => array(
+        "card_name" => clienttranslate("Apple box"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 1,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 4
+    ),
+    67 => array(
+        "card_name" => clienttranslate("Apple"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 5,
+        "card_rubles" => 2,
+        "card_points" => 0,
+        "card_nbr" => 3,
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 1
+    ),
+    68 => array(
+        "card_name" => clienttranslate("Apple crate"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 4,
+        "card_rubles" => 1,
+        "card_points" => 0,
+        "card_nbr" => 2,
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 2
+    ),
+    69 => array(
+        "card_name" => clienttranslate("Apple orchard"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 3,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_APPLE,
+        "card_good_qt" => 3
+    ),
+    70 => array(
+        "card_name" => clienttranslate("Fish box"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 1,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 4
+    ),
+    71 => array(
+        "card_name" => clienttranslate("Fish"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 5,
+        "card_rubles" => 2,
+        "card_points" => 0,
+        "card_nbr" => 3,
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 1
+    ),
+    72 => array(
+        "card_name" => clienttranslate("Fish basket"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 4,
+        "card_rubles" => 1,
+        "card_points" => 0,
+        "card_nbr" => 2,
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 2
+    ),
+    73 => array(
+        "card_name" => clienttranslate("Caviar"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 3,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_FISH,
+        "card_good_qt" => 3
+    ),
+    74 => array(
+        "card_name" => clienttranslate("Cabbage box"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 1,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 4
+    ),
+    75 => array(
+        "card_name" => clienttranslate("Cabbage"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 5,
+        "card_rubles" => 2,
+        "card_points" => 0,
+        "card_nbr" => 3,
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 1
+    ),
+    76 => array(
+        "card_name" => clienttranslate("Vegetable basket"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 4,
+        "card_rubles" => 1,
+        "card_points" => 0,
+        "card_nbr" => 2,
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 2
+    ),
+    77 => array(
+        "card_name" => clienttranslate("Vegetable garden"),
+        "card_type" => PHASE_MARKET,
+        "card_cost" => 3,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_good" => MARKET_CABBAGE,
+        "card_good_qt" => 3
+    )
 );
 
 $addMissingFields = function(&$infos) {
