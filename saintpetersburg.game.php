@@ -50,7 +50,14 @@ class SaintPetersburg extends Table
             "show_player_rubles" => OPT_SHOW_RUBLES,
             "show_player_hands" => OPT_SHOW_HANDS,
             "version" => OPT_VERSION,
-        ));        
+            "market" => OPT_MARKET,
+            "banquet" => OPT_BANQUET,
+            "company" => OPT_COMPANY,
+            "assistants" => OPT_ASSISTANTS,
+            "events" => OPT_EVENTS,
+            "assignments" => OPT_ASSIGNMENTS,
+            "obstacles" => OPT_OBSTACLES,
+        ));
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");

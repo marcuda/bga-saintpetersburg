@@ -74,6 +74,13 @@ if (!defined("CARD_PUB")) {
     define("OPT_SHOW_RUBLES", 100);
     define("OPT_SHOW_HANDS", 101);
     define("OPT_VERSION", 102);
+    define("OPT_MARKET", 103);
+    define("OPT_BANQUET", 104);
+    define("OPT_COMPANY", 105);
+    define("OPT_ASSISTANTS", 106);
+    define("OPT_EVENTS", 107);
+    define("OPT_ASSIGNMENTS", 108);
+    define("OPT_OBSTACLES", 109);
 }
 
 /*
