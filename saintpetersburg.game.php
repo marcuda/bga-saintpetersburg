@@ -20,16 +20,6 @@
 require_once(APP_GAMEMODULE_PATH.'module/table/table.game.php');
 
 
-/*
- * Comparison function for sorting cards by type,
- * which will naturlly sort by cost as well
- */
-function cmpCard($a, $b)
-{
-    return $b['type_arg'] - $a['type_arg'];
-}
-
-
 class SaintPetersburg extends Table
 {
     function __construct()
@@ -60,7 +50,14 @@ class SaintPetersburg extends Table
             "show_player_rubles" => OPT_SHOW_RUBLES,
             "show_player_hands" => OPT_SHOW_HANDS,
             "version" => OPT_VERSION,
-        ));        
+            "market" => OPT_MARKET,
+            "banquet" => OPT_BANQUET,
+            "company" => OPT_COMPANY,
+            "assistants" => OPT_ASSISTANTS,
+            "events" => OPT_EVENTS,
+            "assignments" => OPT_ASSIGNMENTS,
+            "obstacles" => OPT_OBSTACLES,
+        ));
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");
@@ -161,7 +158,7 @@ class SaintPetersburg extends Table
         // Init cards and decks
         // Create all cards
         $cards = array();
-        foreach ($this->card_infos as $idx => $card) {
+        foreach ($this->getCardInfos() as $idx => $card) {
             $cards[] = array(
                 'type' => $card['card_type'],
                 'type_arg' => $idx,
@@ -208,7 +205,9 @@ class SaintPetersburg extends Table
     protected function getAllDatas()
     {
         $result = array();
-    
+
+        $result['version'] = $this->optEdition();
+        
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
     
         // Get information about players
@@ -298,7 +297,7 @@ class SaintPetersburg extends Table
         $result['decks'] = $this->cards->countCardsInLocations();
 
         // Full card info used for tooltips
-        $result['card_infos'] = $this->card_infos;
+        $result['card_infos'] = $this->getCardInfos();
 
         // Observatory status
         $obs = array();
@@ -318,6 +317,7 @@ class SaintPetersburg extends Table
             'observatory' => ROW_OBSERVATORY
         );
 
+        $result['buyOnly'] = $this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0;
   
         return $result;
     }
@@ -338,25 +338,28 @@ class SaintPetersburg extends Table
         // Set progress to inverse of percent left in smallest stack,
         // plus count each phase in the round as 3%
         $val = 0;
+        $oneStackEmpty = false;
 
         // Find percentage of smallest stack
         $counts = $this->cards->countCardsInLocations();
         foreach ($this->phases as $phase) {
             if (key_exists('deck_' . $phase, $counts)) {
-                $percent = $counts['deck_' . $phase] / $this->deck_size[$phase];
-                $val = max($val, 100 * (1 - $percent));
+                $count = $counts['deck_' . $phase];
+                $percent = $count / $this->deck_size[$phase];
+                $val = max($val, 91 * (1 - $percent));
+                if ($count == 0) {
+                    $oneStackEmpty = true;
+                }
             } else {
                 // Stack is empty
-                $val = 100;
+                $val = 91;
+                $oneStackEmpty = true;
             }
         }
-
-        // TODO: Is there a better way to do this? There is an issue where
-        //       progression actually drops when a new round starts and the
-        //       worker deck is not the smallest stack.
-
-        $val -= 9; // allow room for phases
-        $val += 3 * (self::getGameStateValue('current_phase') % 4); // 3% each phase
+        // Add phase progress only if one stack is empty, avoid a drop in progress at the end of the game.
+        if ($oneStackEmpty) {
+            $val += 3 * (self::getGameStateValue('current_phase') % 4); // 3% each phase
+        }
 
         return $val;
     }
@@ -440,13 +443,37 @@ class SaintPetersburg extends Table
     }
 
     /*
+     * Comparison function for sorting cards by model,
+     * which will naturally sort by cost as well
+     */
+    function compareCards($a, $b)
+    {
+        $infoA = $this->getCardInfo($a);
+        $infoB = $this->getCardInfo($b);
+        return $infoB['card_model'] - $infoA['card_model'];
+    }
+    
+    /*
+     * Return additional card information.
+     * This information is stored outside of the deck in order to make
+     * use of the standard Deck implementation and functions.
+     */
+    function getCardInfos()
+    {
+        if ($this->opt2ndEdition()) {
+            return $this->card_infos2nd;
+        }
+        return $this->card_infos;
+    }
+    
+    /*
      * Return additional card information for the given card.
-     * This information is stored outside of the in order to make
+     * This information is stored outside of the deck in order to make
      * use of the standard Deck implementation and functions.
      */
     function getCardInfo($card)
     {
-        return $this->card_infos[$card['type_arg']];
+        return $this->getCardInfos()[$card['type_arg']];
     }
 
     /*
@@ -477,6 +504,8 @@ class SaintPetersburg extends Table
         // Get card details
         $card = $this->cards->getCard($card_id);
         $card_info = $this->getCardInfo($card);
+        self::dump('$card_info', $card_info);
+        $card_model = $card_info['card_model'];
 
         // -1 if taken from the lower row
         if ($row != 1) {
@@ -490,7 +519,8 @@ class SaintPetersburg extends Table
 
         foreach ($player_cards as $pcard) {
             // -1 for each copy of same card already owned
-            if ($pcard['type_arg'] == $card['type_arg']) {
+            $pcard_info = $this->getCardInfo($pcard);
+            if ($card_model == $pcard_info['card_model']) {
                 $cost--;
             }
 
@@ -604,7 +634,11 @@ class SaintPetersburg extends Table
             $rubles += $workers;
         }
         if ($theater) {
-            $rubles += $aristocrats;
+            if ($this->opt2ndEdition()) {
+                $points += $aristocrats;
+            } else {
+                $rubles += $aristocrats;
+            }
         }
 
         return array($points, $rubles);
@@ -739,7 +773,7 @@ class SaintPetersburg extends Table
         $unsorted = $this->cards->pickCardsForLocation($nbr, 'deck_' . $phase, TOP_ROW);
 
         // Sort by type/cost
-        usort($unsorted, 'cmpCard');
+        usort($unsorted, array($this, 'compareCards'));
 
         // Update location_arg for board position
         $sorted = array();
@@ -882,7 +916,7 @@ class SaintPetersburg extends Table
             }
             if ($card_info['card_trade_type'] == PHASE_WORKER &&
                 $card_info['card_worker_type'] != $p_info['card_worker_type'] &&
-                $p_info['card_worker_type'] != WORKER_ALL)
+                    $p_info['card_worker_type'] != WORKER_ALL)
             {
                 continue; // Not correct worker type
             }
@@ -1039,8 +1073,8 @@ class SaintPetersburg extends Table
         $disp_info = $this->getCardInfo($disp_card);
         if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
             ($disp_info['card_type'] == PHASE_WORKER &&
-            $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
-            $disp_info['card_worker_type'] != WORKER_ALL))
+                $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
+                $disp_info['card_worker_type'] != WORKER_ALL))
         {
             throw new BgaUserException(self::_("Wrong type of card to displace"));
         }
@@ -1138,8 +1172,18 @@ class SaintPetersburg extends Table
     {
         return $this->gamestate->table_globals[OPT_SHOW_RUBLES] == 1;
     }
+    
+    function optEdition()
+    {
+        return $this->gamestate->table_globals[OPT_VERSION];
+    }
 
-//////////////////////////////////////////////////////////////////////////////
+    function opt2ndEdition()
+    {
+        return $this->optEdition() == 2;
+    }
+    
+    //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
 
@@ -1150,6 +1194,9 @@ class SaintPetersburg extends Table
     {
         self::checkAction('addCard');
 
+        if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
+            throw new BgaUserException(self::_("You must buy on first worker phase"));
+        }
         $card = $this->getSelectedCard($card_row, $card_col);
 
         // Verify player hand is not full
@@ -1312,6 +1359,9 @@ class SaintPetersburg extends Table
     {
         self::checkAction('pass');
 
+        if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
+            throw new BgaUserException(self::_("You must buy on first worker phase"));
+        }
         $this->passActivePlayer('nextPlayer');
     }
 
@@ -1355,6 +1405,9 @@ class SaintPetersburg extends Table
     function enableAutoPass()
     {
         // No action check
+        if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
+            throw new BgaUserException(self::_("You must buy on first worker phase"));
+        }
         $player_id = self::getCurrentPlayerId(); // CURRENT: player can do this out of turn
         $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
         self::notifyPlayer($player_id, 'autopass', '', array('enable' => true));
