@@ -61,6 +61,7 @@ $game_options = array(
             2 => array(
                 'name' => totranslate('Second edition'),
                 'tmdisplay' => totranslate('Second edition'),
+                'beta' => true
             )
         ),
         'default' => 2
