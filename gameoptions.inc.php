@@ -64,7 +64,7 @@ $game_options = array(
                 'beta' => true
             )
         ),
-        'default' => 2
+        'default' => 1
     ),
     
     // These are not in the rules but could make turn-based games better
