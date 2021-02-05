@@ -53,16 +53,94 @@
     flex-wrap: wrap;
 }
 
-#stp_gameboard {
+#stp_gameboard_width_sizer {
     width: 740px;
-    height: 480px;
-    background-image: url('img/board_full.jpg');
-    position: relative;
     margin: auto;
 }
 
+#stp_gameboard_height_sizer {
+    width: 100%;
+    padding-bottom: 64.8648649%;
+    position: relative;
+    margin: 0px;
+}
+
+.stp_2nd_edition #stp_gameboard_height_sizer {
+    padding-bottom: 65.3425213%;
+}
+
+#stp_gameboard {
+    width: 100%;
+    height: 100%;
+    background-image: url('img/board_full.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    position: absolute;
+    margin: 0px;
+}
+
+.stp_2nd_edition #stp_gameboard {
+    background-image: url('img/board2.jpg');
+}
+
+#stp_game_board_center {
+    position: absolute;
+    height: 100%;
+    left: 50%;
+}
+
+#stp_phase_label {
+    position: relative;
+    left: -50%;
+    top: 2%;
+}
+
+.stp_2nd_edition #stp_phase_label {
+    top: 1.5%;
+}
+
+#stp_count_Worker {
+    left: 230px;
+    top: 128px;
+}
+
+.stp_2nd_edition #stp_count_Worker {
+    left: 28.2%;
+    top: 24.5%;
+}
+
+#stp_count_Building {
+    left: 372px;
+    top: 128px;
+}
+
+.stp_2nd_edition #stp_count_Building {
+    left: 48.2%;
+    top: 24.5%;
+}
+
+#stp_count_Aristocrat {
+    left: 517px;
+    top: 128px;
+}
+
+.stp_2nd_edition #stp_count_Aristocrat {
+    left: 68.2%;
+    top: 24.5%;
+}
+
+#stp_count_Trading {
+    left: 661px;
+    top: 128px;
+}
+
+.stp_2nd_edition #stp_count_Trading {
+    left: 88.2%;
+    top: 24.5%;
+}
+
 /* smallest screen */
-#myhand_wrap {
+#stp_myhand_wrap {
     width: 100%;
     height: 145px;
     margin-bottom: 0px;
@@ -70,22 +148,30 @@
 
 /* medium screen */
 @media only screen and (min-width: 1185px) {
-    #stp_gameboard {
+    #stp_board_sizer {
         margin-right: 10px;
     }
 
-    #myhand_wrap {
+    #stp_myhand_wrap {
         width: 150px;
         height: 260px;
         margin-top: 200px;
         margin-right: auto;
     }
+    .stp_2nd_edition #stp_myhand_wrap {
+        width: 157px;
+    }
 }
 
 /* large screen */
 @media only screen and (min-width: 1340px) {
-    #myhand_wrap {
+    #stp_myhand_wrap {
         width: 300px;
+        height: 145px;
+        margin-top: 315px;
+    }
+    .stp_2nd_edition #stp_myhand_wrap {
+        width: 313px;
         height: 145px;
         margin-top: 315px;
     }
@@ -93,12 +179,30 @@
 
 
 
-.stp_discard {
-    position: absolute;
+.stp_square, .stp_discard, .stp_maskcard, .stp_clickcard, .stp_card, .stp_deck, .stp_cardart_small {
     width: 70px;
     height: 112px;
+}
+
+.stp_2nd_edition .stp_square, .stp_2nd_edition .stp_discard, .stp_2nd_edition .stp_clickcard, .stp_2nd_edition .stp_card, .stp_2nd_edition .stp_deck {
+    width: 9.32%;
+    height: 21.84%;
+}
+
+.stp_2nd_edition .stp_maskcard, .stp_2nd_edition .stp_clickcard, .stp_2nd_edition .stp_cardart_small {
+    width: 73.18px;
+    height: 112px;
+}
+
+.stp_discard {
+    position: absolute;
     left: 47px;
     top: 26px;
+}
+
+.stp_2nd_edition .stp_discard {
+    left: 2.31%;
+    top: 6.45%;
 }
 
 .stp_aritable {
@@ -107,6 +211,13 @@
     height: 52px;
     left: 7px;
     top: 156px;
+}
+
+.stp_2nd_edition .stp_aritable {
+    width: 25.54%;
+    height: 8.31%;
+    left: 2.19%;
+    top: 88.9%;
 }
 
 .stp_aritooltip {
@@ -131,14 +242,10 @@
 }
 
 .stp_square {
-    width: 70px;
-    height: 112px;
     position: absolute;
 }
 
 .stp_maskcard {
-    width: 70px;
-    height: 112px;
     background-color: rgba(255, 228, 196, 0.5);
     filter: alpha(opacity=50); /* IE8 */
     display: none;
@@ -147,24 +254,28 @@
 
 .stp_clickcard
 {
-    width: 70px;
-    height: 112px;
     cursor: pointer;
 }
 
 .stp_card {
     position: absolute;
-    width: 70px;
-    height: 112px;
     background-image: url('img/cards.png');
+    background-size: 1000%;
     cursor: pointer;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
-    border-radius: 10px;
+    border-radius: 14.3% / 8.93%;
+}
+
+.stp_2nd_edition .stp_card {
+    background-image: url('img/cards2.jpg');
+    box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
+    border-radius: 14.3% / 9.33%;
 }
 
 .stockitem {
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
     border-radius: 10px;
+    background-size: 1000%;
 }
 
 .stp_selected {
@@ -178,12 +289,6 @@
 
 .stockitem_select {
     border: 2px solid red ! important;
-}
-
-.stp_rubleicon {
-    width: 45px;
-    height: 24px;
-    background-image: url('img/ruble.jpg');
 }
 
 .stp_iconspan {
@@ -221,6 +326,11 @@
     top: 5px;
 }
 
+.stp_2nd_edition [class^="stp_cardicon_"] {
+    height: 22.9565px;
+    background-image: url('img/cardbacks2.jpg');
+}
+
 .stp_cardicon_Worker {
     background-position: 0px 0px;
 }
@@ -239,32 +349,57 @@
 
 .stp_deck {
     position: absolute;
-    width: 70px;
-    height: 112px;
     top: 40px;
     background-image: url('img/cardbacks_big.jpg');
+    background-size: 400%;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
+    border-radius: 6px;
+}
+
+.stp_2nd_edition .stp_deck {
+    top: 6.3%;
+    background-image: url('img/cardbacks2.jpg');
+    background-size: 900%;
     border-radius: 6px;
 }
 
 .stp_deck_worker {
     left: 185px;
-    background-position: 0px 0px;
+    background-position: 0% 0%;
+}
+
+.stp_2nd_edition .stp_deck_worker {
+    left: 18.5%;
 }
 
 .stp_deck_building {
     left: 327px;
-    background-position: -70px 0px;
+    background-position: 33.33% 0%;
+}
+
+.stp_2nd_edition .stp_deck_building {
+    left: 38.5%;
+    background-position-x: 12.5%;
 }
 
 .stp_deck_aristocrat {
     left: 473px;
-    background-position: -140px 0px;
+    background-position: 66.67% 0%;
+}
+
+.stp_2nd_edition .stp_deck_aristocrat {
+    left: 58.5%;
+    background-position-x: 25%;
 }
 
 .stp_deck_trading {
     left: 617px;
-    background-position: -210px 0px;
+    background-position: 100% 0%;
+}
+
+.stp_2nd_edition .stp_deck_trading {
+    left: 78.6%;
+    background-position-x: 37.5%;
 }
 
 .stp_emptydeck {
@@ -288,9 +423,13 @@
 
 #stp_final_label {
     width: 200px;
-    left: 590px;
-    top: 10px;
+    left: 79.73%;
+    top: 2%;
     color: red;
+}
+
+.stp_2nd_edition #stp_final_label {
+    top: 1.5%;
 }
 
 .stp_token {
@@ -298,6 +437,10 @@
     height: 32px;
     z-index: 99;
     background-position: -128px -16px; /* empty */
+}
+
+.stp_2nd_edition .stp_token {
+    visibility: hidden;
 }
 
 .stp_icon {
@@ -312,20 +455,45 @@
     margin-right: 5px;
 }
 
+.stp_2nd_edition .stp_icon, .stp_2nd_edition .stp_token {
+    background-image: url('img/icons2.png');
+    background-size: 500%;
+}
+
 .stp_token_Worker {
     background-position: 0px -16px;
+}
+
+.stp_2nd_edition .stp_token_Worker {
+    background-position: 0% 100%;
+    visibility: visible;
 }
 
 .stp_token_Building {
     background-position: -32px -16px;
 }
 
+.stp_2nd_edition .stp_token_Building {
+    background-position: 25% 100%;
+    visibility: visible;
+}
+
 .stp_token_Aristocrat {
     background-position: -64px -16px;
 }
 
+.stp_2nd_edition .stp_token_Aristocrat {
+    background-position: 50% 100%;
+    visibility: visible;
+}
+
 .stp_token_Trading {
     background-position: -96px -16px;
+}
+
+.stp_2nd_edition .stp_token_Trading {
+    background-position: 75% 100%;
+    visibility: visible;
 }
 
 .stp_icon_hand {
@@ -337,32 +505,32 @@
     background-position: -16px 0px;
 }
 
+.stp_2nd_edition .stp_icon_ruble {
+    background-position: 25% 0%;
+}
+
 .stp_icon_aricount {
     background-position: -32px 0px;
 }
 
-.stp_icon_0000ff {
-    background-position: -48px 0px;
-}
-
-.stp_icon_ff0000 {
-    background-position: -64px 0px;
-}
-
-.stp_icon_008000 {
-    background-position: -80px 0px;
-}
-
-.stp_icon_ffa500 {
-    background-position: -96px 0px;
+.stp_2nd_edition .stp_icon_aricount {
+    background-position: 50% 0%;
 }
 
 .stp_icon_points {
     background-position: -160px -16px;
 }
 
+.stp_2nd_edition .stp_icon_points {
+    background-position: 75% 0%;
+}
+
 .stp_icon_rubles {
     background-position: -180px -16px;
+}
+
+.stp_2nd_edition .stp_icon_rubles {
+    background-position: 100% 0%;
 }
 
 .stp_icon_rubles, .stp_icon_points {
@@ -396,6 +564,7 @@
 .stp_cardart {
     display:inline-block;
     background-image:url('img/cards_big.jpg');
+    background-size: 1000%;
     width:96px;
     height:150px;
     margin:10px;
@@ -403,13 +572,23 @@
     border-radius:18px
 }
 
+.stp_2nd_edition .stp_cardart {
+    background-image:url('img/cards2.jpg');
+    width:130.68px;
+    height:200px;
+}
+
 .stp_cardart_small {
-    width: 70px;
-    height: 112px;
     background-image: url('img/cards.png');
+    background-size: 1000%;
     margin: 1px;
     border: 1px solid black;
-    border-radius: 10px
+    border-radius: 14.3% / 8.93%;
+}
+
+.stp_2nd_edition .stp_cardart_small {
+    background-image: url('img/cards2.jpg');
+    border-radius: 14.3% / 9.33%;
 }
 
 .stp_cardtooltip {

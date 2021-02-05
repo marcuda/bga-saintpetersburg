@@ -43,8 +43,21 @@ class view_saintpetersburg_saintpetersburg extends game_view
         // Template block for card slots on board
         $this->page->begin_block("saintpetersburg_saintpetersburg", "square");
 
-        $hor_scale = 90;
-        $ver_scale = 120;
+        // % of board width:
+        $hor_scale = 12.16;
+        $hor_padding = 2.7;
+        $hor_adjust6 = 0.27;
+        // % of board height:
+        $ver_scale = 25;
+        $ver_padding = 48.33;
+        if ($this->game->opt2ndEdition()) {
+            $hor_scale = 12.35;
+            $hor_padding = 2.2;
+            $hor_adjust6 = 0;
+            // % of board height:
+            $ver_scale = 24.81;
+            $ver_padding = 37.495;
+        }
         for ($y=0; $y<2; $y++)
         {
             for ($x=0; $x<8; $x++)
@@ -53,8 +66,8 @@ class view_saintpetersburg_saintpetersburg extends game_view
                     'X' => $x,
                     'Y' => $y,
                     // count right to left; slight adjust for one misaligned column
-                    'LEFT' => round((7 - $x) * $hor_scale + 20) + ($x==6?2:0),
-                    'TOP' => round($y * $ver_scale + 232)
+                    'LEFT' => (7 - $x) * $hor_scale + $hor_padding + ($x==6?$hor_adjust6:0),
+                    'TOP' => $y * $ver_scale + $ver_padding
                 ));
             }
         }
@@ -78,14 +91,6 @@ class view_saintpetersburg_saintpetersburg extends game_view
         // Active automatic pass message
         $this->tpl['AUTOPASS_MSG'] = self::_("You will automatically pass your turn until the next phase begins!");
         $this->tpl['CANCEL'] = self::_("Cancel");
-
-        // Temporary publisher notice
-        $publisher = html_entity_decode('Hans im Gl&uuml;ck'); // NOI18N
-        $msg = self::_("A word from");
-        $msg .= ' ' . $publisher . ': ';
-        $msg .= self::_("the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the new artwork is ready.");
-        $this->tpl['PUBLISHER_MSG'] = $msg;
-        $this->tpl['PUBLISHER_ACK'] = self::_("Okay, got it!");
 
         $this->tpl['FINAL'] = self::_("FINAL ROUND");
 
