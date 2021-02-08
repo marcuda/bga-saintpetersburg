@@ -68,7 +68,7 @@ $gameinfos = array(
 'losers_not_ranked' => false,
 
 // Game is "beta". A game MUST set is_beta=1 when published on BGA for the first time, and must remains like this until all bugs are fixed.
-'is_beta' => 1,
+'is_beta' => 0,
 
 // Is this game cooperative (all players wins together or loose together)
 'is_coop' => 0,
@@ -128,7 +128,7 @@ $gameinfos = array(
 //  http://en.doc.boardgamearena.com/Game_meta-information:_gameinfos.inc.php
 //  IMPORTANT: this list should be ORDERED, with the most important tag first.
 //  IMPORTANT: it is mandatory that the FIRST tag is 1, 2, 3 and 4 (= game category)
-'tags' => array( 2, 22, 102, 200, 210 ),
+'tags' => array( 2, 102, 200, 210 ),
 
 
 // 3D mode does not function correctly
