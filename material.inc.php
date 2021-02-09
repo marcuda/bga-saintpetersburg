@@ -675,8 +675,6 @@ $addMissingFields = function(&$infos) {
     }
 };
 
-$addMissingFields($this->card_infos);
-
 $this->card_infos2nd = $this->card_infos;
 // Override first edition data.
 foreach ($this->card_infos2nd_delta as $idx => $card) {
@@ -691,5 +689,7 @@ foreach ($this->card_infos2nd_delta as $idx => $card) {
         $this->card_infos2nd[$idx] = $card;
     }
 }
+// Do not add missing field before the copy for second edition, or some fields won't have a correct value.
+$addMissingFields($this->card_infos);
 $addMissingFields($this->card_infos2nd);
 
