@@ -97,6 +97,14 @@ $game_preferences = array(
             2 => array('name' => totranslate('Vertical')),
         )
     ),
+    102 => array(
+        'name' => totranslate('Auto pass passes'),
+        'needReload' => true,
+        'values' => array(
+            0 => array('name' => totranslate('Next action')),
+            1 => array('name' => totranslate('Immediately')),
+        )
+    ),
 );
 
 

@@ -72,7 +72,8 @@ class action_saintpetersburg extends APP_GameAction
     public function autopass()
     {
         self::setAjaxMode();
-        $result = $this->game->enableAutoPass();
+        $pass = self::getArg("pass", AT_bool, true);
+        $result = $this->game->enableAutoPass($pass);
         self::ajaxResponse();
     }
 

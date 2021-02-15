@@ -1402,7 +1402,7 @@ class SaintPetersburg extends Table
      * Player chooses that (after the next action if active) they will
      * automatically pass all subsequent turns until the next phase
      */
-    function enableAutoPass()
+    function enableAutoPass($pass)
     {
         // No action check
         if ($this->opt2ndEdition() && self::getGameStateValue('current_phase') == 0) {
@@ -1411,8 +1411,10 @@ class SaintPetersburg extends Table
         $player_id = self::getCurrentPlayerId(); // CURRENT: player can do this out of turn
         $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
         self::notifyPlayer($player_id, 'autopass', '', array('enable' => true));
-
         // No state change, player continues to take normal action
+        if ($pass) {
+            $this->pass();
+        }
     }
 
     /*

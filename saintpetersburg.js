@@ -253,7 +253,7 @@ define([
         'use strict';
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function() {
-                this.debug = true; // enabled console logs if true
+                this.debug = false; // enabled console logs if true
 
                 if (this.debug) console.log('saintpetersburg constructor');
 
@@ -529,6 +529,13 @@ define([
                 this.setupNotifications();
 
                 if (this.debug) console.log("Ending game setup");
+            },
+
+            isAutoPassImmediate: function() {
+                if (this.debug) {
+                    console.log(this.prefs);
+                }
+                return typeof (this.prefs[102]) !== 'undefined' && this.prefs[102].value == 1;
             },
 
 
@@ -1365,12 +1372,11 @@ define([
              */
             onPass: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('pass'))
-                    return;
-
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/pass.html",
-                    { lock: true }, this, function(result) { });
+                if (this.checkAction('pass')) {
+                    this.ajaxcall(
+                        "/saintpetersburg/saintpetersburg/pass.html",
+                        { lock: true }, this, function(result) { });
+                }
             },
 
             /*
@@ -1378,12 +1384,15 @@ define([
              */
             onAutoPass: function(evt) {
                 dojo.stopEvent(evt);
-
-                // No action check (player may not be active)
+                // No action check (player can be not active)
 
                 this.ajaxcall(
                     "/saintpetersburg/saintpetersburg/autopass.html",
-                    { lock: true }, this, function(result) { });
+                    {
+                        lock: true,
+                        pass: this.isAutoPassImmediate() && !this.gamedatas.autopass && this.isCurrentPlayerActive()
+                            && !this.gamedatas.buyOnly && this.checkAction('pass', true)
+                    }, this, function(result) { });
             },
 
             /*
