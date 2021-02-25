@@ -1175,7 +1175,7 @@ class SaintPetersburg extends Table
     
     function optEdition()
     {
-        return $this->gamestate->table_globals[OPT_VERSION];
+        return (array_key_exists(OPT_VERSION, $this->gamestate->table_globals))? $this->gamestate->table_globals[OPT_VERSION]: 1;
     }
 
     function opt2ndEdition()
