@@ -92,6 +92,14 @@ class view_saintpetersburg_saintpetersburg extends game_view
         $this->tpl['AUTOPASS_MSG'] = self::_("You will automatically pass your turn until the next phase begins!");
         $this->tpl['CANCEL'] = self::_("Cancel");
 
+        // Temporary publisher notice
+        $publisher = html_entity_decode('Hans im Gl&uuml;ck'); // NOI18N
+        $msg = self::_("A word from");
+        $msg .= ' ' . $publisher . ': ';
+        $msg .= self::_("the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the new artwork is ready.");
+        $this->tpl['PUBLISHER_MSG'] = $msg;
+        $this->tpl['PUBLISHER_ACK'] = self::_("Okay, got it!");
+
         $this->tpl['FINAL'] = self::_("FINAL ROUND");
 
         /*********** Do not change anything below this line  ************/

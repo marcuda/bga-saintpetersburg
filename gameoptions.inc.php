@@ -72,6 +72,14 @@ $game_options = array(
 );
 
 $game_preferences = array(
+    100 => array(
+        'name' => totranslate('Show publisher message'),
+        'needReload' => false,
+        'values' => array(
+            0 => array('name' => totranslate('Yes')),
+            1 => array('name' => totranslate('No')),
+        )
+    ),
     101 => array(
         'name' => totranslate('Overlap duplicate cards'),
         'needReload' => true,
