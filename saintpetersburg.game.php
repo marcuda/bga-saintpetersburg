@@ -94,7 +94,7 @@ class SaintPetersburg extends Table
         // Set the colors of the players with HTML color code
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
- 
+
         // Create players
         // Player rubles is tie breaker and so held in aux score
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar, player_score_aux) VALUES ";
@@ -105,11 +105,11 @@ class SaintPetersburg extends Table
             // start with 25 rubles
             $values[] = "('".$player_id."','$color','".$player['player_canal']."','".addslashes($player['player_name'])."','".addslashes($player['player_avatar'])."',25)";
         }
-        $sql .= implode($values, ',');
+        $sql .= implode(',', $values);
         self::DbQuery($sql);
         self::reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         self::reloadPlayersBasicInfos();
-        
+
         /************ Start the game initialization *****/
 
         // Init global values with their initial values
