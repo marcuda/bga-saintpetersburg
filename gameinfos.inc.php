@@ -15,15 +15,6 @@ $gameinfos = array(
 // Name of the game in English (will serve as the basis for translation)
 'game_name' => "Saint Petersburg", // NOI18N
 
-// Game designer (or game designers, separated by commas)
-'designer' => 'Bernd Brunnhofer',
-
-// Game artist (or game artists, separated by commas)
-'artist' => html_entity_decode('Doris Matth&auml;us'),
-
-// Year of FIRST publication of this game. Can be negative.
-'year' => 2004,
-
 // Game publisher
 'publisher' => html_entity_decode('Hans im Gl&uuml;ck'),
 
@@ -73,18 +64,6 @@ $gameinfos = array(
 // Is this game cooperative (all players wins together or loose together)
 'is_coop' => 0,
 
-// Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
-'complexity' => 2,
-
-// Luck of the game, from 0 (absolutely no luck in this game) to 5 (totally luck driven)
-'luck' => 2,
-
-// Strategy of the game, from 0 (no strategy can be setup) to 5 (totally based on strategy)
-'strategy' => 3,
-
-// Diplomacy of the game, from 0 (no interaction in this game) to 5 (totally based on interaction and discussion between players)
-'diplomacy' => 1,
-
 // Colors attributed to players
 'player_colors' => array( "ff0000", "008000", "0000ff", "ffa500" ),
 
@@ -111,25 +90,6 @@ $gameinfos = array(
     //  minimum possible value: 740
     'max' => null
 ),
-
-// Game presentation
-// Short game presentation text that will appear on the game description page, structured as an array of paragraphs.
-// Each paragraph must be wrapped with totranslate() for translation and should not contain html (plain text without formatting).
-// A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
-'presentation' => array(
-    totranslate("Baroque palaces, wide boulevards, and elegant bridges: St Petersburg. On May 16, 1703, Czar Peter the Great lays the foundation for the first building. Quickly impressive buildings are erected that are ever more grand and beautiful. Such buildings bring the aristocracy glory and the players victory points. But you need traders to bring the rubles necessary for all this magnificence, otherwise, the buildings are empty and bare. But the competition never sleeps and may grab needed cards right from under your nose."),
-   totranslate("St Petersburg: the card game of beautiful living on the Neva.")
-),
-
-// Games categories
-//  You can attribute a maximum of FIVE "tags" for your game.
-//  Each tag has a specific ID (ex: 22 for the category "Prototype", 101 for the tag "Science-fiction theme game")
-//  Please see the "Game meta information" entry in the BGA Studio documentation for a full list of available tags:
-//  http://en.doc.boardgamearena.com/Game_meta-information:_gameinfos.inc.php
-//  IMPORTANT: this list should be ORDERED, with the most important tag first.
-//  IMPORTANT: it is mandatory that the FIRST tag is 1, 2, 3 and 4 (= game category)
-'tags' => array( 2, 102, 200, 210 ),
-
 
 // 3D mode does not function correctly
 'enable_3d' => false,
