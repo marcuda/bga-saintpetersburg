@@ -1627,17 +1627,16 @@ define([
              * Player clicks a card stack
              */
             onClickDeck: function(evt) {
-                dojo.stopEvent(evt);
-                if (!this.checkAction('useObservatory', true)) {
-                    // Decks are only selectable and active after using Observatory
-                    // Ignore click without error message
-                    return;
+                if (this.debug) {
+                    console.log('onClickDeck: ' + evt.currentTarget.id);
                 }
-
-                this.client_state_args.deck = evt.currentTarget.id;
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/drawObservatoryCard.html",
-                    this.client_state_args, this, function(result) { });
+                dojo.stopEvent(evt);
+                if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable') && this.checkAction('useObservatory')) {
+                    this.client_state_args.deck = evt.currentTarget.id;
+                    this.ajaxcall(
+                        "/saintpetersburg/saintpetersburg/drawObservatoryCard.html",
+                        this.client_state_args, this, function(result) { });
+                }
             },
 
             /*
