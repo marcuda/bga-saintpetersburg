@@ -63,15 +63,6 @@ if (!defined("STATE_END_GAME")) {
 
 $machinestates = array(
 
-    // The initial state. Please do not modify.
-    1 => array(
-        "name" => "gameSetup",
-        "description" => "",
-        "type" => "manager",
-        "action" => "stGameSetup",
-        "transitions" => array( "" => STATE_PLAYER_TURN )
-    ),
-    
     // Normal player turn
     STATE_PLAYER_TURN => array(
         "name" => "playerTurn",
@@ -155,17 +146,6 @@ $machinestates = array(
             "cantPlay" => STATE_NEXT_PLAYER
         )
     ),
-
-    // Final state.
-    // Please do not modify (and do not overload action/args methods).
-    99 => array(
-        "name" => "gameEnd",
-        "description" => clienttranslate("End of game"),
-        "type" => "manager",
-        "action" => "stGameEnd",
-        "args" => "argGameEnd"
-    )
-
 );
 
 

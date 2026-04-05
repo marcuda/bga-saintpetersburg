@@ -253,7 +253,8 @@ define([
         'use strict';
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function() {
-                this.debug = false; // enabled console logs if true
+                // Enabled console logs if true
+                this.debug = false;
 
                 if (this.debug) console.log('saintpetersburg constructor');
 
@@ -320,6 +321,8 @@ define([
                     this.dontPreloadImage('icons2.jpg');
                 }
 
+                this.buildBoard(gamedatas);
+                
                 if (this.prefs[100].value == 0) {
                     // Show message from publisher player has not seen/acknowledged
                     dojo.style('publisher_msg', 'display', 'block');
@@ -355,7 +358,36 @@ define([
                     var player = gamedatas.players[player_id];
                     player.url = g_gamethemeurl;
                     var player_board_div = $('player_board_' + player_id);
-                    dojo.place(this.format_block('jstpl_player_board', player), player_board_div);
+                    const id = player_id;
+                    dojo.place(`
+                        <div class="stp_board">
+                            <div id="rublecount_icon_p${id}" class="imgtext stp_icon stp_icon_ruble"></div>
+                            <span id="rublecount_p${id}">?</span>&nbsp;
+                            <div id="aricount_icon_p${id}" class="imgtext stp_icon stp_icon_aricount"></div>
+                            <span id="aricount_p${id}">0</span>&nbsp;
+                            <div id="handcount_icon_p${id}" class="imgtext stp_icon stp_icon_hand"></div>
+                            <span id="handcount_p${id}">0</span>&nbsp;
+                            <div id="cardicon_p${id}_0"></div>
+                            <div id="cardicon_p${id}_1"></div>
+                            <div id="cardicon_p${id}_2"></div>
+                            <div id="cardicon_p${id}_3"></div><br>
+                            <div id="income_wrap_p${id}">
+                                <div id="income_icon_rubles_p${id}" class="stp_icon stp_icon_rubles"><span>+</span></div>
+                                <div id="income_wrap_rubles_p${id}" style="display: inline-block;">
+                                    <span id="income_rubles_p${id}_0">0</span>/<span id="income_rubles_p${id}_1">0</span>/<span id="income_rubles_p${id}_2">0</span>
+                                </div><br>
+                                <div id="income_icon_points_p${id}" class="stp_icon stp_icon_points">
+                                    <span>+</span>
+                                </div>
+                                <div id="income_wrap_points_p${id}" style="display: inline-block;">
+                                    <span id="income_points_p${id}_0">0</span>/<span id="income_points_p${id}_1">0</span>/<span id="income_points_p${id}_2">0</span>
+                                </div>
+                            </div>
+                            <div id="token_wrap_p${id}" style="margin-left: 15px; position: relative; top: -6px">
+                                <div id="token_p${id}" class="imgtext stp_token"></div>&nbsp;
+                                <div id="token2_p${id}" class="imgtext stp_token"></div>
+                            </div>
+                        </div>`, player_board_div);
 
                     // Player hand counters
                     var hand_counter = new ebg.counter();
@@ -489,11 +521,37 @@ define([
                 }
 
                 // Aristocrat table helper tooltip
-                this.addTooltipHtml('aristocrat_table', this.format_block('jstpl_ari_tooltip', {
-                    text: _('Players score end game bonus points for each different type of Aristocrat they own, which is tracked in the player panel.'),
-                    aristocrats: _('Unique Aristocrats'),
-                    points: _('Bonus Points'),
-                }), 'aristocrat_table');
+                const text = _('Players score end game bonus points for each different type of Aristocrat they own, which is tracked in the player panel.');
+
+                this.addTooltipHtml('aristocrat_table', `
+                    <div class="stp_aritooltip">
+                        <p>${text}</p>
+                        <table><tbody><tr style="background-color:rgb(252,185,115);">
+                            <th>${_('Unique Aristocrats')}</th>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>6</td>
+                            <td>7</td>
+                            <td>8</td>
+                            <td>9</td>
+                            <td>10+</td>
+                        </tr><tr>
+                            <th>${_('Bonus Points')}</th>
+                            <td>1</td>
+                            <td>3</td>
+                            <td>6</td>
+                            <td>10</td>
+                            <td>15</td>
+                            <td>21</td>
+                            <td>28</td>
+                            <td>36</td>
+                            <td>45</td>
+                            <td>55</td>
+                        </tr></tbody></table>
+                    </div>`, 'aristocrat_table');
 
                 // Player hand
                 if (!this.isSpectator) { // Spectator has no hand element
@@ -537,6 +595,134 @@ define([
                 if (this.debug) console.log("Ending game setup");
             },
 
+            buildBoard: function(gameData) {
+                if (this.debug) {
+                    console.log("buildBoard");
+                }
+                const PUBLISHER_MSG = dojo.string.substitute(
+                    _('A word from ${publisherName}: the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the new artwork is ready.'),
+                    { publisherName: 'Hans im Glück' });
+                this.bga.gameArea.getElement().insertAdjacentHTML('beforeend', `
+                    <div id="publisher_msg" style="display: none; margin-bottom: 5px; margin-right: 10px">
+                        <div class="roundedbox" style="width: 100%;">
+                            <div class=roundedboxinner">
+                                <div class="stp_banner_msg">
+                                    <div class="stp_publisher_icon"></div>
+                                    &nbsp;
+                                    <span>${PUBLISHER_MSG}</span>
+                                    &nbsp;
+                                    <a id="button_publisher_ack" class="action-button bgabutton bgabutton_blue" href="#">${_('Okay, got it!')}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="autopass_msg" style="display: none; margin-bottom: 5px; margin-right: 10px">
+                        <div class="roundedbox" style="width: 100%;">
+                            <div class=roundedboxinner">
+                                <div id="autopass" class="stp_banner_msg">
+                                    <span>${_('You will automatically pass your turn until the next phase begins!')}</span>
+                                    <a href="#" class="action-button bgabutton bgabutton_red" style="line-height:normal;" onclick="return false;" id="button_cancel_pass">${_('Cancel')}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Game board, card stacks and play area -->
+                    <div id="stp_game_area">
+                        <div id="stp_gameboard_width_sizer">
+                            <div id="stp_gameboard_height_sizer">
+                                <div id="stp_gameboard">
+                                    <div id="discard_pile" class="stp_discard"></div>
+                                    <div id="aristocrat_table" class="stp_aritable"></div>
+                                    <div id="stp_game_board_center">
+                                        <div id="stp_phase_label" class="stp_label"></div>
+                                    </div>
+                                    <div id="stp_final_label" class="stp_label" style="display: none;">${_('FINAL ROUND')}</div>
+                                    <div id="decks">
+                                        <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
+                                        <div id="deck_Building" class="stp_deck stp_deck_building"></div>
+                                        <div id="deck_Aristocrat" class="stp_deck stp_deck_aristocrat"></div>
+                                        <div id="deck_Trading" class="stp_deck stp_deck_trading"></div>
+                                        <div id="deck_counts">
+                                            <span id="stp_count_Worker" class="stp_label">0</span>
+                                            <span id="stp_count_Building" class="stp_label">0</span>
+                                            <span id="stp_count_Aristocrat" class="stp_label">0</span>
+                                            <span id="stp_count_Trading" class="stp_label">0</span>
+                                        </div>
+                                    </div>
+                            
+                                    <!-- Squares -->
+                                    
+                                    <div id="stp_cards">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Current player hand -->
+                        <div id="stp_myhand_wrap" class="whiteblock">
+                            <h3>${_('My hand')}</h3>
+                            <div id="stp_myhand"></div>
+                        </div>
+                    </div>
+
+                    <div id="stp_playertables">
+                        <!-- Player's tables -->
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div id="button_1"></div>
+                    <div id="button_2"></div>
+                    <div id="button_3"></div>
+                    <div id="button_4"></div>
+                    <div id="button_autopass"></div>
+                `);
+                
+                // % of board width:
+                let hor_scale = 12.16;
+                let hor_padding = 2.7;
+                let hor_adjust6 = 0.27;
+                // % of board height:
+                let ver_scale = 25;
+                let ver_padding = 48.33;
+                if (gameData.version == 2) {
+                    hor_scale = 12.35;
+                    hor_padding = 2.2;
+                    hor_adjust6 = 0;
+                    // % of board height:
+                    ver_scale = 24.81;
+                    ver_padding = 37.495;
+                }
+                const cards = document.getElementById('stp_cards');
+                for (let y=0; y<2; y++)
+                {
+                    for (let x=0; x<8; x++)
+                    {
+                        // Count right to left; slight adjust for one misaligned column.
+                        const left = (7 - x) * hor_scale + hor_padding + (x == 6? hor_adjust6: 0);
+                        const top = y * ver_scale + ver_padding;
+                        cards.insertAdjacentHTML('beforebegin',
+                            `<div id="square_${x}_${y}" class="stp_square" style="left: ${left}%; top: ${top}%;"></div>`);
+                    }
+                }
+                
+                const playerTables = document.getElementById('stp_playertables');
+                // Template block for player boards
+                // Get correct order relative to current player
+                for (const playerId of gameData.players_in_order) {
+                    if (this.debug) {
+                        console.log('playerId', playerId);
+                    }
+                    const player = gameData.players[playerId];
+                    playerTables.insertAdjacentHTML('beforeend', `
+                        <div id="stp_playertable_${playerId}_wrap" class="whiteblock">
+                            <h3 style="color:#${player.color}">${player.name}</h3>
+                            <div id="stp_playertable_${playerId}"></div>
+                        </div>`);
+                }
+
+            },
+            
             isAutoPassImmediate: function() {
                 if (this.debug) {
                     console.log(this.prefs);
@@ -817,7 +1003,11 @@ define([
                     var player_id = parseInt(card_div.id.split('_')[1]);
                     var id = card_id.split('_');
                     id = id[id.length - 1];
-                    dojo.place(this.format_block('jstpl_card_content', { id: id }), card_div.id);
+                    dojo.place(`
+                        <div id="card_content_${id}">
+                            <div id="card_content_mask_${id}" class="stp_maskcard"></div>
+                            <div id="card_content_active_${id}" class="stp_clickcard"></div>
+                        </div>`, card_div.id);
 
                     if (player_id == this.player_id) {
                         // Active player can click on card
@@ -835,8 +1025,6 @@ define([
             getCardTooltip: function(card_type_id, eff_cost) {
                 // Get card info and copy to modify
                 const card = dojo.clone(this.card_infos[card_type_id]);
-
-                card.card_name = _(card.card_name);
 
                 // Sprite index
                 const x = card_type_id % this.card_art_row_size;
@@ -864,9 +1052,6 @@ define([
                     card.card_type = _(card.card_type);
                 }
 
-                // Number of this card type in game
-                card.card_nbr_label = _("Cards in play");
-
                 // Cost and benefits
                 var txt = "<p>" + _("Cost") + ": " + card.card_cost + "</p>";
                 if (eff_cost > 0) {
@@ -883,9 +1068,18 @@ define([
                 if (typeof card.card_text != "undefined") {
                     txt += "<p>" + _(card.card_text) + "</p>";
                 }
-                card.card_text = txt;
 
-                return this.format_block("jstpl_card_tooltip", card);
+                return `
+                <div class="stp_cardtooltip">
+                    <h3>${_(card.card_name)}</h3>
+                    <hr/>
+                    <b>${card.card_type}</b>\<br/>
+                    ${txt}
+                    <div>
+                        <div class="stp_cardart" style="background-position: ${card.artx}% ${card.arty}%;"></div>
+                    </div>
+                    <i>${_('Cards in play')}: ${card.card_nbr}</i>
+                </div>`;
             },
 
             /*
@@ -944,12 +1138,17 @@ define([
 
                     if (hand.length > 0) {
                         // Add detailed tooltip
-                        var html = this.format_block("jstpl_hand_tooltip", {
-                            artx: artx,
-                            arty: arty,
-                            disp: disp,
-                            text: _("Cards in player hand") + " (" + hand.length + "):"
-                        });
+                        const text = dojo.string.substitute(_("Cards in player hand (${nbCards}):"), {nbCards: hand.length});
+                        const html = `
+                            <div class="stp_cardtooltip">
+                                <b>${text}</b>
+                                <div>
+                                    <div class="stp_cardart_small" style="background-position: ${artx[0]}% ${arty[0]}%; display: ${disp[0]}"></div>
+                                    <div class="stp_cardart_small" style="background-position: ${artx[1]}% ${arty[1]}%; display: ${disp[1]}"></div>
+                                    <div class="stp_cardart_small" style="background-position: ${artx[2]}% ${arty[2]}%; display: ${disp[2]}"></div>
+                                    <div class="stp_cardart_small" style="background-position: ${artx[3]}% ${arty[3]}%; display: ${disp[3]}"></div>
+                                </div>
+                            </div>`;
                         this.addTooltipHtml('handcount_p' + player_id, html)
                         this.addTooltipHtml('handcount_icon_p' + player_id, html);
                     } else {
@@ -976,12 +1175,7 @@ define([
 
                 if (this.debug) console.log('adding card type ' + idx + ' at col,row ' + col + ',' + row);
 
-                dojo.place(this.format_block('jstpl_card', {
-                    x: x,
-                    y: y,
-                    row: row,
-                    col: col
-                }), 'stp_cards');
+                dojo.place(this.formatCard(x, y, row, col), 'stp_cards');
 
                 var card_div = this.getCardDiv(row, col);
                 this.placeOnObject(card_div, src);
@@ -989,6 +1183,10 @@ define([
 
                 this.addTooltipHtml(card_div, this.getCardTooltip(idx, 0));
                 dojo.connect($(card_div), 'onclick', this, 'onSelectCard');
+            },
+            
+            formatCard: function(x, y, row, col) {
+                return `<div class="stp_card" id="card_${col}_${row}" style="background-position:${x}% ${y}%"></div>`;
             },
 
             /*
@@ -1194,12 +1392,7 @@ define([
                 var y = 100 * Math.floor(idx / this.card_art_row_size) / (this.card_art_col_size - 1);
 
                 // Place and animate card draw
-                dojo.place(this.format_block('jstpl_card', {
-                    x: x,
-                    y: y,
-                    row: this.constants.observatory,
-                    col: 0
-                }), 'stp_cards');
+                dojo.place(this.formatCard(x, y, this.constants.observatory, 0), 'stp_cards');
                 this.placeOnObject(card_id, 'deck_' + args.card.type);
                 dojo.addClass(card_id, 'stp_selected');
                 this.slideToObject(card_id, 'stp_gameboard').play();

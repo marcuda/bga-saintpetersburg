@@ -1,0 +1,24 @@
+{
+    "100": {
+        "name": "Show other player rubles",
+        "values": [
+            {
+                "name": "No"
+            },
+            {
+                "name": "Yes"
+            }
+        ]
+    },
+    "101": {
+        "name": "Show other player hands",
+        "values": [
+            {
+                "name": "No"
+            },
+            {
+                "name": "Yes"
+            }
+        ]
+    }
+}

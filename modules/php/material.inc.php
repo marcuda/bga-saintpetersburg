@@ -572,7 +572,7 @@ $this->card_infos = array(
  * card_nbr = number of this card in deck
  * card_text = explanation of any additional card effects (for tooltip)
  */
-$this->card_infos2nd_delta = array(
+$card_infos2nd_delta = array(
     CARD_SHIP => array(
         "card_good" => MARKET_SACK,
         "card_nbr" => 1
@@ -677,7 +677,7 @@ $addMissingFields = function(&$infos) {
 
 $this->card_infos2nd = $this->card_infos;
 // Override first edition data.
-foreach ($this->card_infos2nd_delta as $idx => $card) {
+foreach ($card_infos2nd_delta as $idx => $card) {
     if (isset($this->card_infos2nd[$idx]) || isset($card['card_model'])) {
         if (!isset($this->card_infos2nd[$idx])) {
             $this->card_infos2nd[$idx] = $this->card_infos2nd[$card['card_model']];

@@ -1,0 +1,41 @@
+{
+    "100": {
+        "name": "Show publisher message",
+        "needReload": false,
+        "values": [
+            {
+                "name": "Yes"
+            },
+            {
+                "name": "No"
+            }
+        ]
+    },
+    "101": {
+        "name": "Overlap duplicate cards",
+        "needReload": true,
+        "values": [
+            {
+                "name": "Horizontal"
+            },
+            {
+                "name": "None"
+            },
+            {
+                "name": "Vertical"
+            }
+        ]
+    },
+    "102": {
+        "name": "Auto pass passes",
+        "needReload": true,
+        "values": [
+            {
+                "name": "Next action"
+            },
+            {
+                "name": "Immediately"
+            }
+        ]
+    }
+}

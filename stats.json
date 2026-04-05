@@ -1,0 +1,106 @@
+{
+    "table": {
+        "turns_number": {
+            "id": 20,
+            "name": "Number of turns",
+            "type": "int"
+        },
+        "rounds_number": {
+            "id": 30,
+            "name": "Number of rounds",
+            "type": "int"
+        }
+    },
+    "player": {
+        "actions_taken": {
+            "id": 10,
+            "name": "Number of actions taken",
+            "type": "int"
+        },
+        "points_aristocrats_end": {
+            "id": 11,
+            "name": "Points from Aristocrat types",
+            "type": "int"
+        },
+        "points_rubles_end": {
+            "id": 12,
+            "name": "Points from Rubles",
+            "type": "int"
+        },
+        "points_hand_end": {
+            "id": 13,
+            "name": "Loss from cards in hand",
+            "type": "int"
+        },
+        "points_total": {
+            "id": 14,
+            "name": "Points from played cards",
+            "type": "int"
+        },
+        "points_Worker": {
+            "id": 15,
+            "name": "Points from Workers",
+            "type": "int"
+        },
+        "points_Building": {
+            "id": 16,
+            "name": "Points from Buildings",
+            "type": "int"
+        },
+        "points_Aristocrat": {
+            "id": 17,
+            "name": "Points from Aristocrats",
+            "type": "int"
+        },
+        "pub_points": {
+            "id": 18,
+            "name": "Points bought with Pub",
+            "type": "int"
+        },
+        "rubles_total": {
+            "id": 19,
+            "name": "Rubles from played cards",
+            "type": "int"
+        },
+        "rubles_Worker": {
+            "id": 20,
+            "name": "Rubles from Workers",
+            "type": "int"
+        },
+        "rubles_Building": {
+            "id": 21,
+            "name": "Rubles from Buildings",
+            "type": "int"
+        },
+        "rubles_Aristocrat": {
+            "id": 22,
+            "name": "Rubles from Aristocrats",
+            "type": "int"
+        },
+        "rubles_spent": {
+            "id": 23,
+            "name": "Rubles spent",
+            "type": "int"
+        },
+        "cards_bought": {
+            "id": 24,
+            "name": "Cards bought",
+            "type": "int"
+        },
+        "cards_traded": {
+            "id": 25,
+            "name": "Trading cards bought",
+            "type": "int"
+        },
+        "cards_added": {
+            "id": 26,
+            "name": "Cards added to hand",
+            "type": "int"
+        },
+        "observatory_draws": {
+            "id": 27,
+            "name": "Cards drawn with Observatory",
+            "type": "int"
+        }
+    }
+}

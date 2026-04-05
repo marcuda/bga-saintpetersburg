@@ -1,4 +1,6 @@
 *~
 *.swp
 .*
+_ide_helper.php
+bga-framework.d.ts
 

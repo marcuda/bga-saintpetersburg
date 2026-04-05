@@ -54,8 +54,8 @@ class action_saintpetersburg extends APP_GameAction
     public function addCard()
     {
         self::setAjaxMode();
-        $row = self::getArg("row", AT_posint, true);
-        $col = self::getArg("col", AT_posint, true);
+        $row = (int)self::getArg("row", AT_posint, true);
+        $col = (int)self::getArg("col", AT_posint, true);
         $result = $this->game->addCard($row, $col);
         self::ajaxResponse();
     }
@@ -99,7 +99,7 @@ class action_saintpetersburg extends APP_GameAction
     public function buyPoints()
     {
         self::setAjaxMode();
-        $points = self::getArg("points", AT_posint, true); // number points
+        $points = (int)self::getArg("points", AT_posint, true); // number points
         $result = $this->game->buyPoints($points);
         self::ajaxResponse();
     }
