@@ -264,7 +264,7 @@ class Game extends \Bga\GameFramework\Table
         if ($this->optShowRubles()) {
             // Option to see all player rubles enabled
             $result['rubles'] = $this->getRublesAll();
-        } else {
+        } else if (!$this->isSpectator()){
             // By default only own rubles visible
             $result['rubles'] = array(
                 $current_player_id => $this->getRubles($current_player_id)
