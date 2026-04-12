@@ -105,7 +105,7 @@ class action_saintpetersburg extends APP_GameAction
     }
 
     // Player clicks a deck while using Observatory
-    public function drawObservatoryCard()
+    public function useObservatory()
     {
         self::setAjaxMode();
         $deck = self::getArg("deck", AT_alphanum, true); // deck name
@@ -114,6 +114,12 @@ class action_saintpetersburg extends APP_GameAction
         self::ajaxResponse();
     }
 
+    // TODO Compatibility with version 241124 javascript, remove once a newer version have been deployed and all realtime games started in 241124 have ended.
+    public function drawObservatoryCard()
+    {
+        $this->useObservatory();
+    }
+    
     // Player clicks the 'Discard' button while using Observatory
     public function discardCard()
     {

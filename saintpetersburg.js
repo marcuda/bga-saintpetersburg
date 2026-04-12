@@ -251,6 +251,21 @@ define([
 ],
     function(dojo, declare) {
         'use strict';
+        
+        // Preference values:
+        const PREF_PUBLISHER_MESSAGE = 100;
+        const PREF_PM_ON = 0;
+        const PREF_PM_OFF = 1;
+        
+        const PREF_CARDS_OVERLAP = 101;
+        const PREF_CO_HORIZONTAL = 0;
+        const PREF_CO_NONE = 1;
+        const PREF_CO_VERTICAL = 2;
+        
+        const PREF_AUTO_PASS = 102;
+        const PREF_AP_NEXT_ACTION = 0;
+        const PREF_AP_IMMEDIATELY = 1;
+
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function() {
                 // Enabled console logs if true
@@ -280,7 +295,7 @@ define([
                 this.card_infos = null;         // Full list of card details
                 this.deck_counters = [];        // Counters for cards in each phase stack
                 // N.B. terms deck and stack are used interchangably
-                this.client_state_args = { lock: true };    // Object to hold argument during client state changes
+                this.client_state_args = {};    // Object to hold argument during client state changes
                 this.possible_moves = null;     // All possible moves for current player
                 this.constants = null;          // Constant values between client and server
                 this.is_trading = false;        // True if in client state for trading card
@@ -323,7 +338,7 @@ define([
 
                 this.buildBoard(gamedatas);
                 
-                if (this.prefs[100].value == 0) {
+                if (this.bga.userPreferences.get(PREF_PUBLISHER_MESSAGE) == PREF_PM_ON) {
                     // Show message from publisher player has not seen/acknowledged
                     dojo.style('publisher_msg', 'display', 'block');
                     dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
@@ -332,9 +347,9 @@ define([
                 // Overlap duplicate cards if preferred
                 var duplicate_overlap = 0;
                 this.duplicate_vertical = false;
-                if (this.prefs[101].value == 0) {
+                if (this.bga.userPreferences.get(PREF_CARDS_OVERLAP) == PREF_CO_HORIZONTAL) {
                     duplicate_overlap = 60;
-                } else if (this.prefs[101].value == 2) {
+                } else if (this.bga.userPreferences.get(PREF_CARDS_OVERLAP) == PREF_CO_VERTICAL) {
                     duplicate_overlap = 30;
                     this.duplicate_vertical = true;
                 }
@@ -357,9 +372,8 @@ define([
                     // Custom icons and such
                     var player = gamedatas.players[player_id];
                     player.url = g_gamethemeurl;
-                    var player_board_div = $('player_board_' + player_id);
                     const id = player_id;
-                    dojo.place(`
+                    this.bga.playerPanels.getElement(player_id).insertAdjacentHTML('beforeend', `
                         <div class="stp_board">
                             <div id="rublecount_icon_p${id}" class="imgtext stp_icon stp_icon_ruble"></div>
                             <span id="rublecount_p${id}">?</span>&nbsp;
@@ -387,7 +401,7 @@ define([
                                 <div id="token_p${id}" class="imgtext stp_token"></div>&nbsp;
                                 <div id="token2_p${id}" class="imgtext stp_token"></div>
                             </div>
-                        </div>`, player_board_div);
+                        </div>`);
 
                     // Player hand counters
                     var hand_counter = new ebg.counter();
@@ -725,9 +739,9 @@ define([
             
             isAutoPassImmediate: function() {
                 if (this.debug) {
-                    console.log(this.prefs);
+                    console.log('isAutoPassImmediate', this.bga.userPreferences.get(PREF_AUTO_PASS));
                 }
-                return typeof (this.prefs[102]) !== 'undefined' && this.prefs[102].value == 1;
+                return this.bga.userPreferences.get(PREF_AUTO_PASS) == PREF_AP_IMMEDIATELY;
             },
 
 
@@ -755,7 +769,7 @@ define([
                             }
                         }
                         this.possible_moves = args.args;
-                        this.client_state_args = { lock: true };
+                        this.client_state_args = {};
                         if (this.isCurrentPlayerActive()) {
                             this.setSelections();
                         }
@@ -783,7 +797,6 @@ define([
                         this.possible_moves[this.constants.observatory] = {};
                         this.possible_moves[this.constants.observatory][0] = args.args;
                         this.client_state_args = {
-                            lock: true,
                             row: this.constants.observatory,
                             col: 0
                         };
@@ -960,8 +973,7 @@ define([
                 // Remove message banner
                 dojo.style('publisher_msg', 'display', 'none');
                 // Save user preference to not show banner
-                // See ly_studio.js
-                this.ajaxcall("/table/table/changePreference.html", { id: 100, value: 1, game: this.game_name }, this, function() { });
+                this.bga.userPreferences.set(PREF_PUBLISHER_MESSAGE, PREF_PM_OFF);
             },
 
             /*
@@ -1296,9 +1308,9 @@ define([
              * Highlight selected card and any possible moves
              */
             setSelections: function() {
-                if (this.debug) console.log('setSelection');
-                if (this.debug) console.log(this.possible_moves);
-                if (this.debug) console.log(this.is_trading);
+                if (this.debug) {
+                     console.log('setSelection', this.possible_moves, this.is_trading);
+                }
 
                 var row, col, div, card;
 
@@ -1441,7 +1453,7 @@ define([
                     return;
 
                 // Clear any previous selection
-                this.client_state_args = { lock: true };
+                this.client_state_args = {};
 
                 // Card location
                 var coords = evt.currentTarget.id.split('_');
@@ -1477,9 +1489,7 @@ define([
                     return;
                 }
 
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/addCard.html",
-                    this.client_state_args, this, function(result) { });
+                this.bga.actions.performAction('addCard', this.client_state_args);
             },
 
             /*
@@ -1515,9 +1525,7 @@ define([
                     });
                 } else {
                     // Send buy action to server
-                    this.ajaxcall(
-                        "/saintpetersburg/saintpetersburg/buyCard.html",
-                        this.client_state_args, this, function(result) { });
+                    this.bga.actions.performAction('buyCard', this.client_state_args);
                 }
             },
 
@@ -1557,9 +1565,7 @@ define([
                     });
                 } else {
                     // Send play action to server
-                    this.ajaxcall(
-                        "/saintpetersburg/saintpetersburg/playCard.html",
-                        this.client_state_args, this, function(result) { });
+                    this.bga.actions.performAction('playCard', this.client_state_args);
                 }
 
                 this.playerHand.unselectAll();
@@ -1582,11 +1588,7 @@ define([
              */
             onPass: function(evt) {
                 dojo.stopEvent(evt);
-                if (this.checkAction('pass')) {
-                    this.ajaxcall(
-                        "/saintpetersburg/saintpetersburg/pass.html",
-                        { lock: true }, this, function(result) { });
-                }
+                this.bga.actions.performAction('pass');
             },
 
             /*
@@ -1594,15 +1596,15 @@ define([
              */
             onAutoPass: function(evt) {
                 dojo.stopEvent(evt);
+                const pass = this.isAutoPassImmediate() && !this.gamedatas.autopass && this.isCurrentPlayerActive()
+                    && !this.gamedatas.buyOnly && this.checkAction('pass', true);
+                if (this.debug) {
+                     console.log('onAutoPass', pass);
+                }
                 // No action check (player can be not active)
-
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/autopass.html",
-                    {
-                        lock: true,
-                        pass: this.isAutoPassImmediate() && !this.gamedatas.autopass && this.isCurrentPlayerActive()
-                            && !this.gamedatas.buyOnly && this.checkAction('pass', true)
-                    }, this, function(result) { });
+                this.bga.actions.performAction('autopass', {
+                    pass: pass
+                }, { checkAction: false });
             },
 
             /*
@@ -1610,12 +1612,8 @@ define([
              */
             onCancelAutoPass: function(evt) {
                 dojo.stopEvent(evt);
-
                 // No action check (player may not be active)
-
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/cancelAutoPass.html",
-                    { lock: true }, this, function(result) { });
+                this.bga.actions.performAction('cancelAutoPass', {}, { checkAction: false });
             },
 
             /*
@@ -1683,12 +1681,7 @@ define([
              */
             onBuyPoints: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('buyPoints'))
-                    return;
-
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/buyPoints.html",
-                    { lock: true, points: this.pub_points }, this, function(result) { });
+                this.bga.actions.performAction('buyPoints', { points: this.pub_points });
                 this.pub_points = 0;
             },
 
@@ -1701,7 +1694,7 @@ define([
                 if (items.length > 0) {
                     if (this.checkAction('playCard')) {
                         // Clear any previous selection
-                        this.client_state_args = { lock: true };
+                        this.client_state_args = {};
 
                         // Store card details
                         var card_id = items[0].id;
@@ -1735,14 +1728,10 @@ define([
 
                         if (this.client_state_args.row == this.constants.hand) {
                             // Play from hand
-                            this.ajaxcall(
-                                "/saintpetersburg/saintpetersburg/playCard.html",
-                                this.client_state_args, this, function(result) { });
+                            this.bga.actions.performAction('playCard', this.client_state_args);
                         } else {
                             // Buy from board
-                            this.ajaxcall(
-                                "/saintpetersburg/saintpetersburg/buyCard.html",
-                                this.client_state_args, this, function(result) { });
+                            this.bga.actions.performAction('buyCard', this.client_state_args);
                         }
 
                         this.playerTable.unselectAll();
@@ -1826,9 +1815,7 @@ define([
                 dojo.stopEvent(evt);
                 if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable') && this.checkAction('useObservatory')) {
                     this.client_state_args.deck = evt.currentTarget.id;
-                    this.ajaxcall(
-                        "/saintpetersburg/saintpetersburg/drawObservatoryCard.html",
-                        this.client_state_args, this, function(result) { });
+                    this.bga.actions.performAction('useObservatory', this.client_state_args);
                 }
             },
 
@@ -1837,12 +1824,7 @@ define([
              */
             onDiscardCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('discard'))
-                    return;
-
-                this.ajaxcall(
-                    "/saintpetersburg/saintpetersburg/discardCard.html",
-                    { lock: true }, this, function(result) { });
+                this.bga.actions.performAction('discardCard');
             },
 
 
@@ -1990,7 +1972,7 @@ define([
                 } else {
                     // Other player - move card to player board and destroy
                     var anim = this.slideToObject(this.getCardDiv(row, col),
-                        'player_board_' + notif.args.player_id);
+                        this.bga.playerPanels.getElement(notif.args.player_id));
                     dojo.connect(anim, 'onEnd', function(node) {
                         dojo.destroy(node);
                     });
@@ -2035,7 +2017,7 @@ define([
                     // Other players - add card to table
                     this.player_tables[notif.args.player_id].addToStockWithId(
                         notif.args.card_idx, notif.args.card_id,
-                        'overall_player_board_' + notif.args.player_id);
+                        this.bga.playerPanels.getElement(notif.args.player_id));
                 }
 
                 if (this.player_rubles[notif.args.player_id]) {
@@ -2163,7 +2145,7 @@ define([
 
                 for (var player_id in notif.args.scores) {
                     var newScore = notif.args.scores[player_id];
-                    this.scoreCtrl[player_id].toValue(newScore);
+                    this.bga.playerPanels.getScoreCounter(player_id).toValue(newScore);
                     if (notif.args.rubles && this.player_rubles[player_id]) {
                         // End game only when rubles are traded for points
                         var newRubles = notif.args.rubles[player_id];
@@ -2230,7 +2212,7 @@ define([
                 if (this.debug) console.log(notif);
 
                 // Update score
-                this.scoreCtrl[notif.args.player_id].incValue(notif.args.points);
+                this.bga.playerPanels.getScoreCounter(notif.args.player_id).incValue(notif.args.points);
 
                 if (this.player_rubles[notif.args.player_id]) {
                     // Active player sees ruble count after playing cost

@@ -113,7 +113,8 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${card_name}: ${you} must take or discard'),
         "type" => "activeplayer",
         "args" => "argUseObservatory",
-        "possibleactions" => array("buyCard", "addCard", "discard", "cancel"),
+        // TODO Compatibility with version 241124 javascript, remove "discard" once a newer version have been deployed and all realtime games started in 241124 have ended.
+        "possibleactions" => array("buyCard", "addCard", "discardCard", "discard", "cancel"),
         "transitions" => array(
             "nextPlayer" => STATE_NEXT_PLAYER,
             "zombiePass" => STATE_NEXT_PLAYER,
