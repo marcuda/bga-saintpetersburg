@@ -463,18 +463,16 @@ define([
                         this.addTooltip('income_wrap_points_p' + player_id, _("Number of points scored in each phase"), "");
                     }
 
-                    if (!this.bga.players.isCurrentPlayerSpectator()) {
-                        // Rubles (default hidden for other players)
-                        if (gamedatas.rubles[player_id]) {
-                            this.player_rubles[player_id] = new ebg.counter();
-                            this.player_rubles[player_id].create('rublecount_p' + player_id);
-                            this.player_rubles[player_id].setValue(gamedatas.rubles[player_id]);
-                            this.addTooltip('rublecount_p' + player_id, _("Number of rubles"), "");
-                            this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles"), "");
-                        } else {
-                            this.addTooltip('rublecount_p' + player_id, _("Number of rubles (secret)"), "");
-                            this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles (secret)"), "");
-                        }
+                    // Rubles (default hidden for other players)
+                    if (player_id in gamedatas.rubles) {
+                        this.player_rubles[player_id] = new ebg.counter();
+                        this.player_rubles[player_id].create('rublecount_p' + player_id);
+                        this.player_rubles[player_id].setValue(gamedatas.rubles[player_id]);
+                        this.addTooltip('rublecount_p' + player_id, _("Number of rubles"), "");
+                        this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles"), "");
+                    } else {
+                        this.addTooltip('rublecount_p' + player_id, _("Number of rubles (secret)"), "");
+                        this.addTooltip('rublecount_icon_p' + player_id, _("Number of rubles (secret)"), "");
                     }
                 }
 
