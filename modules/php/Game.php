@@ -420,6 +420,15 @@ class Game extends \Bga\GameFramework\Table
         // Rubles are stored in auxiliary score counter as it is the tie breaker.
         return $this->bga->playerScoreAux->get($playerId);
     }
+    
+    /**
+     * Get the rubles of each player.
+     * @return array Rubles per player id.
+     */
+    private function getRublesAll(): array
+    {
+        return $this->bga->playerScoreAux->getAll();
+    }
 
     /**
      * Increment the number of rubles of the given player by the given amount,
