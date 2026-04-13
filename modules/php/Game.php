@@ -1038,7 +1038,8 @@ class Game extends \Bga\GameFramework\Table
                 if (!$obs['used']) {
                     $possible_moves[ROW_OBSERVATORY][$card['id']] = array(
                         // To trigger possible move styling.
-                        'can_add' => true
+                        'can_add' => true,
+                        'can_buy' => false
                     );
                 }
             }

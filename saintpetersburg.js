@@ -1309,7 +1309,7 @@ define([
              */
             setSelections: function() {
                 if (this.debug) {
-                     console.log('setSelection', this.possible_moves, this.is_trading);
+                     console.log('setSelections', this.possible_moves, this.is_trading);
                 }
 
                 var row, col, div, card;
@@ -1343,6 +1343,9 @@ define([
                                 } else if (row == this.constants.observatory) {
                                     // Observatory
                                     div = this.player_tables[this.player_id].getItemDivId(col);
+                                }
+                                if (this.debug) {
+                                     console.log('setSelections', row, col, card, div);
                                 }
                                 dojo.addClass(div, 'stp_selectable');
 
