@@ -70,9 +70,7 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must choose a card or pass'),
         "type" => "activeplayer",
         "args" => "argPlayerTurn",
-        "possibleactions" => array("actSelectCard", "actAddCard", "actBuyCard", "actPlayCard", "actUseObservatory", "actPass", "actCancel",
-            // TODO remove old actions once no realtime game left in 260413.
-            "selectCard", "addCard", "buyCard", "playCard", "useObservatory", "pass", "autopass", "cancel"),
+        "possibleactions" => array("actSelectCard", "actAddCard", "actBuyCard", "actPlayCard", "actUseObservatory", "actPass", "actCancel"),
         "transitions" => array(
             "nextPlayer" => STATE_NEXT_PLAYER,
             "useObservatory" => STATE_USE_OBSERVATORY,
@@ -115,9 +113,7 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${card_name}: ${you} must take or discard'),
         "type" => "activeplayer",
         "args" => "argUseObservatory",
-        "possibleactions" => array("actBuyCard", "actAddCard", "actDiscardCard", "actCancel",
-            // TODO remove old actions once no realtime game left in 260413.
-            "buyCard", "addCard", "discardCard", "cancel"),
+        "possibleactions" => array("actBuyCard", "actAddCard", "actDiscardCard", "actCancel"),
         "transitions" => array(
             "nextPlayer" => STATE_NEXT_PLAYER,
             "zombiePass" => STATE_NEXT_PLAYER,
@@ -133,9 +129,7 @@ $machinestates = array(
         "type" => "multipleactiveplayer",
         "action" => "stUsePub",
         "args" => "argUsePub",
-        "possibleactions" => array("actBuyPoints",
-            // TODO remove old actions once no realtime game left in 260413.
-            "buyPoints"),
+        "possibleactions" => array("actBuyPoints"),
         "transitions" => array(
             "nextPhase" => STATE_NEXT_PHASE
         )

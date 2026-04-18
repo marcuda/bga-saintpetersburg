@@ -1221,9 +1221,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actAddCard(int $row, int $col)
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('addCard');
-
         if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
             throw new UserException(clienttranslate("You must buy on first worker phase"));
         }
@@ -1246,9 +1243,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actBuyCard(int $row, int $col, int $trade_id=-1)
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('buyCard');
-
         $player_id = (int)$this->getActivePlayerId();
         $card = $this->getSelectedCard($row, $col);
         $card_id = (int)$card['id'];
@@ -1283,9 +1277,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actPlayCard(int $card_id, int $trade_id=-1)
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('playCard');
-
         $player_id = (int)$this->getActivePlayerId();
         $card = $this->cards->getCard($card_id);
         if ($card == null || $card['location'] != 'hand' || $card['location_arg'] != $player_id) {
@@ -1390,9 +1381,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actPass()
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('pass');
-
         if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
             throw new UserException(clienttranslate("You must buy on first worker phase"));
         }
@@ -1471,9 +1459,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actBuyPoints(int $points)
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('buyPoints');
-
         // A player can buy up to 5 points for 2 rubles each with a Pub,
         // or up to 10 points if the player owns both
         $player_id = (int)$this->getCurrentPlayerId();
@@ -1529,9 +1514,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actUseObservatory(#[StringParam(enum: self::DECKS)] string $deck, int $card_id)
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('useObservatory');
-
         // Verify Observatory exists and owned by player
         $player_id = (int)$this->getActivePlayerId();
         $card = $this->cards->getCard($card_id);
@@ -1583,9 +1565,6 @@ class Game extends \Bga\GameFramework\Table
      */
     function actDiscardCard()
     {
-        // TODO remove check action once no realtime game left in 260413.
-        $this->checkAction('discardCard');
-
         // Verify drawn card
         $player_id = (int)$this->getActivePlayerId();
         $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
