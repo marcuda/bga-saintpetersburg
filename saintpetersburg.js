@@ -2127,8 +2127,6 @@ define([
                     draw++;
                 }
 
-                // TODO: Possible issue where deck counter value goes too low?
-                // Noticed in one game (off by one) and not yet reproduced
                 // Update deck counters and tooltips
                 var num_cards = this.deck_counters[notif.args.phase_arg].incValue(-draw);
                 this.setDeckTooltip(notif.args.phase_arg, num_cards);
