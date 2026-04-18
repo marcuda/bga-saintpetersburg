@@ -22,6 +22,7 @@
  */
   
   
+// TODO remove current file once no realtime game left in 260413.
 class action_saintpetersburg extends APP_GameAction
 { 
     // Constructor: please do not modify
@@ -46,7 +47,7 @@ class action_saintpetersburg extends APP_GameAction
         $row = self::getArg("row", AT_posint, true);
         $col = self::getArg("col", AT_posint, true);
         $trade_id = self::getArg("trade_id", AT_posint, false, -1);
-        $result = $this->game->buyCard($row, $col, $trade_id);
+        $result = $this->game->actBuyCard($row, $col, $trade_id);
         self::ajaxResponse();
     }
 
@@ -56,7 +57,7 @@ class action_saintpetersburg extends APP_GameAction
         self::setAjaxMode();
         $row = (int)self::getArg("row", AT_posint, true);
         $col = (int)self::getArg("col", AT_posint, true);
-        $result = $this->game->addCard($row, $col);
+        $result = $this->game->actAddCard($row, $col);
         self::ajaxResponse();
     }
 
@@ -64,7 +65,7 @@ class action_saintpetersburg extends APP_GameAction
     public function pass()
     {
         self::setAjaxMode();
-        $result = $this->game->pass();
+        $result = $this->game->actPass();
         self::ajaxResponse();
     }
 
@@ -73,7 +74,7 @@ class action_saintpetersburg extends APP_GameAction
     {
         self::setAjaxMode();
         $pass = self::getArg("pass", AT_bool, true);
-        $result = $this->game->enableAutoPass($pass);
+        $result = $this->game->actAutoPass($pass);
         self::ajaxResponse();
     }
 
@@ -81,7 +82,7 @@ class action_saintpetersburg extends APP_GameAction
     public function cancelAutoPass()
     {
         self::setAjaxMode();
-        $result = $this->game->cancelAutoPass();
+        $result = $this->game->actCancelAutoPass();
         self::ajaxResponse();
     }
 
@@ -91,7 +92,7 @@ class action_saintpetersburg extends APP_GameAction
         self::setAjaxMode();
         $card_id = self::getArg("col", AT_posint, true); // hand card id
         $trade_id = self::getArg("trade_id", AT_posint, false, -1);
-        $result = $this->game->playCard($card_id, $trade_id);
+        $result = $this->game->actPlayCard($card_id, $trade_id);
         self::ajaxResponse();
     }
 
@@ -100,7 +101,7 @@ class action_saintpetersburg extends APP_GameAction
     {
         self::setAjaxMode();
         $points = (int)self::getArg("points", AT_posint, true); // number points
-        $result = $this->game->buyPoints($points);
+        $result = $this->game->actBuyPoints($points);
         self::ajaxResponse();
     }
 
@@ -110,7 +111,7 @@ class action_saintpetersburg extends APP_GameAction
         self::setAjaxMode();
         $deck = self::getArg("deck", AT_alphanum, true); // deck name
         $obs_id = self::getArg("obs_id", AT_posint, true); // observastory id
-        $result = $this->game->drawObservatoryCard($deck, $obs_id);
+        $result = $this->game->actUseObservatory($deck, $obs_id);
         self::ajaxResponse();
     }
 
@@ -118,7 +119,7 @@ class action_saintpetersburg extends APP_GameAction
     public function discardCard()
     {
         self::setAjaxMode();
-        $result = $this->game->discardCard();
+        $result = $this->game->actDiscardCard();
         self::ajaxResponse();
     }
 

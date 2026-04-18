@@ -21,6 +21,8 @@ namespace Bga\Games\SaintPetersburg;
 
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\SystemException;
+use Bga\GameFramework\Actions\CheckAction;
+use Bga\GameFramework\Actions\Types\StringParam;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -1217,14 +1219,15 @@ class Game extends \Bga\GameFramework\Table
     /*
      * Player adds a card to their hand
      */
-    function addCard(int $card_row, int $card_col)
+    function actAddCard(int $row, int $col)
     {
+        // TODO remove check action once no realtime game left in 260413.
         $this->checkAction('addCard');
 
         if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
             throw new UserException(clienttranslate("You must buy on first worker phase"));
         }
-        $card = $this->getSelectedCard($card_row, $card_col);
+        $card = $this->getSelectedCard($row, $col);
 
         // Verify player hand is not full
         if ($this->isHandFull((int)$this->getActivePlayerId()))
@@ -1234,19 +1237,20 @@ class Game extends \Bga\GameFramework\Table
         $dest = 'hand';
         $notif = 'addCard';
         $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
-        $this->cardAction((int)$card['id'], -1, $card_row, 0, $dest, $notif, $msg);
+        $this->cardAction((int)$card['id'], -1, $row, 0, $dest, $notif, $msg);
         $this->gamestate->nextState('nextPlayer');
     }
 
     /*
      * Player buys a card
      */
-    function buyCard(int $card_row, int $card_col, int $trade_id=-1)
+    function actBuyCard(int $row, int $col, int $trade_id=-1)
     {
+        // TODO remove check action once no realtime game left in 260413.
         $this->checkAction('buyCard');
 
         $player_id = (int)$this->getActivePlayerId();
-        $card = $this->getSelectedCard($card_row, $card_col);
+        $card = $this->getSelectedCard($row, $col);
         $card_id = (int)$card['id'];
 
         // Verify trade if needed
@@ -1257,7 +1261,7 @@ class Game extends \Bga\GameFramework\Table
         }
 
         // Verify player can pay cost
-        $card_cost = $this->getCardCost($card_id, $card_row, $trade_id);
+        $card_cost = $this->getCardCost($card_id, $row, $trade_id);
         $rubles = $this->getRubles($player_id);
         if ($card_cost > $rubles)
             throw new UserException(clienttranslate("You do not have enough rubles"));
@@ -1270,15 +1274,16 @@ class Game extends \Bga\GameFramework\Table
         } else {
             $msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
         }
-        $this->cardAction($card_id, $trade_id, $card_row, $card_cost, $dest, $notif, $msg);
+        $this->cardAction($card_id, $trade_id, $row, $card_cost, $dest, $notif, $msg);
         $this->gamestate->nextState('nextPlayer');
     }
 
     /*
      * Player play a card from their hand
      */
-    function playCard(int $card_id, int $trade_id=-1)
+    function actPlayCard(int $card_id, int $trade_id=-1)
     {
+        // TODO remove check action once no realtime game left in 260413.
         $this->checkAction('playCard');
 
         $player_id = (int)$this->getActivePlayerId();
@@ -1383,8 +1388,9 @@ class Game extends \Bga\GameFramework\Table
     /*
      * Player passes their turn
      */
-    function pass()
+    function actPass()
     {
+        // TODO remove check action once no realtime game left in 260413.
         $this->checkAction('pass');
 
         if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
@@ -1427,12 +1433,13 @@ class Game extends \Bga\GameFramework\Table
     }
 
     /*
-     * Player chooses that (after the next action if active) they will
-     * automatically pass all subsequent turns until the next phase
+     * Player chooses that they will automatically pass all subsequent turns until the next phase.<br>
+     * No check action as it can be done at any time.
+     * @param bool $pass If true pass immediately else wait for next activation of player.
      */
-    function enableAutoPass(bool $pass)
+    #[CheckAction(false)]
+    function actAutoPass(bool $pass)
     {
-        // No action check
         if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
             throw new UserException(clienttranslate("You must buy on first worker phase"));
         }
@@ -1442,16 +1449,17 @@ class Game extends \Bga\GameFramework\Table
         $this->notify->player($player_id, 'autopass', '', array('enable' => true));
         // No state change, player continues to take normal action
         if ($pass) {
-            $this->pass();
+            $this->actPass();
         }
     }
 
     /*
-     * Player stops automatically passing their turns
+     * Player stops automatically passing their turns.<br>
+     * No check action as it can be done at any time.
      */
-    function cancelAutoPass()
+    #[CheckAction(false)]
+    function actCancelAutoPass()
     {
-        // No action check
         // CURRENT: player can do this out of turn
         $player_id = (int)$this->getCurrentPlayerId();
         $this->DbQuery("UPDATE player SET autopass=0 WHERE player_id='$player_id'");
@@ -1461,8 +1469,9 @@ class Game extends \Bga\GameFramework\Table
     /*
      * Player buys points using a Pub
      */
-    function buyPoints(int $points)
+    function actBuyPoints(int $points)
     {
+        // TODO remove check action once no realtime game left in 260413.
         $this->checkAction('buyPoints');
 
         // A player can buy up to 5 points for 2 rubles each with a Pub,
@@ -1513,11 +1522,14 @@ class Game extends \Bga\GameFramework\Table
         $this->gamestate->setPlayerNonMultiactive($player_id, 'nextPhase');
     }
 
+    // Must match each deck.
+    const DECKS = ['deck_Worker', 'deck_Building', 'deck_Aristocrat', 'deck_Trading'];
     /*
      * Player uses Observatory to draw a card
      */
-    function drawObservatoryCard(string $deck, int $card_id)
+    function actUseObservatory(#[StringParam(enum: self::DECKS)] string $deck, int $card_id)
     {
+        // TODO remove check action once no realtime game left in 260413.
         $this->checkAction('useObservatory');
 
         // Verify Observatory exists and owned by player
@@ -1569,9 +1581,10 @@ class Game extends \Bga\GameFramework\Table
     /*
      * Player discards the card drawn with Observatory
      */
-    function discardCard()
+    function actDiscardCard()
     {
-        $this->checkAction('discard');
+        // TODO remove check action once no realtime game left in 260413.
+        $this->checkAction('discardCard');
 
         // Verify drawn card
         $player_id = (int)$this->getActivePlayerId();

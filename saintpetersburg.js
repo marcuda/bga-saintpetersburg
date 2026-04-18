@@ -1452,7 +1452,7 @@ define([
              */
             onSelectCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('selectCard'))
+                if (!this.checkAction('actSelectCard'))
                     return;
 
                 // Clear any previous selection
@@ -1484,7 +1484,7 @@ define([
              */
             onAddCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('addCard'))
+                if (!this.checkAction('actAddCard'))
                     return;
 
                 if (this.isButtonDisabled(evt.target)) {
@@ -1492,7 +1492,7 @@ define([
                     return;
                 }
 
-                this.bga.actions.performAction('addCard', this.client_state_args);
+                this.bga.actions.performAction('actAddCard', this.client_state_args);
             },
 
             /*
@@ -1500,7 +1500,7 @@ define([
              */
             onBuyCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('buyCard'))
+                if (!this.checkAction('actBuyCard'))
                     return;
 
                 // Get card info to handle trading cards
@@ -1528,7 +1528,7 @@ define([
                     });
                 } else {
                     // Send buy action to server
-                    this.bga.actions.performAction('buyCard', this.client_state_args);
+                    this.bga.actions.performAction('actBuyCard', this.client_state_args);
                 }
             },
 
@@ -1537,7 +1537,7 @@ define([
              */
             onPlayCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('playCard')) {
+                if (!this.checkAction('actPlayCard')) {
                     this.playerHand.unselectAll();
                     return;
                 }
@@ -1568,7 +1568,7 @@ define([
                     });
                 } else {
                     // Send play action to server
-                    this.bga.actions.performAction('playCard', this.client_state_args);
+                    this.bga.actions.performAction('actPlayCard', { card_id: this.client_state_args.col });
                 }
 
                 this.playerHand.unselectAll();
@@ -1579,7 +1579,7 @@ define([
              */
             onCancelCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('cancel'))
+                if (!this.checkAction('actCancel'))
                     return;
 
                 // Reset to main state
@@ -1591,7 +1591,7 @@ define([
              */
             onPass: function(evt) {
                 dojo.stopEvent(evt);
-                this.bga.actions.performAction('pass');
+                this.bga.actions.performAction('actPass');
             },
 
             /*
@@ -1600,12 +1600,12 @@ define([
             onAutoPass: function(evt) {
                 dojo.stopEvent(evt);
                 const pass = this.isAutoPassImmediate() && !this.gamedatas.autopass && this.isCurrentPlayerActive()
-                    && !this.gamedatas.buyOnly && this.checkAction('pass', true);
+                    && !this.gamedatas.buyOnly && this.checkAction('actPass', true);
                 if (this.debug) {
                      console.log('onAutoPass', pass);
                 }
                 // No action check (player can be not active)
-                this.bga.actions.performAction('autopass', {
+                this.bga.actions.performAction('actAutoPass', {
                     pass: pass
                 }, { checkAction: false });
             },
@@ -1616,7 +1616,7 @@ define([
             onCancelAutoPass: function(evt) {
                 dojo.stopEvent(evt);
                 // No action check (player may not be active)
-                this.bga.actions.performAction('cancelAutoPass', {}, { checkAction: false });
+                this.bga.actions.performAction('actCancelAutoPass', {}, { checkAction: false });
             },
 
             /*
@@ -1684,7 +1684,7 @@ define([
              */
             onBuyPoints: function(evt) {
                 dojo.stopEvent(evt);
-                this.bga.actions.performAction('buyPoints', { points: this.pub_points });
+                this.bga.actions.performAction('actBuyPoints', { points: this.pub_points });
                 this.pub_points = 0;
             },
 
@@ -1695,7 +1695,7 @@ define([
                 var items = this.playerHand.getSelectedItems();
 
                 if (items.length > 0) {
-                    if (this.checkAction('playCard')) {
+                    if (this.checkAction('actPlayCard')) {
                         // Clear any previous selection
                         this.client_state_args = {};
 
@@ -1725,16 +1725,17 @@ define([
                 var items = this.playerTable.getSelectedItems();
 
                 if (items.length > 0) {
-                    if (this.checkAction('buyCard') && this.is_trading) {
+                    if (this.checkAction('actBuyCard') && this.is_trading) {
                         // Displace card with trading card
                         this.client_state_args.trade_id = items[0].id;
 
                         if (this.client_state_args.row == this.constants.hand) {
                             // Play from hand
-                            this.bga.actions.performAction('playCard', this.client_state_args);
+                            this.bga.actions.performAction('actPlayCard',
+                                { card_id: this.client_state_args.col, trade_id: this.client_state_args.trade_id });
                         } else {
                             // Buy from board
-                            this.bga.actions.performAction('buyCard', this.client_state_args);
+                            this.bga.actions.performAction('actBuyCard', this.client_state_args);
                         }
 
                         this.playerTable.unselectAll();
@@ -1758,21 +1759,21 @@ define([
                     return;
                 }
 
-                var obs_id = evt.currentTarget.id.split('_')[3];
-                if (this.client_state_args.obs_id == obs_id) {
+                const obs_card_id = evt.currentTarget.id.split('_')[3];
+                if (this.client_state_args.card_id == obs_card_id) {
                     // Already in client state for Observatory
                     // Player needs to click choose a deck or cancel
                     this.showMessage(_("You must select a card stack on the board"), "error");
                     return;
                 }
 
-                if (dojo.getStyle('card_content_mask_' + obs_id, 'display') != 'none') {
+                if (dojo.getStyle('card_content_mask_' + obs_card_id, 'display') != 'none') {
                     // Observatory card already used (mask is on)
                     this.showMessage(_("You can only use an Observatory once per round"), "error");
                     return;
                 }
 
-                this.useObservatory(obs_id);
+                this.useObservatory(obs_card_id);
             },
 
             /*
@@ -1791,8 +1792,8 @@ define([
             /*
              * Player uses Observatory (card or button)
              */
-            useObservatory: function(obs_id) {
-                if (!this.checkAction('useObservatory'))
+            useObservatory: function(obs_card_id) {
+                if (!this.checkAction('actUseObservatory'))
                     return;
 
                 if (this.current_phase != this.phases[1]) {
@@ -1801,7 +1802,7 @@ define([
                     return;
                 }
 
-                this.client_state_args.obs_id = obs_id;
+                this.client_state_args.card_id = obs_card_id;
 
                 this.setClientState('client_useObservatory', {
                     descriptionmyturn: _('Observatory: ${you} must choose a stack to draw from')
@@ -1816,9 +1817,8 @@ define([
                     console.log('onClickDeck: ' + evt.currentTarget.id);
                 }
                 dojo.stopEvent(evt);
-                if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable') && this.checkAction('useObservatory')) {
-                    this.client_state_args.deck = evt.currentTarget.id;
-                    this.bga.actions.performAction('useObservatory', this.client_state_args);
+                if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable') && this.checkAction('actUseObservatory')) {
+                    this.bga.actions.performAction('actUseObservatory', { deck: evt.currentTarget.id, card_id: this.client_state_args.card_id});
                 }
             },
 
@@ -1826,8 +1826,11 @@ define([
              * Player clicks 'Discard' button for Observatory
              */
             onDiscardCard: function(evt) {
+                if (this.debug) {
+                    console.log('onDiscardCard');
+                }
                 dojo.stopEvent(evt);
-                this.bga.actions.performAction('discardCard');
+                this.bga.actions.performAction('actDiscardCard');
             },
 
 
