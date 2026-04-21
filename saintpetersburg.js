@@ -3,8 +3,8 @@
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
  * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
- * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
- * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
+ * See https://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
  * saintpetersburg.js
@@ -755,7 +755,7 @@ define([
                 if (this.debug) console.log('Entering state: ' + stateName);
 
                 switch (stateName) {
-                    case 'playerTurn':
+                    case 'PlayerTurn':
                         if (this.gamedatas.buyOnly) {
                             if (this.isCurrentPlayerActive()) {
                                 this.gamedatas.gamestate.descriptionmyturn = '${you} must choose a card';
@@ -792,7 +792,7 @@ define([
                             }
                         }
                         break;
-                    case 'useObservatory':
+                    case 'UseObservatory':
                         this.possible_moves = {};
                         this.possible_moves[this.constants.observatory] = {};
                         this.possible_moves[this.constants.observatory][0] = args.args;
@@ -802,7 +802,7 @@ define([
                         };
                         this.showObservatoryChoice(args.args);
                         break;
-                    case 'usePub':
+                    case 'UsePub':
                         // Pub negates auto pass
                         dojo.style('autopass_msg', 'display', 'none');
                         if (args.args[this.player_id] === undefined) {
@@ -842,7 +842,7 @@ define([
 
                 if (this.isCurrentPlayerActive()) {
                     switch (stateName) {
-                        case 'playerTurn':
+                        case 'PlayerTurn':
                             // Options: observatory?, pass
                             if (args[this.constants.observatory].length === undefined) {
                                 // args is possible moves and will have an object, which has no length,
@@ -888,7 +888,7 @@ define([
                             // Options: cancel
                             this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
-                        case 'usePub':
+                        case 'UsePub':
                             // Options: -1, +1, buy, pass
                             var color = "blue";
                             if (args[this.player_id] == 0) { // max points player can buy
@@ -902,7 +902,7 @@ define([
                             // Options: cancel
                             this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
-                        case 'useObservatory':
+                        case 'UseObservatory':
                             // Options: buy, add, cancel
                             var buy_color = args.can_buy ? "blue" : "gray";
                             var add_color = args.can_add ? "blue" : "gray";
@@ -911,7 +911,7 @@ define([
                             this.addActionButton("button_3", _("Discard"), "onDiscardCard");
                             break;
                     }
-                } else if (!this.gamedatas.buyOnly && stateName == 'playerTurn'
+                } else if (!this.gamedatas.buyOnly && stateName == 'PlayerTurn'
                     && !this.gamedatas.autopass && !this.isSpectator) {
                     this.addActionButton("button_autopass", _("Enable auto pass"), "onAutoPass", null, false, "red");
                 }
@@ -1452,7 +1452,8 @@ define([
              */
             onSelectCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('actSelectCard'))
+                // Selection of a card is allowed if and only if play card action is allowed (not taking rubles and hand in account).
+                if (!this.checkAction('actPlayCard'))
                     return;
 
                 // Clear any previous selection
@@ -1575,15 +1576,15 @@ define([
             },
 
             /*
-             * Player clicks 'Cancel' button (several actions)
+             * Player clicks 'Cancel' button (several actions).
              */
             onCancelCard: function(evt) {
                 dojo.stopEvent(evt);
-                if (!this.checkAction('actCancel'))
-                    return;
-
-                // Reset to main state
-                this.restoreServerGameState();
+                // Cancel is allowed if and only if add card action is allowed (not taking rubles and hand in account).
+                if (this.checkAction('actAddCard')) {
+                    // Reset to main state
+                    this.restoreServerGameState();
+                }
             },
 
             /*

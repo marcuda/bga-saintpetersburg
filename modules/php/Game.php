@@ -1,20 +1,16 @@
 <?php
- /**
-  *------
-  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
-  * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
-  * 
-  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
-  * See http://en.boardgamearena.com/#!doc/Studio for more information.
-  * -----
-  * 
-  * saintpetersburg.game.php
-  *
-  * This is the main file for your game logic.
-  *
-  * In this PHP file, you are going to defines the rules of the game.
-  *
-  */
+/**
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * 
+ * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
+ * See https://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ * 
+ * This is the main file for your game logic.
+ *
+ */
 declare(strict_types=1);
 
 namespace Bga\Games\SaintPetersburg;
@@ -23,6 +19,9 @@ use Bga\GameFramework\UserException;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\Actions\Types\StringParam;
+use Bga\Games\SaintPetersburg\States\NextPlayer;
+use Bga\Games\SaintPetersburg\States\ScorePhase;
+use Bga\Games\SaintPetersburg\States\PlayerTurn;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -200,7 +199,7 @@ class Game extends \Bga\GameFramework\Table
         $this->gamestate->changeActivePlayer($this->getGameStateValue("starting_player_" . PHASE_WORKER));
 
         /************ End of the game initialization *****/
-        return STATE_PLAYER_TURN;
+        return PlayerTurn::class;
     }
 
     /*
@@ -417,7 +416,7 @@ class Game extends \Bga\GameFramework\Table
      * @param int $playerId A player id.
      * @return int The rubles owned by the player.
      */
-    private function getRubles(int $playerId): int
+    public function getRubles(int $playerId): int
     {
         // Rubles are stored in auxiliary score counter as it is the tie breaker.
         return $this->bga->playerScoreAux->get($playerId);
@@ -439,7 +438,7 @@ class Game extends \Bga\GameFramework\Table
      * @param int $inc The delat to apply.
      * @return int The new rubles total of the player.
      */
-    protected function incRubles(int $playerId, int $inc): int
+    function incRubles(int $playerId, int $inc): int
     {
         return $this->bga->playerScoreAux->inc($playerId, $inc, null);
     }
@@ -667,107 +666,6 @@ class Game extends \Bga\GameFramework\Table
     }
 
     /*
-     * Compute the scores at the end of the given phase
-     */
-    function scorePhase(string $phase)
-    {
-        if ($phase == PHASE_TRADING) {
-            // No scoring after trading card phase.
-            return;
-        }
-
-        $players = $this->loadPlayersBasicInfos();
-        $scores = array();
-        foreach ($players as $player_id => $player) {
-            list($points, $rubles) = $this->computeScoring($player_id, $phase);
-
-            // Update scores, stats, and log
-            $scores[$player_id] = $this->bga->playerScore->inc($player_id, $points, null);
-            $this->bga->playerStats->inc('points_total', $points, $player_id);
-            $this->bga->playerStats->inc('points_' . $phase, $points, $player_id);
-
-            $this->incRubles($player_id, $rubles);
-            $this->bga->playerStats->inc('rubles_total', $rubles, $player_id);
-            $this->bga->playerStats->inc('rubles_' . $phase, $rubles, $player_id);
-
-            $msg = clienttranslate('${player_name} earns ${rubles} Ruble(s) and ${points} Point(s)');
-            $this->bga->notify->all('scorePhase', $msg, array(
-                'player_id' => $player_id,
-                'player_name' => $player['player_name'],
-                'points' => $points,
-                'rubles' => $rubles
-            ));
-        }
-
-        // Notify to update scores on client
-        $this->bga->notify->all('newScores', "", array(
-            'scores' => $scores
-        ));
-    }
-
-    /*
-     * Compute end game scoring and set final results
-     */
-    function finalScoring()
-    {
-        $players = $this->loadPlayersBasicInfos();
-        $scores = array();
-        $rubles = array();
-        foreach ($players as $player_id => $player) {
-            // Each different aristocrat (up to 10) is worth that many points
-            // 1 = 1, 2 = 1+2 = 3, 3 = 1+2+3 = 6, ... 10 = 1+2+3+...+10 = 55
-            // or more simply: n(n+1)/2
-            $num_ari = $this->uniqueAristocrats($player_id);
-            $points_ari = min(55, $num_ari * ($num_ari + 1) / 2);
-            $this->bga->playerScore->inc($player_id, $points_ari, null);
-            $this->playerStats->set('points_aristocrats_end', $points_ari, $player_id);
-
-            $msg = clienttranslate('Final scoring: ${player_name} earns ${points_ari} Point(s) for ${num_ari} Aristocrat type(s)');
-            $this->bga->notify->all('message', $msg, array(
-                'player_name' => $player['player_name'],
-                'points_ari' => $points_ari,
-                'num_ari' => $num_ari,
-            ));
-
-            // 1 per 10 rubles, ignoring any remainder
-            // Players trade these rubles for points
-            $num_rubles = $this->getRubles($player_id);
-            $points_rubles = intdiv($num_rubles, 10);
-            $num_rubles = 10 * $points_rubles;
-            $this->bga->playerScore->inc($player_id, $points_rubles, null);
-            $rubles[$player_id] = $this->incRubles($player_id, -1 * $num_rubles);
-            $this->bga->playerStats->set( 'points_rubles_end', $points_rubles, $player_id);
-
-            $msg = clienttranslate('Final scoring: ${player_name} earns ${points_rubles} Point(s) for ${num_rubles} Ruble(s)');
-            $this->bga->notify->all('message', $msg, array(
-                'player_name' => $player['player_name'],
-                'points_rubles' => $points_rubles,
-                'num_rubles' => $num_rubles,
-            ));
-
-            // -5 per card left in hand
-            $num_hand = count($this->cards->getPlayerHand($player_id));
-            $points_hand = -5 * $num_hand;
-            // set final score to report
-            $scores[$player_id] = $this->bga->playerScore->inc($player_id, $points_hand, null);
-            $this->bga->playerStats->set( 'points_hand_end', $points_hand, $player_id);
-
-            $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} Points for ${num_hand} card(s) in hand');
-            $this->bga->notify->all('message', $msg, array(
-                'player_name' => $player['player_name'],
-                'points_hand' => $points_hand,
-                'num_hand' => $num_hand,
-            ));
-
-        }
-
-        $this->bga->notify->all('newScores', "", array(
-            'scores' => $scores,
-            'rubles' => $rubles,
-        ));
-    }
-
-    /*
      * Draw and sort a given number of cards from the given phase stack
      * onto the top row of the board, starting at the given location
      */
@@ -790,78 +688,6 @@ class Game extends \Bga\GameFramework\Table
         }
 
         return $sorted;
-    }
-
-    /*
-     * Move all cards on the board as far right as possible and return the
-     * total number of cards on the board.
-     * Cards on the lower row go all the way to the end; those above to the
-     * next open position left of any lower cards.
-     */
-    function shiftCardsRight(): int
-    {
-        $num_cards = 0;
-        foreach (array(BOTTOM_ROW, TOP_ROW) as $row) {
-            $board = $this->cards->getCardsInLocation($row, null, 'location_arg');
-            if (count($board) == 0) {
-                continue;
-            }
-
-            // Build associative array of old => new positions for client
-            $shifted = array();
-            foreach ($board as $card) {
-                $loc = $card['location_arg'];
-                $shifted[$loc] = $num_cards;
-                $this->cards->moveCard($card['id'], $row, $num_cards);
-                $num_cards++;
-            }
-
-            // Row constants are string but client needs integer
-            $row_num = ($row == BOTTOM_ROW ? 1 : 0);
-
-            $this->bga->notify->all('shiftRight', "", array(
-                'columns' => $shifted,
-                'row' => $row_num
-            ));
-        }
-
-        return $num_cards;
-    }
-
-    /*
-     * Move all cards on the board from the upper row to the lower
-     */
-    function shiftCardsDown()
-    {
-        $board = $this->cards->getCardsInLocation(TOP_ROW);
-        if (count($board) == 0) {
-            return;
-        }
-
-        foreach ($board as $card) {
-            $this->cards->moveCard($card['id'], BOTTOM_ROW, $card['location_arg']);
-        }
-
-        $this->bga->notify->all('shiftDown', "", array(
-            'columns' => array_column($board, 'location_arg')
-        ));
-    }
-
-    /*
-     * Remove from the game all cards on the board lower row
-     */
-    function discardBottomRow()
-    {
-        $discard = array();
-        $board = $this->cards->getCardsInLocation(BOTTOM_ROW);
-        foreach ($board as $card) {
-            $this->cards->playCard((int)$card['id']);
-            $discard[] = array('col' => $card['location_arg'], 'row' => 1);
-        }
-
-        $this->bga->notify->all('discard', "", array(
-            'cards' => $discard
-        ));
     }
 
     /*
@@ -1050,10 +876,15 @@ class Game extends \Bga\GameFramework\Table
         return $possible_moves;
     }
 
-    /*
-     * Return the card at given board row, col location
+    /**
+     * Return the card at given board location.
+     *
+     * @param int $row The board row or the observatory card type.
+     * @param int $col The board column (meaningless if row is the observatory card type).
+     * @return array A card.
+     * @throws SystemException If no card exist at given location.
      */
-    function getSelectedCard(int $row, int $col): array
+    private function getSelectedCard(int $row, int $col): array
     {
         // Get card from correct location
         if ($row == 0) {
@@ -1065,14 +896,14 @@ class Game extends \Bga\GameFramework\Table
             $col = $this->getActivePlayerId();
         }
         $cards = $this->cards->getCardsInLocation($loc, $col);
-
+        
         // Verify a card exists here
-        if (count($cards) != 1)
+        if (count($cards) != 1) {
             throw new SystemException("Impossible selection");
-
+        }
         return array_shift($cards);
     }
-
+    
     /*
      * Verify that given trading card can displace selected card
      */
@@ -1107,10 +938,6 @@ class Game extends \Bga\GameFramework\Table
         }
     }
 
-    /*
-     * Return true if player has a potential (though not necessarily valid)
-     * move to make, and false otherwise.
-     */
     /**
      * Return true if player has a potential (though not necessarily valid)
      * move to make, and false otherwise.
@@ -1213,53 +1040,57 @@ class Game extends \Bga\GameFramework\Table
     }
     
     //////////////////////////////////////////////////////////////////////////////
-    //////////// Player actions
+    //////////// Player actions commonn to several states.
     //////////// 
-
-    /*
-     * Player adds a card to their hand
+    /**
+     * Player adds a card to their hand.
+     * @param int $row The board row or the observatory card type.
+     * @param int $col The board column (meaningless if row is the observatory card type).
+     * @param int $activePlayerId The active player id.
+     * @return string The next state (NextPlayer).
      */
-    function actAddCard(int $row, int $col)
+    function addCard(int $row, int $col, int $activePlayerId): string
     {
-        if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
-            throw new UserException(clienttranslate("You must buy on first worker phase"));
-        }
         $card = $this->getSelectedCard($row, $col);
-
+        
         // Verify player hand is not full
-        if ($this->isHandFull((int)$this->getActivePlayerId()))
+        if ($this->isHandFull($activePlayerId)) {
             throw new UserException(clienttranslate("Your hand is full"));
-
+        }
         // Add to hand
         $dest = 'hand';
         $notif = 'addCard';
         $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
-        $this->cardAction((int)$card['id'], -1, $row, 0, $dest, $notif, $msg);
-        $this->gamestate->nextState('nextPlayer');
+        $this->cardAction((int) $card['id'], - 1, $row, 0, $dest, $notif, $msg);
+        return NextPlayer::class;
     }
 
-    /*
-     * Player buys a card
+    /**
+     * Player buys a card.
+     * @param int $row The board row or the observatory card type.
+     * @param int $col The board column (meaningless if row is the observatory card type).
+     * @param int $activePlayerId The active player id.
+     * @param int $trade_id The traded card id or -1 if no traded card.
+     * @return string The next state (NextPlayer).
      */
-    function actBuyCard(int $row, int $col, int $trade_id=-1)
+    function buyCard(int $row, int $col, int $activePlayerId, int $trade_id): string
     {
-        $player_id = (int)$this->getActivePlayerId();
         $card = $this->getSelectedCard($row, $col);
-        $card_id = (int)$card['id'];
-
+        $card_id = (int) $card['id'];
+        
         // Verify trade if needed
         if ($this->isTrading($card)) {
-            $this->checkTrade($card, $trade_id, $player_id);
+            $this->checkTrade($card, $trade_id, $activePlayerId);
         } else if ($trade_id > 0) {
             throw new SystemException("Impossible buy with trade");
         }
-
+        
         // Verify player can pay cost
         $card_cost = $this->getCardCost($card_id, $row, $trade_id);
-        $rubles = $this->getRubles($player_id);
-        if ($card_cost > $rubles)
+        $rubles = $this->getRubles($activePlayerId);
+        if ($card_cost > $rubles) {
             throw new UserException(clienttranslate("You do not have enough rubles"));
-
+        }
         // Add card to player table
         $dest = 'table';
         $notif = 'buyCard';
@@ -1269,61 +1100,32 @@ class Game extends \Bga\GameFramework\Table
             $msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
         }
         $this->cardAction($card_id, $trade_id, $row, $card_cost, $dest, $notif, $msg);
-        $this->gamestate->nextState('nextPlayer');
+        return NextPlayer::class;
     }
-
-    /*
-     * Player play a card from their hand
-     */
-    function actPlayCard(int $card_id, int $trade_id=-1)
-    {
-        $player_id = (int)$this->getActivePlayerId();
-        $card = $this->cards->getCard($card_id);
-        if ($card == null || $card['location'] != 'hand' || $card['location_arg'] != $player_id) {
-            throw new SystemException("Impossible play from hand");
-        }
-
-        // Verify trade if needed
-        if ($this->isTrading($card)) {
-            $this->checkTrade($card, $trade_id, $player_id);
-        } else if ($trade_id > 0) {
-            throw new SystemException("Impossible play with trade");
-        }
-
-        // Verify player can pay cost
-        $card_cost = $this->getCardCost($card_id, 0, $trade_id);
-        $rubles = $this->getRubles($player_id);
-        if ($card_cost > $rubles)
-            throw new UserException(clienttranslate("You do not have enough rubles"));
-
-        // Add card to player table
-        $dest = 'table';
-        $notif = 'playCard';
-        if ($trade_id > 0) {
-            $msg = clienttranslate('${player_name} plays ${card_name} from their hand, displacing ${trade_name}, for ${card_cost} Ruble(s)');
-        } else {
-            $msg = clienttranslate('${player_name} plays ${card_name} from their hand for ${card_cost} Ruble(s)');
-        }
-        $this->cardAction($card_id, $trade_id, 0, $card_cost, $dest, $notif, $msg);
-        $this->gamestate->nextState('nextPlayer');
-    }
-
-    /*
-     * Perform the appropriate action for the given card and destination
+    
+    /**
+     * Perform the appropriate action for the given card and destination.
      *
-     * Reduces duplication of code in main card actions (buy/add/play)
+     * Reduces duplication of code in main card actions (buy/add/play).
+     * @param int $card_id The card id.
+     * @param int $trade_id The traded card id or -1 if no trade.
+     * @param int $card_row The card row.
+     * @param int $card_cost The card cost.
+     * @param string $dest The card destination.
+     * @param string $notif The notification name.
+     * @param string $msg The notification message.
      */
-    protected function cardAction(int $card_id, int $trade_id, int $card_row, int $card_cost, string $dest, string $notif,
+    function cardAction(int $card_id, int $trade_id, int $card_row, int $card_cost, string $dest, string $notif,
         string $msg)
     {
         $card = $this->cards->getCard($card_id);
         $card_idx = $card['type_arg'];
-
+        
         // Pay cost and take card
-        $player_id = (int)$this->getActivePlayerId();
-        $this->incRubles($player_id, -$card_cost);
+        $player_id = (int) $this->getActivePlayerId();
+        $this->incRubles($player_id, - $card_cost);
         $this->cards->moveCard($card_id, $dest, $player_id);
-
+        
         // Stats
         $this->bga->playerStats->inc('rubles_spent', $card_cost, $player_id);
         if ($dest == 'table') {
@@ -1334,18 +1136,18 @@ class Game extends \Bga\GameFramework\Table
         } else if ($dest == 'hand') {
             $this->bga->playerStats->inc('cards_added', 1, $player_id);
         }
-
+        
         if ($trade_id > 0) {
             // Discard displaced card
             $this->cards->playCard($trade_id);
-
+            
             // Get info for log
             $trade = $this->cards->getCard($trade_id);
             $trade_name = $this->getCardName($trade);
         } else {
             $trade_name = '';
         }
-
+        
         // Income
         if ($dest == 'table') {
             $income = $this->getIncome($player_id);
@@ -1353,73 +1155,65 @@ class Game extends \Bga\GameFramework\Table
             // No change to report
             $income = null;
         }
-
-        $this->bga->notify->all($notif, $msg, array(
-            'i18n' => array('card_name', 'trade_name'),
-            'player_id' => $player_id,
-            'player_name' => $this->getPlayerNameById($player_id),
-            'card_name' => $this->getCardName($card),
-            'card_id' => $card_id,
-            'card_idx' => $card_idx,
-            'card_loc' => $card['location_arg'],
-            'card_row' => $card_row,
-            'card_cost' => $card_cost,
-            'trade_id' => $trade_id,
-            'trade_name' => $trade_name,
-            'aristocrats' => $this->uniqueAristocrats($player_id),
-            'income' => $income,
-        ));
-
+        
+        $this->bga->notify->all($notif, $msg, [
+                'i18n' => ['card_name', 'trade_name'],
+                'player_id' => $player_id,
+                'player_name' => $this->getPlayerNameById($player_id),
+                'card_name' => $this->getCardName($card),
+                'card_id' => $card_id,
+                'card_idx' => $card_idx,
+                'card_loc' => $card['location_arg'],
+                'card_row' => $card_row,
+                'card_cost' => $card_cost,
+                'trade_id' => $trade_id,
+                'trade_name' => $trade_name,
+                'aristocrats' => $this->uniqueAristocrats($player_id),
+                'income' => $income
+            ]);
+        
         // Reset globals
-        $this->setGameStateValue("activated_observatory", -1);
+        $this->setGameStateValue("activated_observatory", - 1);
         $this->setGameStateValue("num_pass", 0);
         $this->bga->playerStats->inc('actions_taken', 1, $player_id);
     }
-
-    /*
-     * Player passes their turn
+    
+    /**
+     * Record pass action and check if all players have passed.
+     * @param int $playerId The passing player id.
+     * @param bool canPlay True if the player could have played.
+     * @return string The next state.
      */
-    function actPass()
-    {
-        if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
-            throw new UserException(clienttranslate("You must buy on first worker phase"));
-        }
-        $this->passActivePlayer('nextPlayer');
-    }
-
-    /*
-     * Record pass action and check if all players have passed
-     */
-    function passActivePlayer(string $next_state)
+    function passPlayer(int $playerId, bool $canPlay): string
     {
         // All players must pass in turn order to end current phase
         // Increment global pass counter to track when this happens
         $num_pass = $this->incGameStateValue('num_pass', 1);
-        $player_id = (int)$this->getActivePlayerId();
-        $this->bga->notify->all('pass', clienttranslate('${player_name} passes'), array(
-            'player_name' => $this->getPlayerNameById($player_id),
-            'player_id' => $player_id,
-            'state' => $next_state, // to track auto pass in debug
-        ));
-
-        if ($next_state != 'nextPlayer' && !$this->dbGetAutoPass($player_id)) {
+        $this->bga->notify->all('pass', clienttranslate('${player_name} passes'),
+            array(
+                'player_name' => $this->getPlayerNameById($playerId),
+                'player_id' => $playerId,
+                'canPlay' => $canPlay // to track auto pass in debug
+            ));
+        
+        if ((!$canPlay) && ! $this->dbGetAutoPass($playerId)) {
             // Inform player they passed automatically
             $msg = clienttranslate('You cannot play and were forced to pass automatically');
-            $this->notify->player($player_id, 'log', $msg, array());
+            $this->notify->player($playerId, 'log', $msg, array());
         }
-
+        
         // Determine if phase should end
         if ($num_pass == $this->getPlayersNumber()) {
             // All players pass in turn => next phase
             // Reset pass counter for next phase
             $this->setGameStateValue("num_pass", 0);
-            $this->gamestate->nextState('allPass');
+            return ScorePhase::class;
         } else {
-            // One or more players left to pass => next player
-            $this->gamestate->nextState($next_state);
+            // One or more players left to pass => next player.
+            return NextPlayer::class;
         }
     }
-
+    
     /*
      * Player chooses that they will automatically pass all subsequent turns until the next phase.<br>
      * No check action as it can be done at any time.
@@ -1435,9 +1229,8 @@ class Game extends \Bga\GameFramework\Table
         $player_id = (int)$this->getCurrentPlayerId();
         $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
         $this->notify->player($player_id, 'autopass', '', array('enable' => true));
-        // No state change, player continues to take normal action
         if ($pass) {
-            $this->actPass();
+            $this->gamestate->jumpToState($this->passPlayer($player_id, true));
         }
     }
 
@@ -1454,485 +1247,6 @@ class Game extends \Bga\GameFramework\Table
         $this->notify->player($player_id, 'autopass', '', array('enable' => false));
     }
 
-    /*
-     * Player buys points using a Pub
-     */
-    function actBuyPoints(int $points)
-    {
-        // A player can buy up to 5 points for 2 rubles each with a Pub,
-        // or up to 10 points if the player owns both
-        $player_id = (int)$this->getCurrentPlayerId();
-        $max_points = 0;
-        $pubs = $this->cards->getCardsOfTypeInLocation(
-            PHASE_BUILDING, CARD_PUB, 'table');
-        foreach ($pubs as $card) {
-            if ($card['location_arg'] == $player_id) {
-                $max_points += 5;
-            }
-        }
-
-        // Verify the number of points to buy and also that the current
-        // player actually owns at least one Pub
-        if ($points < 0 || $points > $max_points)
-            throw new SystemException("Impossible pub buy");
-
-        if ($points > 0) {
-            // Verify player can pay the cost
-            $rubles = $this->getRubles($player_id);
-            $cost = $points * 2;
-            if ($cost > $rubles)
-                throw new UserException(clienttranslate("You do not have enough rubles"));
-
-            // Update rubles, points, stats
-            $this->incRubles($player_id, -$cost);
-            $this->bga->playerStats->inc('rubles_spent', $cost, $player_id);
-            $this->bga->playerScore->inc($player_id, $points, null);
-            $this->bga->playerStats->inc('pub_points', $points, $player_id);
-
-            $msg = clienttranslate('${player_name} uses Pub to buy ${points} Point(s) for ${cost} Rubles');
-            $this->bga->notify->all('buyPoints', $msg, array(
-                'player_id' => $player_id,
-                'player_name' => $this->getPlayerNameById($player_id),
-                'points' => $points,
-                'cost' => $cost
-            ));
-        } else {
-            // No points, skip it
-            $this->bga->notify->all('message', clienttranslate('${player_name} declines to use the Pub bonus'), array(
-                'player_name' => $this->getPlayerNameById($player_id)
-            ));
-        }
-        
-        // Multiple active state as more than one player can own a Pub
-        $this->gamestate->setPlayerNonMultiactive($player_id, 'nextPhase');
-    }
-
-    // Must match each deck.
-    const DECKS = ['deck_Worker', 'deck_Building', 'deck_Aristocrat', 'deck_Trading'];
-    /*
-     * Player uses Observatory to draw a card
-     */
-    function actUseObservatory(#[StringParam(enum: self::DECKS)] string $deck, int $card_id)
-    {
-        // Verify Observatory exists and owned by player
-        $player_id = (int)$this->getActivePlayerId();
-        $card = $this->cards->getCard($card_id);
-        if ($card == null || $card['type_arg'] != CARD_OBSERVATORY ||
-            $card['location_arg'] != $player_id || $card['location'] != 'table')
-        {
-            throw new SystemException("Invalid Observatory play");
-        }
-
-        // Verify Observatory is not already used and current phase is Building
-        $obs = $this->getObservatory($card_id);
-        $phase = $this->getGameStateValue('current_phase') % 4;
-        if ($obs['used'] || $this->phases[$phase] != PHASE_BUILDING)
-            throw new UserException(clienttranslate("You cannot use the Observatory right now"));
-
-        // Cannot draw from empty stack or take last card in stack
-        $num_cards = $this->cards->countCardInLocation($deck);
-        if ($num_cards == 0) {
-            throw new UserException(clienttranslate("Card stack is empty"));
-        } else if ($num_cards == 1) {
-            throw new UserException(clienttranslate("You cannot draw the last card"));
-        }
-
-        // Draw card
-        $card = $this->cards->pickCardForLocation($deck, 'obs_tmp', $player_id);
-        if ($card == null || $this->cards->countCardInLocation('obs_tmp') != 1)
-            throw new SystemException("Impossible Observatory draw");
-
-        $phase = explode('_', $deck)[1];
-
-        $msg = clienttranslate('Observatory: ${player_name} draws ${card_name} from the ${phase} stack');
-        $this->bga->notify->all('observatory', $msg, array(
-            'i18n' => array('card_name', 'phase'),
-            'player_name' => $this->getPlayerNameById($player_id),
-            'card_name' => $this->getCardName($card),
-            'phase' => $phase,
-            'player_id' => $player_id,
-        ));
-
-        // Mark Observatrory as used
-        $this->setGameStateValue("activated_observatory", $obs['id']);
-        $this->setGameStateValue('observatory_' . $obs['id'] . '_used', 1);
-        $this->bga->playerStats->inc('observatory_draws', 1, $player_id);
-        $this->gamestate->nextState("useObservatory");
-    }
-    
-    /*
-     * Player discards the card drawn with Observatory
-     */
-    function actDiscardCard()
-    {
-        // Verify drawn card
-        $player_id = (int)$this->getActivePlayerId();
-        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
-        if ($cards == null || count($cards) != 1)
-            throw new SystemException("Impossible Observatory discard");
-
-        // Discard
-        $card = array_shift($cards);
-        $this->cards->playCard((int)$card['id']);
-
-        // Reuse end round discard notif arg
-        $location = array();
-        $location[] = array('row' => ROW_OBSERVATORY);
-
-        $msg = clienttranslate('${player_name} discards ${card_name}');
-        $this->bga->notify->all('discard', $msg, array(
-            'i18n' => array('card_name'),
-            'player_name' => $this->getPlayerNameById($player_id),
-            'card_name' => $this->getCardName($card),
-            'cards' => $location
-        ));
-
-        // Reset card selection and pass counter globals
-        $this->setGameStateValue("activated_observatory", -1);
-        $this->setGameStateValue("num_pass", 0);
-        $this->bga->playerStats->inc('actions_taken', 1, $player_id);
-        $this->gamestate->nextState('nextPlayer');
-    }
-
-//////////////////////////////////////////////////////////////////////////////
-//////////// Game state arguments
-////////////
-
-    /*
-     * Arguments for state: playerTurn
-     * Main turn for player to select a card and add/buy/trade
-     * Return all possible moves
-     * 
-     * N.B. pseudo private info included here (cards in hand)
-     *      although the same info is available to any player
-     *      paying attention and/or and keeping notes and is
-     *      also recorded in the logs. TODO: fix it?
-     */
-    function argPlayerTurn(): array
-    {
-        $player_id = (int)$this->getActivePlayerId();
-        return $this->getAllPossibleMoves($player_id);
-    }
-
-    /*
-     * Arguments for state: useObservatory
-     * Player draws a card with Observatory
-     * Return card details and possible actions
-     */
-    function argUseObservatory(): array
-    {
-        // Get card drawn with Observatory
-        $player_id = (int)$this->getActivePlayerId();
-        $cards = $this->cards->getCardsInLocation('obs_tmp', $player_id);
-        if ($cards == null || count($cards) != 1)
-            throw new SystemException("Impossible Observatory recall");
-
-        // Possible actions
-        $card = array_shift($cards);
-        $rubles = $this->getRubles($player_id);
-        $hand_full = $this->isHandFull($player_id);
-        $possible_moves = $this->getPossibleMoves($player_id, $card, $rubles, $hand_full);
-        $obs_id = $this->getGameStateValue("activated_observatory");
-        $possible_moves['card'] = $card;
-        $possible_moves['obs_id'] = $this->getGameStateValue('observatory_' . $obs_id . '_id');
-        $possible_moves['player_id'] = $player_id;
-        $possible_moves['i18n'] = array('card_name');
-
-        return $possible_moves;
-    }
-
-    /*
-     * Arguments for state: usePub
-     * Player(s) can choose to buy points with Pub
-     * Return an array of player(s) that own one or more Pub cards where
-     * key: player_id => value: maximum number of points they can buy
-     * based on number or Pub cards (1 or 2) and available rubles
-     */
-    function argUsePub(): array
-    {
-        $players = array();
-        $pubs = $this->cards->getCardsOfTypeInLocation(
-            PHASE_BUILDING, CARD_PUB, 'table');
-
-        // Determine which players own the Pubs
-        foreach ($pubs as $card) {
-            $player_id = $card['location_arg'];
-            if (key_exists($player_id, $players)) {
-                $players[$player_id] += 5;
-            } else {
-                $players[$player_id] = 5;
-            }
-        }
-
-        // Determine available rubles for Pub owner(s)
-        foreach ($players as $player_id => $points) {
-            $rubles = $this->getRubles($player_id);
-            $poss_buys = intdiv($rubles, 2);
-            $players[$player_id] = min($points, $poss_buys);
-        }
-
-        return $players;
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-    //////////// Game state actions
-    ////////////
-
-    /*
-     * Game state: nextPlayer
-     * Give more time and activate next player
-     */
-    function stNextPlayer()
-    {
-        // Next player
-        $player_id = (int)$this->activeNextPlayer();
-
-        // Count one turn when it gets back to the player that started this phase
-        $current_phase = $this->getGameStateValue('current_phase') % 4;
-        $phase = $this->phases[$current_phase];
-        $starting_player = $this->getGameStateValue("starting_player_" . $phase);
-        if ($player_id == $starting_player) {
-            $this->bga->tableStats->inc('turns_number', 1);
-        }
-
-        if ($this->dbGetAutoPass($player_id) || !$this->canPlay($player_id)) {
-            // Player is auto passing or must pass since no available play
-            $this->passActivePlayer('cantPlay');
-        } else {
-            // Next player turn
-            $this->giveExtraTime($player_id);
-            $this->gamestate->nextState('nextTurn');
-        }
-    }
-
-    /*
-     * Game state: scorePhase
-     * Score end of phase and move to next phase or round, or end game
-     */
-    function stScorePhase()
-    {
-        // Get phase status
-        $current_phase = $this->getGameStateValue('current_phase') % 4;
-        $new_round = ($current_phase == 3);
-
-        // End game if last phase of final round just finished
-        if ($new_round && $this->getGameStateValue("last_round")) {
-            $this->finalScoring();
-            $this->gamestate->nextState('endGame');
-            return;
-        }
-
-        // Score phase just completed
-        $phase = $this->phases[$current_phase];
-        $this->scorePhase($phase);
-
-        if ($phase == PHASE_BUILDING) {
-            // Allow pub to be used if owned
-            $this->gamestate->nextState('usePub');
-        } else {
-            $this->gamestate->nextState('nextPhase');
-        }
-    }
-
-    /*
-     * Game state: usePub
-     * Activate multiple player state for any player(s) owning Pub
-     */
-    function stUsePub()
-    {
-        $player_infos = $this->loadPlayersBasicInfos();
-        $player_id = null;
-        $pub_players = array();
-
-        // Allow any players that own a Pub to use it
-        $pubs = $this->cards->getCardsOfTypeInLocation(PHASE_BUILDING, CARD_PUB, 'table');
-        foreach ($pubs as $card) {
-            if ($player_id == $card['location_arg']) {
-                // Same player owns both
-                break;
-            }
-
-            $player_id = (int)$card['location_arg'];
-            if ($this->getRubles($player_id) > 0) {
-                $pub_players[] = $player_id;
-            } else {
-                // Player has no money and must pass
-                $this->bga->notify->all('message', clienttranslate('${player_name} declines to use the Pub bonus'), array(
-                    'player_name' => $player_infos[$player_id]['player_name']
-                ));
-                // Inform player they passed automatically
-                $msg = clienttranslate('You cannot play and were forced to pass automatically');
-                $this->notify->player($player_id, 'log', $msg, array());
-            }
-        }
-
-        $this->gamestate->setPlayersMultiactive($pub_players, 'nextPhase', true);
-    }
-
-    /*
-     * Game state: nextPhase
-     * Progress from completed phase to the next phase/round and
-     * track end game trigger
-     */
-    function stNextPhase()
-    {
-        // Increment phase
-        $next_phase = $this->incGameStateValue('current_phase', 1) % 4;
-        $phase = $this->phases[$next_phase];
-
-        // Clear any automatic passing
-        $this->DbQuery("UPDATE player SET autopass=0");
-
-        // Handle new round (Trading -> Worker)
-        if ($next_phase == 0) {
-            // Discard bottom cards and move top row down
-            $this->discardBottomRow();
-            $this->shiftCardsDown();
-
-            // Rotate starting player tokens
-            $tokens = array();
-            $players = $this->loadPlayersBasicInfos();
-            $next_player = $this->createNextPlayerTable(array_keys($players));
-            foreach ($this->phases as $token_phase) {
-                $token = "starting_player_" . $token_phase;
-                $player_id = $this->getGameStateValue($token);
-                $this->setGameStateValue($token, $next_player[$player_id]);
-                $tokens[$token_phase] = array(
-                    'current' => $player_id,
-                    'next' => $next_player[$player_id]
-                );
-            }
-
-            // Reset any used Observatory cards
-            // and notify players to update score counters
-            $obs_players = array();
-            for ($i=0; $i<2; $i++) {
-                if ($this->getGameStateValue('observatory_' . $i . '_used') == 1) {
-                    $card = $this->cards->getCard($this->getGameStateValue('observatory_' . $i . '_id'));
-                    $obs_players[] = $card['location_arg'];
-                    $this->setGameStateValue('observatory_' . $i . '_used', 0);
-                }
-            }
-
-            $this->bga->tableStats->inc('rounds_number', 1);
-
-            $this->bga->notify->all('newRound', "", array(
-                'tokens' => $tokens,
-                'observatory' => $obs_players,
-            ));
-        }
-
-        // Move all cards on board as far right as possible
-        $num_cards = $this->shiftCardsRight();
-
-        // Draw up to 8 new cards from current deck
-        $new_cards = $this->drawCards(8 - $num_cards, $num_cards, $phase);
-
-        // Check if deck was emptied to trigger final round
-        if ($this->cards->countCardInLocation('deck_' . $phase) <= 0) {
-            if (!$this->getGameStateValue("last_round")) {
-                $this->setGameStateValue("last_round", 1);
-                $msg = clienttranslate('Final round! ${phase} deck is empty');
-                $this->bga->notify->all('lastRound', $msg, array(
-                    'i18n' => array('phase'),
-                    'phase' => $phase
-                ));
-            }
-        }
-
-        // Activate starting player (_not_ next player) for next phase
-        $starting_player = (int)$this->getGameStateValue("starting_player_" . $phase);
-        $this->gamestate->changeActivePlayer($starting_player);
-        $this->bga->tableStats->inc('turns_number', 1);
-
-        $msg = clienttranslate('${phase} phase begins, starting with ${player_name}');
-        $this->bga->notify->all('nextPhase', $msg, array(
-            'i18n' => array('phase'),
-            'player_name' => $this->getPlayerNameById($starting_player),
-            'phase' => $phase,
-            'phase_arg' => $phase, // non-translated arg used in client (i18n came late)
-            'cards' => $new_cards
-        ));
-
-        if ($this->canPlay($starting_player)) {
-            $this->giveExtraTime($starting_player);
-            $this->gamestate->nextState('nextTurn');
-        } else {
-            // Player must pass since no available play
-            $this->passActivePlayer('cantPlay');
-        }
-    }
-
-//////////////////////////////////////////////////////////////////////////////
-//////////// Zombie
-////////////
-
-    /*
-        zombieTurn:
-        
-        This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
-        You can do whatever you want in order to make sure the turn of this player ends appropriately
-        (ex: pass).
-        
-        Important: your zombie code will be called when the player leaves the game. This action is triggered
-        from the main site and propagated to the gameserver from a server, not from a browser.
-        As a consequence, there is no current player associated to this action. In your zombieTurn function,
-        you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message. 
-    */
-
-    function zombieTurn($state, $active_player)
-    {
-        $statename = $state['name'];
-        
-        if ($state['type'] === "activeplayer") {
-            if ($statename == "useObservatory") {
-                // Clear Observatory selection
-                $this->setGameStateValue("activated_observatory", -1);
-
-                // Discard drawn card
-                $cards = $this->cards->getCardsInLocation('obs_tmp', $active_player);
-                if ($cards != null && count($cards) == 1) {
-                    $card = array_shift($cards);
-                    $this->cards->playCard((int)$card['id']);
-
-                    // Notify client to clear UI for other players
-                    $msg = clienttranslate('${card_name} is discarded automatically');
-                    $this->bga->notify->all('discard', $msg, array(
-                        'i18n' => array('card_name'),
-                        'card_name' => $this->getCardName($card),
-                        'cards' => array(array('row' => ROW_OBSERVATORY))
-                    ));
-                }
-            } else if ($statename != "playerTurn") {
-                throw new SystemException("Zombie mode not supported at this game state: ".$statename);
-            }
-
-            // Pass
-            $num_pass = $this->incGameStateValue('num_pass', 1);
-            if ($num_pass == $this->getPlayersNumber()) {
-                // Zombie is last player to pass => next phase
-                // Reset pass counter for next phase
-                $this->setGameStateValue("num_pass", 0);
-                $this->gamestate->nextState('zombieAllPass');
-            } else {
-                // One or more players left to pass => next player
-                $this->gamestate->nextState('zombiePass');
-            }
-
-            return;
-        }
-
-        if ($state['type'] === "multipleactiveplayer") {
-            // Make sure player is in a non blocking status for role turn
-            // Only multi state is Pub buy, and this is the correct action
-            $this->gamestate->setPlayerNonMultiactive($active_player, 'nextPhase');
-            
-            return;
-        }
-
-        throw new SystemException("Zombie mode not supported at this game state: ".$statename);
-    }
-    
 ///////////////////////////////////////////////////////////////////////////////////:
 ////////// DB upgrade
 //////////
@@ -1978,5 +1292,5 @@ class Game extends \Bga\GameFramework\Table
             $this->applyDbUpgradeToAllDB($sql);
         }
 
-    }    
+    }
 }
