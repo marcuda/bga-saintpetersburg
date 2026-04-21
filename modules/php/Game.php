@@ -1230,6 +1230,9 @@ class Game extends \Bga\GameFramework\Table
         $this->DbQuery("UPDATE player SET autopass=1 WHERE player_id='$player_id'");
         $this->notify->player($player_id, 'autopass', '', array('enable' => true));
         if ($pass) {
+            if ($player_id !=  (int)$this->getActivePlayerId()) {
+                throw new SystemException('Player is not active');
+            }
             $this->gamestate->jumpToState($this->passPlayer($player_id, true));
         }
     }
