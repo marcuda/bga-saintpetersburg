@@ -10,18 +10,17 @@
 declare(strict_types = 1);
 namespace Bga\Games\SaintPetersburg\States;
 
-use Bga\GameFramework\States\GameState;
-use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\Games\SaintPetersburg\CardState;
 use Bga\Games\SaintPetersburg\Game;
 use Bga\Games\SaintPetersburg\StateId;
 
-class UseObservatory extends GameState
+class UseObservatory extends CardState
 {
     function __construct(protected Game $game)
     {
-        parent::__construct($game, id: StateId::USE_OBSERVATORY->value, type: StateType::ACTIVE_PLAYER,
+        parent::__construct($game, id: StateId::USE_OBSERVATORY,
             description: clienttranslate('Observatory: ${actplayer} must take or discard'),
             descriptionMyTurn: clienttranslate('${card_name}: ${you} must take or discard'));
     }
@@ -63,7 +62,7 @@ class UseObservatory extends GameState
     #[PossibleAction]
     function actAddCard(int $activePlayerId)
     {
-        return $this->game->addCard(ROW_OBSERVATORY, 0, $activePlayerId);
+        return $this->addCard(ROW_OBSERVATORY, 0, $activePlayerId);
     }
     
     /**
@@ -75,7 +74,7 @@ class UseObservatory extends GameState
     #[PossibleAction]
     function actBuyCard(int $activePlayerId, int $trade_id = - 1)
     {
-        return $this->game->buyCard(ROW_OBSERVATORY, 0, $activePlayerId, $trade_id);
+        return $this->buyCard(ROW_OBSERVATORY, 0, $activePlayerId, $trade_id);
     }
     
     /**

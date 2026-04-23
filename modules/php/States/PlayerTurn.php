@@ -10,25 +10,24 @@
 declare(strict_types = 1);
 namespace Bga\Games\SaintPetersburg\States;
 
-use Bga\GameFramework\States\GameState;
-use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\Actions\Types\IntParam;
 use Bga\GameFramework\Actions\Types\StringParam;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\Games\SaintPetersburg\CardState;
 use Bga\Games\SaintPetersburg\Game;
 use Bga\Games\SaintPetersburg\StateId;
 
 /**
  * This active player state ask a player to play one turn.
  */
-class PlayerTurn extends GameState
+class PlayerTurn extends CardState
 {
 
     function __construct(protected Game $game)
     {
-        parent::__construct($game, id: StateId::PLAYER_TURN->value, type: StateType::ACTIVE_PLAYER,
+        parent::__construct($game, id: StateId::PLAYER_TURN,
             description: clienttranslate('${actplayer} must choose a card or pass'),
             descriptionMyTurn: clienttranslate('${you} must choose a card or pass'));
     }
@@ -65,7 +64,7 @@ class PlayerTurn extends GameState
         if ($game->opt2ndEdition() && $game->getGameStateValue('current_phase') == 0) {
             throw new UserException(clienttranslate("You must buy on first worker phase"));
         }
-        return $game->addCard($row, $col, $activePlayerId);
+        return $this->addCard($row, $col, $activePlayerId);
     }
 
     /**
@@ -79,7 +78,7 @@ class PlayerTurn extends GameState
     #[PossibleAction]
     function actBuyCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 7)] int $col, int $activePlayerId, int $trade_id = - 1)
     {
-        return $this->game->buyCard($row, $col, $activePlayerId, $trade_id);
+        return $this->buyCard($row, $col, $activePlayerId, $trade_id);
     }
 
     /**
@@ -100,7 +99,7 @@ class PlayerTurn extends GameState
 
         // Verify trade if needed
         if ($game->isTrading($card)) {
-            $game->checkTrade($card, $trade_id, $activePlayerId);
+            $this->checkTrade($card, $trade_id, $activePlayerId);
         } else if ($trade_id > 0) {
             throw new SystemException("Impossible play with trade");
         }
@@ -120,7 +119,7 @@ class PlayerTurn extends GameState
         } else {
             $msg = clienttranslate('${player_name} plays ${card_name} from their hand for ${card_cost} Ruble(s)');
         }
-        $game->cardAction($card_id, $trade_id, 0, $card_cost, $dest, $notif, $msg);
+        $this->cardAction($card_id, $trade_id, 0, $card_cost, $dest, $notif, $msg, $activePlayerId);
         return NextPlayer::class;
     }
 
