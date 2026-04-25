@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -12,10 +12,14 @@ namespace Bga\Games\SaintPetersburg\States;
 
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\States\PossibleAction;
+use Bga\GameFramework\UserException;
 use Bga\Games\SaintPetersburg\CardState;
 use Bga\Games\SaintPetersburg\Game;
 use Bga\Games\SaintPetersburg\StateId;
 
+/**
+ * This active player state ask a player to buy add or discard a card drawn through observatory.
+ */
 class UseObservatory extends CardState
 {
     function __construct(protected Game $game)
@@ -24,13 +28,14 @@ class UseObservatory extends CardState
             description: clienttranslate('Observatory: ${actplayer} must take or discard'),
             descriptionMyTurn: clienttranslate('${card_name}: ${you} must take or discard'));
     }
-    
+
     /**
      * Get the state arguments to be sent to client.
      * Player draws a card with Observatory.
      * Return card details and possible actions.
      * @param int $activePlayerId The active player id.
      * @return array All possible moves.
+     * @throws SystemException If the active player does not have an observatory.
      */
     function getArgs(int $activePlayerId): array
     {
@@ -38,7 +43,7 @@ class UseObservatory extends CardState
         // Get card drawn with Observatory
         $cards = $game->cards->getCardsInLocation('obs_tmp', $activePlayerId);
         if ($cards == null || count($cards) != 1) {
-            throw new SystemException("Impossible Observatory recall");
+            throw new SystemException("Impossible observatory recall");
         }
         // Possible actions
         $card = array_shift($cards);
@@ -53,34 +58,39 @@ class UseObservatory extends CardState
         
         return $possible_moves;
     }
-    
+
     /**
      * Player adds a card to their hand.
      * @param int $activePlayerId The active player id.
      * @return mixed The next state (NextPlayer).
+     * @throws SystemException When no observatory drawn card exist.
+     * @throws UserException When player hand is full.
      */
     #[PossibleAction]
     function actAddCard(int $activePlayerId)
     {
         return $this->addCard(ROW_OBSERVATORY, 0, $activePlayerId);
     }
-    
+
     /**
      * Player buys a card.
      * @param int $activePlayerId The active player id.
      * @param int $trade_id The traded card id or -1 if no traded card.
      * @return mixed The next state (NextPlayer).
+     * @throws SystemException When no observatory drawn card exist or trade is not possible.
+     * @throws UserException When player does not have enough rubles.
      */
     #[PossibleAction]
     function actBuyCard(int $activePlayerId, int $trade_id = - 1)
     {
         return $this->buyCard(ROW_OBSERVATORY, 0, $activePlayerId, $trade_id);
     }
-    
+
     /**
      * Player discards the card drawn with Observatory
      * @param int $activePlayerId The active player id.
      * @return mixed The next state (NextPlayer).
+     * @throws SystemException When no observatory drawn card exist.
      */
     #[PossibleAction]
     function actDiscardCard(int $activePlayerId)
@@ -114,7 +124,7 @@ class UseObservatory extends CardState
         $this->bga->playerStats->inc('actions_taken', 1, $activePlayerId);
         return NextPlayer::class;
     }
-    
+
     /**
      * This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
      * You can do whatever you want in order to make sure the turn of this player ends appropriately
@@ -127,6 +137,8 @@ class UseObservatory extends CardState
      * As a consequence, there is no current player associated to this action. In your zombieTurn function,
      * you must _never_ use `getCurrentPlayerId()` or `getCurrentPlayerName()`,
      * but use the $playerId passed in parameter and $this->game->getPlayerNameById($playerId) instead.
+     * @param int $playerId The id of the player being a zombie.
+     * @throws SystemException When no observatory drawn card exist.
      */
     function zombie(int $playerId)
     {

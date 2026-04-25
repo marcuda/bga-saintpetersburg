@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  * 
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -15,16 +15,25 @@ declare(strict_types=1);
 
 namespace Bga\Games\SaintPetersburg;
 
+use Bga\GameFramework\Components\Deck;
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\Actions\CheckAction;
-use Bga\GameFramework\Actions\Types\StringParam;
 use Bga\Games\SaintPetersburg\States\NextPlayer;
 use Bga\Games\SaintPetersburg\States\ScorePhase;
 use Bga\Games\SaintPetersburg\States\PlayerTurn;
 
 class Game extends \Bga\GameFramework\Table
 {
+    public Deck $cards;
+
+    // Full stack sizes for progression.
+    private array $deck_size = [
+        Phase::Worker->name => 31,
+        Phase::Building->name => 28,
+        Phase::Aristocrat->name => 27,
+        Phase::Trading->name => 30
+    ];
     private array $card_infos;
     private array $card_infos2nd;
     
@@ -41,10 +50,10 @@ class Game extends \Bga\GameFramework\Table
         require 'material.inc.php';
     
         $this->initGameStateLabels(array(
-            "starting_player_" . PHASE_WORKER => 10,     // player_id holding Worker token (stone)
-            "starting_player_" . PHASE_BUILDING => 11,   // player_id holding Building token
-            "starting_player_" . PHASE_ARISTOCRAT => 12, // player_id holding Aristocrat token
-            "starting_player_" . PHASE_TRADING => 13,    // player_id holding Trading token
+            "starting_player_" . Phase::Worker->name => 10,     // player_id holding Worker token (stone)
+            "starting_player_" . Phase::Building->name => 11,   // player_id holding Building token
+            "starting_player_" . Phase::Aristocrat->name => 12, // player_id holding Aristocrat token
+            "starting_player_" . Phase::Trading->name => 13,    // player_id holding Trading token
             "num_pass" => 16,              // number of players that have consecutively passed in this phase
             "current_phase" => 17,         // current phase number, always increasing
             "last_round" => 18,            // 1 if the end state has been triggered in the current round
@@ -68,26 +77,13 @@ class Game extends \Bga\GameFramework\Table
         ));
 
         $this->cards = $this->bga->deckFactory->createDeck('card');
-        $this->deck_size = array( // full stack sizes for progression
-            PHASE_WORKER => 31,
-            PHASE_BUILDING => 28,
-            PHASE_ARISTOCRAT => 27,
-            PHASE_TRADING => 30
-        );
-
-        $this->phases = array(
-            PHASE_WORKER,
-            PHASE_BUILDING,
-            PHASE_ARISTOCRAT,
-            PHASE_TRADING
-        );
     }
         
     /*
         setupNewGame:
         
         This method is called only once, when a new game is launched.
-        In this method, you must setup the game according to the game rules, so that
+        In this method, you must set up the game according to the game rules, so that
         the game is ready to be played.
     */
     protected function setupNewGame($players, $options = array())
@@ -109,7 +105,7 @@ class Game extends \Bga\GameFramework\Table
         $this->reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         $this->reloadPlayersBasicInfos();
         
-        // Player rubles is tie breaker and so held in aux score
+        // Player rubles is tiebreaker and so held in aux score
         foreach(array_keys($players) as $playerId)
         {
             // start with 25 rubles
@@ -125,8 +121,8 @@ class Game extends \Bga\GameFramework\Table
 
         // Player order for each phase
         $starting_tokens = array();
-        foreach ($this->phases as $phase) {
-            $starting_tokens[] = "starting_player_" . $phase;
+        foreach (Phase::cases() as $phase) {
+            $starting_tokens[] = "starting_player_" . $phase->name;
         }
         shuffle($starting_tokens);
 
@@ -168,7 +164,7 @@ class Game extends \Bga\GameFramework\Table
         $cards = array();
         foreach ($this->getCardInfos() as $idx => $card) {
             $cards[] = array(
-                'type' => $card['card_type'],
+                'type' => $card['card_type']->name,
                 'type_arg' => $idx,
                 'nbr' => $card['card_nbr']
             );
@@ -176,14 +172,15 @@ class Game extends \Bga\GameFramework\Table
         $this->cards->createCards($cards);
 
         // Split into decks for each type
-        foreach ($this->phases as $phase) {
-            $cards = $this->cards->getCardsOfType($phase);
-            $this->cards->moveCards(array_column($cards, 'id'), 'deck_' . $phase);
-            $this->cards->shuffle('deck_' . $phase);
+        foreach (Phase::cases() as $phase) {
+            $cards = $this->cards->getCardsOfType($phase->name);
+            $deck = 'deck_' . $phase->name;
+            $this->cards->moveCards(array_column($cards, 'id'), $deck);
+            $this->cards->shuffle($deck);
         }
 
         // Initialize globals to handle Observatory use
-        $obs = $this->cards->getCardsOfType(PHASE_BUILDING, CARD_OBSERVATORY);
+        $obs = $this->cards->getCardsOfType(Phase::Building->name, CARD_OBSERVATORY);
         $i = 0;
         foreach ($obs as $card) {
             $this->setGameStateInitialValue("observatory_" . $i . "_id", $card['id']);
@@ -193,10 +190,10 @@ class Game extends \Bga\GameFramework\Table
         $this->setGameStateInitialValue("activated_observatory", -1);
 
         // Starting draw based on number of players
-        $this->drawCards($num_players * 2, 0, PHASE_WORKER);
+        $this->drawCards($num_players * 2, 0, Phase::Worker);
 
         // Activate first player (which is in general a good idea :))
-        $this->gamestate->changeActivePlayer($this->getGameStateValue("starting_player_" . PHASE_WORKER));
+        $this->gamestate->changeActivePlayer($this->getGameStateValue("starting_player_" . Phase::Worker->name));
 
         /************ End of the game initialization *****/
         return PlayerTurn::class;
@@ -205,7 +202,7 @@ class Game extends \Bga\GameFramework\Table
     /*
         getAllDatas: 
         
-        Gather all informations about current game situation (visible by the current player).
+        Gather all information about current game situation (visible by the current player).
         
         The method is called each time the game interface is displayed to a player, ie:
         _ when the game starts
@@ -217,7 +214,7 @@ class Game extends \Bga\GameFramework\Table
 
         $result['version'] = $this->optEdition();
         
-        // !! We must only return informations visible by this player !!
+        // !! We must only return information visible by this player!!
         $current_player_id = (int)$this->getCurrentPlayerId();
     
         // Get information about players
@@ -280,17 +277,18 @@ class Game extends \Bga\GameFramework\Table
 
         // Number players already passed this turn
         $result['num_pass'] = $this->getGameStateValue('num_pass');
-        // Player order to mark passing (needed for spectator when playerorder not set)
+        // Player order to mark passing (needed for spectator when player order not set)
         $result['players_in_order'] = $this->getPlayersInOrder();
 
         // Get starting player tokens for each phase
         $tokens = array();
-        foreach ($this->phases as $token_phase) {
-            $token = "starting_player_" . $token_phase;
+        foreach (Phase::cases() as $token_phase) {
+            $phaseName = $token_phase->name;
+            $token = "starting_player_" . $phaseName;
             $token_player = $this->getGameStateValue($token);
             // Client expects two elements here as same input is used for new round logic.
             // In this case we don't have (or need) that information so set both to current.
-            $tokens[$token_phase] = array(
+            $tokens[$phaseName] = array(
                 'current' => $token_player,
                 'next' => $token_player
             );
@@ -298,7 +296,7 @@ class Game extends \Bga\GameFramework\Table
         $result['tokens'] = $tokens;
 
         // Current phase
-        $result['phase'] = $this->phases[$this->getGameStateValue('current_phase') % 4];
+        $result['phase'] = Phase::fromRound((int)$this->getGameStateValue('current_phase'))->name;
         $result['last_round'] = $this->getGameStateValue("last_round") == 1;
 
         // Cards on board
@@ -338,7 +336,7 @@ class Game extends \Bga\GameFramework\Table
         getGameProgression:
         
         Compute and return the current game progression.
-        The number returned must be an integer beween 0 (=the game just started) and
+        The number returned must be an integer between 0 (=the game just started) and
         100 (= the game is finished or almost finished).
     
         This method is called each time we are in a game state with the "updateGameProgression" property set to true 
@@ -354,10 +352,11 @@ class Game extends \Bga\GameFramework\Table
 
         // Find percentage of smallest stack
         $counts = $this->cards->countCardsInLocations();
-        foreach ($this->phases as $phase) {
-            if (key_exists('deck_' . $phase, $counts)) {
-                $count = $counts['deck_' . $phase];
-                $percent = $count / $this->deck_size[$phase];
+        foreach (Phase::cases() as $phase) {
+            $deck = 'deck_' . $phase->name;
+            if (key_exists($deck, $counts)) {
+                $count = $counts[$deck];
+                $percent = $count / $this->deck_size[$phase->name];
                 $val = max($val, 91 * (1 - $percent));
                 if ($count == 0) {
                     $oneStackEmpty = true;
@@ -387,7 +386,7 @@ class Game extends \Bga\GameFramework\Table
      * tables in the same order as the player boards.
      *
      * While the starting player for each phase is determined by
-     * cutom games rules, play will alway proceed in natural order.
+     * custom games rules, play will always proceed in natural order.
      */
     function getPlayersInOrder(): array
     {
@@ -399,26 +398,26 @@ class Game extends \Bga\GameFramework\Table
 
         // Check for spectator
         if (!key_exists($player_id, $players)) {
-            $player_id = (int)$next_player[0];
+            $player_id = $next_player[0];
         }
 
         // Build array starting with current player
         for ($i=0; $i<count($players); $i++) {
             $result[] = $player_id;
-            $player_id = (int)$next_player[$player_id];
+            $player_id = $next_player[$player_id];
         }
 
         return $result;
     }
     
     /**
-     * Get the rubles a plyaer owns.
+     * Get the rubles a player owns.
      * @param int $playerId A player id.
      * @return int The rubles owned by the player.
      */
     public function getRubles(int $playerId): int
     {
-        // Rubles are stored in auxiliary score counter as it is the tie breaker.
+        // Rubles are stored in auxiliary score counter as it is the tiebreaker.
         return $this->bga->playerScoreAux->get($playerId);
     }
     
@@ -456,7 +455,7 @@ class Game extends \Bga\GameFramework\Table
     
     /*
      * Return additional card information.
-     * This information is stored outside of the deck in order to make
+     * This information is stored outside the deck in order to make
      * use of the standard Deck implementation and functions.
      */
     function getCardInfos(): array
@@ -469,7 +468,7 @@ class Game extends \Bga\GameFramework\Table
     
     /*
      * Return additional card information for the given card.
-     * This information is stored outside of the deck in order to make
+     * This information is stored outside the deck in order to make
      * use of the standard Deck implementation and functions.
      */
     function getCardInfo(array $card): array
@@ -555,19 +554,19 @@ class Game extends \Bga\GameFramework\Table
      * Return true if the given card is the same type as given,
      * including a trading card of the same color
      */
-    function isCardType(array $card, string $type): bool
+    function isCardType(array $card, Phase $type): bool
     {
         $card_info = $this->getCardInfo($card);
-        $is_type = $card['type'] == $type;
-        $is_trade_type = ($card['type'] == PHASE_TRADING && $card_info['card_trade_type'] == $type);
+        $is_type = $card['type'] == $type->name;
+        $is_trade_type = ($card['type'] == Phase::Trading->name && $card_info['card_trade_type'] == $type);
         return ($is_type || $is_trade_type);
     }
 
     // Convenience functions of isCardType with each type
-    function isWorker(array $card): bool { return $this->isCardType($card, PHASE_WORKER); }
-    function isBuilding(array $card): bool { return $this->isCardType($card, PHASE_BUILDING); }
-    function isAristocrat(array $card): bool { return $this->isCardType($card, PHASE_ARISTOCRAT); }
-    function isTrading(array $card): bool { return $card['type'] == PHASE_TRADING; }
+    function isWorker(array $card): bool { return $this->isCardType($card, Phase::Worker); }
+    function isBuilding(array $card): bool { return $this->isCardType($card, Phase::Building); }
+    function isAristocrat(array $card): bool { return $this->isCardType($card, Phase::Aristocrat); }
+    function isTrading(array $card): bool { return $card['type'] == Phase::Trading->name; }
 
     /*
      * Count the number of different aristocrats the given player owns
@@ -590,7 +589,7 @@ class Game extends \Bga\GameFramework\Table
     /*
      * Compute the scoring potential for a given player/phase
      */
-    function computeScoring(int $player_id, string $phase): array
+    function computeScoring(int $player_id, Phase $phase): array
     {
         $points = 0;
         $rubles = 0;
@@ -650,7 +649,7 @@ class Game extends \Bga\GameFramework\Table
      */
     function getIncome(int $player_id): array
     {
-        $phases = array(PHASE_WORKER, PHASE_BUILDING, PHASE_ARISTOCRAT);
+        $phases = array(Phase::Worker, Phase::Building, Phase::Aristocrat);
         $points = array();
         $rubles = array();
         for ($i = 0; $i < 3; $i++) {
@@ -669,10 +668,10 @@ class Game extends \Bga\GameFramework\Table
      * Draw and sort a given number of cards from the given phase stack
      * onto the top row of the board, starting at the given location
      */
-    function drawCards(int $nbr, int $start_idx, string $phase): array
+    function drawCards(int $nbr, int $start_idx, Phase $phase): array
     {
         // Draw cards from phase stack
-        $unsorted = $this->cards->pickCardsForLocation($nbr, 'deck_' . $phase, TOP_ROW);
+        $unsorted = $this->cards->pickCardsForLocation($nbr, 'deck_' . $phase->name, TOP_ROW);
 
         // Sort by type/cost
         usort($unsorted, array($this, 'compareCards'));
@@ -719,7 +718,7 @@ class Game extends \Bga\GameFramework\Table
         $max_hand = 3;
         // +1 card in hand if player owns the Warehouse
         $warehouse = $this->cards->getCardsOfTypeInLocation(
-            PHASE_BUILDING, CARD_WAREHOUSE, 'table', $player_id);
+            Phase::Building->name, CARD_WAREHOUSE, 'table', $player_id);
         if (count($warehouse) == 1) {
             $max_hand++;
         }
@@ -732,10 +731,10 @@ class Game extends \Bga\GameFramework\Table
      * with given (trading) card--does NOT consider cost.
      * Return all possible cards that could be displaced in the given
      * (reference) trades array--DOES consider cost and available rubles.
-     * @param array $card A card of the cards deck.
+     * @param array $card A card of the trading cards deck.
      * @param int $cost The card cost.
      * @param int $player_id The player id.
-     * @param array $trades An array of int to fill with the displacable cards’ids for which the player can afford the displace
+     * @param array $trades An array of int to fill with the displacable cards’ ids for which the player can afford the displace
      * cost.
      * @return bool True if the player has at least one card that could be displaced (right type) even if not enough rubles.
      */
@@ -753,7 +752,7 @@ class Game extends \Bga\GameFramework\Table
                 // Not correct trading type
                 continue;
             }
-            if ($card_info['card_trade_type'] == PHASE_WORKER &&
+            if ($card_info['card_trade_type'] == Phase::Worker &&
                 $card_info['card_worker_type'] != $p_info['card_worker_type'] &&
                     $p_info['card_worker_type'] != WORKER_ALL)
             {
@@ -779,17 +778,6 @@ class Game extends \Bga\GameFramework\Table
         }
 
         return $has_trade;
-    }
-
-    /*
-     * Return true if given player has at least one valid card to displace
-     * with given (trading) card--DOES consider cost and available rubles
-     */
-    function hasTrades(array $card, int $cost, int $player_id): bool
-    {
-        $trades = array();
-        $this->getTrades($card, $cost, $player_id, $trades);
-        return count($trades) > 0;
     }
 
     /*
@@ -857,10 +845,10 @@ class Game extends \Bga\GameFramework\Table
         }
 
         // Observatory
-        $current_phase = $this->getGameStateValue('current_phase') % 4;
-        if ($this->phases[$current_phase] == PHASE_BUILDING) {
+        $current_phase = Phase::fromRound((int)$this->getGameStateValue('current_phase'));
+        if ($current_phase == Phase::Building) {
             $cards = $this->cards->getCardsOfTypeInLocation(
-                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
+                Phase::Building->name, CARD_OBSERVATORY, 'table', $player_id);
             foreach ($cards as $card) {
                 $obs = $this->getObservatory((int)$card['id']);
                 if (!$obs['used']) {
@@ -896,16 +884,9 @@ class Game extends \Bga\GameFramework\Table
             // Can play if any card available to buy or add
             // This also covers any usable Observatory
             $moves = $this->getAllPossibleMoves($player_id);
-            foreach ($moves as $cards) {
-                foreach ($cards as $card) {
-                    if ($card['can_buy'] || $card['can_add']) {
-                        return true;
-                    }
-                }
-            }
+            return array_any($moves, fn($cards) => array_any($cards, fn($card) => $card['can_buy'] || $card['can_add']));
 
             // No legal move
-            return false;
         }
 
         // Money is secret, but it would always be known if a player has none
@@ -923,10 +904,10 @@ class Game extends \Bga\GameFramework\Table
         }
 
         // Can play if Observatory can be used
-        $current_phase = $this->getGameStateValue('current_phase') % 4;
-        if ($this->phases[$current_phase] == PHASE_BUILDING) {
+        $current_phase = Phase::fromRound((int)$this->getGameStateValue('current_phase'));
+        if ($current_phase == Phase::Building) {
             $cards = $this->cards->getCardsOfTypeInLocation(
-                PHASE_BUILDING, CARD_OBSERVATORY, 'table', $player_id);
+                Phase::Building->name, CARD_OBSERVATORY, 'table', $player_id);
             foreach ($cards as $card) {
                 $obs = $this->getObservatory((int)$card['id']);
                 if (!$obs['used']) {
@@ -983,7 +964,7 @@ class Game extends \Bga\GameFramework\Table
     /**
      * Record pass action and check if all players have passed.
      * @param int $playerId The passing player id.
-     * @param bool canPlay True if the player could have played.
+     * @param bool $canPlay True if the player could have played.
      * @return string The next state.
      */
     function passPlayer(int $playerId, bool $canPlay): string
@@ -1001,7 +982,7 @@ class Game extends \Bga\GameFramework\Table
         if ((!$canPlay) && ! $this->dbGetAutoPass($playerId)) {
             // Inform player they passed automatically
             $msg = clienttranslate('You cannot play and were forced to pass automatically');
-            $this->notify->player($playerId, 'log', $msg, array());
+            $this->notify->player($playerId, 'log', $msg);
         }
         
         // Determine if phase should end
@@ -1022,7 +1003,7 @@ class Game extends \Bga\GameFramework\Table
      * @param bool $pass If true pass immediately else wait for next activation of player.
      */
     #[CheckAction(false)]
-    function actAutoPass(bool $pass)
+    function actAutoPass(bool $pass): void
     {
         if ($this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0) {
             throw new UserException(clienttranslate("You must buy on first worker phase"));
@@ -1044,7 +1025,7 @@ class Game extends \Bga\GameFramework\Table
      * No check action as it can be done at any time.
      */
     #[CheckAction(false)]
-    function actCancelAutoPass()
+    function actCancelAutoPass(): void
     {
         // CURRENT: player can do this out of turn
         $player_id = (int)$this->getCurrentPlayerId();
@@ -1067,7 +1048,7 @@ class Game extends \Bga\GameFramework\Table
     
     */
     
-    function upgradeTableDb($from_version)
+    function upgradeTableDb($from_version): void
     {
         // $from_version is the current version of this game database, in numerical form.
         // For example, if the game was running with a release of your game named "140430-1345",

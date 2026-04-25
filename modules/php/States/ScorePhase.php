@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -13,8 +13,12 @@ namespace Bga\Games\SaintPetersburg\States;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\Games\SaintPetersburg\Game;
+use Bga\Games\SaintPetersburg\Phase;
 use Bga\Games\SaintPetersburg\StateId;
 
+/**
+ * This game state perform the current phase scoring.
+ */
 class ScorePhase extends GameState
 {
     function __construct(protected Game $game)
@@ -30,32 +34,32 @@ class ScorePhase extends GameState
     {
         $game = $this->game;
         // Get phase status
-        $current_phase = $game->getGameStateValue('current_phase') % 4;
-        $new_round = ($current_phase == 3);
+        $phase = Phase::fromRound((int)$game->getGameStateValue('current_phase'));
+        $lastPhase = ($phase == Phase::Trading);
         
         // End game if last phase of final round just finished
-        if ($new_round && $game->getGameStateValue("last_round")) {
+        if ($lastPhase && $game->getGameStateValue("last_round")) {
             $this->finalScoring();
             return StateId::END_GAME->value;
         }
         
         // Score phase just completed
-        $phase = $game->phases[$current_phase];
         $this->scorePhase($phase);
         
-        if ($phase == PHASE_BUILDING) {
+        if ($phase == Phase::Building) {
             // Allow pub to be used if owned
             return UsePub::class;
         }
         return NextPhase::class;
     }
-    
-    /*
+
+    /**
      * Compute the scores at the end of the given phase
+     * @param Phase $phase The phase to score.
      */
-    function scorePhase(string $phase)
+    function scorePhase(Phase $phase): void
     {
-        if ($phase == PHASE_TRADING) {
+        if ($phase == Phase::Trading) {
             // No scoring after trading card phase.
             return;
         }
@@ -69,11 +73,11 @@ class ScorePhase extends GameState
             // Update scores, stats, and log
             $scores[$player_id] = $this->bga->playerScore->inc($player_id, $points, null);
             $this->bga->playerStats->inc('points_total', $points, $player_id);
-            $this->bga->playerStats->inc('points_' . $phase, $points, $player_id);
+            $this->bga->playerStats->inc('points_' . $phase->name, $points, $player_id);
             
             $game->incRubles($player_id, $rubles);
             $this->bga->playerStats->inc('rubles_total', $rubles, $player_id);
-            $this->bga->playerStats->inc('rubles_' . $phase, $rubles, $player_id);
+            $this->bga->playerStats->inc('rubles_' . $phase->name, $rubles, $player_id);
             
             $msg = clienttranslate('${player_name} earns ${rubles} Ruble(s) and ${points} Point(s)');
             $this->bga->notify->all('scorePhase', $msg, array(
@@ -90,10 +94,10 @@ class ScorePhase extends GameState
         ));
     }
     
-    /*
+    /**
      * Compute end game scoring and set final results
      */
-    function finalScoring()
+    function finalScoring(): void
     {
         $game = $this->game;
         $players = $game->loadPlayersBasicInfos();

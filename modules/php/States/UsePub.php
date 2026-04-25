@@ -10,6 +10,8 @@
 declare(strict_types = 1);
 namespace Bga\Games\SaintPetersburg\States;
 
+use Bga\GameFramework\Components\Counters\OutOfRangeCounterException;
+use Bga\GameFramework\Components\Counters\UnknownPlayerException;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
@@ -17,8 +19,12 @@ use Bga\GameFramework\UserException;
 use Bga\GameFramework\Actions\Types\IntParam;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\Games\SaintPetersburg\Game;
+use Bga\Games\SaintPetersburg\Phase;
 use Bga\Games\SaintPetersburg\StateId;
 
+/**
+ * This active player state allow a player having a pub to buy points.
+ */
 class UsePub extends GameState
 {
     function __construct(protected Game $game)
@@ -39,7 +45,7 @@ class UsePub extends GameState
     {
         $game = $this->game;
         $players = array();
-        $pubs = $game->cards->getCardsOfTypeInLocation(PHASE_BUILDING, CARD_PUB, 'table');
+        $pubs = $game->cards->getCardsOfTypeInLocation(Phase::Building->name, CARD_PUB, 'table');
         
         // Determine which players own the Pubs
         foreach ($pubs as $card) {
@@ -74,7 +80,7 @@ class UsePub extends GameState
         $pub_players = array();
         
         // Allow any players that own a Pub to use it
-        $pubs = $game->cards->getCardsOfTypeInLocation(PHASE_BUILDING, CARD_PUB, 'table');
+        $pubs = $game->cards->getCardsOfTypeInLocation(Phase::Building->name, CARD_PUB, 'table');
         foreach ($pubs as $card) {
             if ($player_id == $card['location_arg']) {
                 // Same player owns both
@@ -97,11 +103,13 @@ class UsePub extends GameState
         
         $this->gamestate->setPlayersMultiactive($pub_players, NextPhase::class, true);
     }
-    
+
     /**
      * Player buys points using a Pub
      * @param int $points The number of bought points.
      * @param int $currentPlayerId The current player id.
+     * @throws SystemException When number of points is too high.
+     * @throws UserException When player does not have enough rubles.
      */
     #[PossibleAction]
     function actBuyPoints(#[IntParam(min: 0, max: 10)] int $points, int $currentPlayerId)
@@ -111,7 +119,7 @@ class UsePub extends GameState
         // or up to 10 points if the player owns both
         $max_points = 0;
         $pubs = $game->cards->getCardsOfTypeInLocation(
-            PHASE_BUILDING, CARD_PUB, 'table');
+            Phase::Building->name, CARD_PUB, 'table');
         foreach ($pubs as $card) {
             if ($card['location_arg'] == $currentPlayerId) {
                 $max_points += 5;
@@ -171,7 +179,7 @@ class UsePub extends GameState
     function zombie(int $playerId)
     {
         // Level 0 zombie: do not buy points.
-        return $this->actBuyPoints(0, $playerId);
+        $this->actBuyPoints(0, $playerId);
     }
 }
 

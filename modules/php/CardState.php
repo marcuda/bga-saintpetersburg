@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -14,8 +14,6 @@ use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
-use Bga\Games\SaintPetersburg\Game;
-use Bga\Games\SaintPetersburg\StateId;
 use Bga\Games\SaintPetersburg\States\NextPlayer;
 
 /**
@@ -28,13 +26,15 @@ class CardState extends GameState
         parent::__construct($game, id: $id->value, type: StateType::ACTIVE_PLAYER,
             description: $description, descriptionMyTurn: $descriptionMyTurn);
     }
-    
+
     /**
      * Player adds a card to their hand.
      * @param int $row The board row or the observatory card type.
      * @param int $col The board column (meaningless if row is the observatory card type).
      * @param int $activePlayerId The active player id.
      * @return string The next state (NextPlayer).
+     * @throws UserException When player hand is full.
+     * @throws SystemException If no card exist at given location.
      */
     protected function addCard(int $row, int $col, int $activePlayerId): string
     {
@@ -51,7 +51,7 @@ class CardState extends GameState
         $this->cardAction((int) $card['id'], - 1, $row, 0, $dest, $notif, $msg, $activePlayerId);
         return NextPlayer::class;
     }
-    
+
     /**
      * Player buys a card.
      * @param int $row The board row or the observatory card type.
@@ -59,6 +59,8 @@ class CardState extends GameState
      * @param int $activePlayerId The active player id.
      * @param int $trade_id The traded card id or -1 if no traded card.
      * @return string The next state (NextPlayer).
+     * @throws SystemException If no card exist at given location or trade is not possible.
+     * @throws UserException When player does not have enough rubles.
      */
     protected function buyCard(int $row, int $col, int $activePlayerId, int $trade_id): string
     {
@@ -105,7 +107,7 @@ class CardState extends GameState
      * @param int $playerId The player id.
      */
     protected function cardAction(int $card_id, int $trade_id, int $card_row, int $card_cost, string $dest, string $notif,
-        string $msg, int $playerId)
+        string $msg, int $playerId): void
     {
         $game = $this->game;
         $card = $game->cards->getCard($card_id);
@@ -166,14 +168,16 @@ class CardState extends GameState
         $game->setGameStateValue("num_pass", 0);
         $this->bga->playerStats->inc('actions_taken', 1, $playerId);
     }
-    
+
     /**
      * Verify that given trading card can displace selected card
      * @param array $card Bought card from a Deck instance.
      * @param int $disp_id Displaced card id.
      * @param int $player_id Player id.
+     * @throws SystemException When displaced card can never be displaced.
+     * @throws UserException When displaced card is not of the right type.
      */
-    protected function checkTrade(array $card, int $disp_id, int $player_id)
+    protected function checkTrade(array $card, int $disp_id, int $player_id): void
     {
         $game = $this->game;
         // Verify displaced card exists and owned by player
@@ -189,7 +193,7 @@ class CardState extends GameState
         $card_info = $game->getCardInfo($card);
         $disp_info = $game->getCardInfo($disp_card);
         if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
-            ($disp_info['card_type'] == PHASE_WORKER &&
+            ($disp_info['card_type'] == Phase::Worker->name &&
                 $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
                 $disp_info['card_worker_type'] != WORKER_ALL))
         {
@@ -211,7 +215,7 @@ class CardState extends GameState
      * @param int $row The board row or the observatory card type.
      * @param int $col The board column (meaningless if row is the observatory card type).
      * @return array A card.
-     * @throws SystemException If no card exist at given location.
+     * @throws SystemException When given row value is invalid or no card exist at given location.
      */
     private function getSelectedCard(int $row, int $col): array
     {
@@ -224,12 +228,14 @@ class CardState extends GameState
         } else if ($row == ROW_OBSERVATORY) {
             $loc = 'obs_tmp';
             $col = $game->getActivePlayerId();
+        } else {
+            throw new SystemException("Unexpected row $row.");
         }
         $cards = $game->cards->getCardsInLocation($loc, $col);
         
         // Verify a card exists here
         if (count($cards) != 1) {
-            throw new SystemException("Impossible selection");
+            throw new SystemException("Impossible selection at location $loc and column $col.");
         }
         return array_shift($cards);
     }

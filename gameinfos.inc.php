@@ -53,10 +53,10 @@ $gameinfos = array(
     // Time in second add to a player when "giveExtraTime" is called (speed profile = slow)
     'slow_additional_time' => 50,
 
-    // If you are using a tie breaker in your game (using "player_score_aux"), you must describe here
+    // If you are using a tiebreaker in your game (using "player_score_aux"), you must describe here
     // the formula used to compute "player_score_aux". This description will be used as a tooltip to explain
-    // the tie breaker to the players.
-    // Note: if you are NOT using any tie breaker, leave the empty string.
+    // the tiebreaker to the players.
+    // Note: if you are NOT using any tiebreaker, leave the empty string.
     'tie_breaker_description' => clienttranslate("Number of rubles"),
 
     // If in the game, all losers are equal (no score to rank them or explicit in the rules that losers are not ranked between

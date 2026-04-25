@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -13,8 +13,12 @@ namespace Bga\Games\SaintPetersburg\States;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\Games\SaintPetersburg\Game;
+use Bga\Games\SaintPetersburg\Phase;
 use Bga\Games\SaintPetersburg\StateId;
 
+/**
+ * This game state activate the next player.
+ */
 class NextPlayer extends GameState
 {
     function __construct(protected Game $game)
@@ -33,9 +37,8 @@ class NextPlayer extends GameState
         $player_id = (int)$game->activeNextPlayer();
         
         // Count one turn when it gets back to the player that started this phase
-        $current_phase = $game->getGameStateValue('current_phase') % 4;
-        $phase = $game->phases[$current_phase];
-        $starting_player = $game->getGameStateValue("starting_player_" . $phase);
+        $current_phase = Phase::fromRound((int)$game->getGameStateValue('current_phase'));
+        $starting_player = $game->getGameStateValue("starting_player_" . $current_phase->name);
         if ($player_id == $starting_player) {
             $this->bga->tableStats->inc('turns_number', 1);
         }

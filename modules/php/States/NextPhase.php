@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -13,8 +13,12 @@ namespace Bga\Games\SaintPetersburg\States;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\Games\SaintPetersburg\Game;
+use Bga\Games\SaintPetersburg\Phase;
 use Bga\Games\SaintPetersburg\StateId;
 
+/**
+ * This game state change the current phase.
+ */
 class NextPhase extends GameState
 {
     function __construct(protected Game $game)
@@ -31,14 +35,14 @@ class NextPhase extends GameState
     {
         $game = $this->game;
         // Increment phase
-        $next_phase = $game->incGameStateValue('current_phase', 1) % 4;
-        $phase = $game->phases[$next_phase];
+        $currentRound = $game->incGameStateValue('current_phase', 1);
+        $phase = Phase::fromRound($currentRound);
         
         // Clear any automatic passing
         $game->DbQuery("UPDATE player SET autopass=0");
         
         // Handle new round (Trading -> Worker)
-        if ($next_phase == 0) {
+        if ($phase == Phase::Worker) {
             // Discard bottom cards and move top row down
             $this->discardBottomRow();
             $this->shiftCardsDown();
@@ -47,11 +51,12 @@ class NextPhase extends GameState
             $tokens = array();
             $players = $game->loadPlayersBasicInfos();
             $next_player = $game->createNextPlayerTable(array_keys($players));
-            foreach ($game->phases as $token_phase) {
-                $token = "starting_player_" . $token_phase;
+            foreach (Phase::cases() as $token_phase) {
+                $phaseName = $token_phase->name;
+                $token = "starting_player_" . $phaseName;
                 $player_id = $game->getGameStateValue($token);
                 $game->setGameStateValue($token, $next_player[$player_id]);
-                $tokens[$token_phase] = array(
+                $tokens[$phaseName] = array(
                     'current' => $player_id,
                     'next' => $next_player[$player_id]
                 );
@@ -83,19 +88,19 @@ class NextPhase extends GameState
         $new_cards = $game->drawCards(8 - $num_cards, $num_cards, $phase);
         
         // Check if deck was emptied to trigger final round
-        if ($game->cards->countCardInLocation('deck_' . $phase) <= 0) {
+        if ($game->cards->countCardInLocation('deck_' . $phase->name) <= 0) {
             if (!$game->getGameStateValue("last_round")) {
                 $game->setGameStateValue("last_round", 1);
                 $msg = clienttranslate('Final round! ${phase} deck is empty');
                 $this->bga->notify->all('lastRound', $msg, array(
                     'i18n' => array('phase'),
-                    'phase' => $phase
+                    'phase' => $phase->name
                 ));
             }
         }
         
         // Activate starting player (_not_ next player) for next phase
-        $starting_player = (int)$game->getGameStateValue("starting_player_" . $phase);
+        $starting_player = (int)$game->getGameStateValue("starting_player_" . $phase->name);
         $this->gamestate->changeActivePlayer($starting_player);
         $this->bga->tableStats->inc('turns_number', 1);
         
@@ -103,8 +108,8 @@ class NextPhase extends GameState
         $this->bga->notify->all('nextPhase', $msg, array(
             'i18n' => array('phase'),
             'player_name' => $game->getPlayerNameById($starting_player),
-            'phase' => $phase,
-            'phase_arg' => $phase, // non-translated arg used in client (i18n came late)
+            'phase' => $phase->name,
+            'phase_arg' => $phase->name, // non-translated arg used in client (i18n came late)
             'cards' => $new_cards
         ));
         
@@ -156,7 +161,7 @@ class NextPhase extends GameState
     /*
      * Move all cards on the board from the upper row to the lower
      */
-    function shiftCardsDown()
+    function shiftCardsDown(): void
     {
         $game = $this->game;
         $board = $game->cards->getCardsInLocation(TOP_ROW);
@@ -176,7 +181,7 @@ class NextPhase extends GameState
     /*
      * Remove from the game all cards on the board lower row
      */
-    function discardBottomRow()
+    function discardBottomRow(): void
     {
         $game = $this->game;
         $discard = array();

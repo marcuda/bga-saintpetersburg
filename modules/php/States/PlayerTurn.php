@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -17,6 +17,7 @@ use Bga\GameFramework\Actions\Types\StringParam;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\Games\SaintPetersburg\CardState;
 use Bga\Games\SaintPetersburg\Game;
+use Bga\Games\SaintPetersburg\Phase;
 use Bga\Games\SaintPetersburg\StateId;
 
 /**
@@ -56,6 +57,8 @@ class PlayerTurn extends CardState
      * @param int $col The column of the selected card.
      * @param int $activePlayerId The active player id.
      * @return mixed The next state (NextPlayer).
+     * @throws SystemException When no card exist at given location.
+     * @throws UserException When player hand is full or when player must buy a worker.
      */
     #[PossibleAction]
     function actAddCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 7)] int $col, int $activePlayerId)
@@ -74,6 +77,8 @@ class PlayerTurn extends CardState
      * @param int $activePlayerId The active player id.
      * @param int $trade_id The traded card id or -1 if no traded card.
      * @return mixed The next state (NextPlayer).
+     * @throws SystemException When no card exist at given location or trade is not possible.
+     * @throws UserException When player does not have enough rubles.
      */
     #[PossibleAction]
     function actBuyCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 7)] int $col, int $activePlayerId, int $trade_id = - 1)
@@ -87,6 +92,8 @@ class PlayerTurn extends CardState
      * @param int $activePlayerId The active player id.
      * @param int $trade_id The traded card id or -1 if no traded card.
      * @return mixed The next state (NextPlayer).
+     * @throws SystemException When card is not valid or can not be traded.
+     * @throws UserException When player doe not have enough rubles.
      */
     #[PossibleAction]
     function actPlayCard(int $card_id, int $activePlayerId, int $trade_id = - 1)
@@ -127,6 +134,7 @@ class PlayerTurn extends CardState
      * Player passes their turn.
      * @param int $activePlayerId The active player id.
      * @return mixed The next state (NextPlayer or ScorePhase).
+     * @throws UserException When player must buy a worker.
      */
     #[PossibleAction]
     function actPass(int $activePlayerId)
@@ -139,7 +147,7 @@ class PlayerTurn extends CardState
     }
 
     // Must match each deck.
-    const DECKS = [
+    const array DECKS = [
         'deck_Worker',
         'deck_Building',
         'deck_Aristocrat',
@@ -152,6 +160,9 @@ class PlayerTurn extends CardState
      * @param int $card_id The observatory card id.
      * @param int $activePlayerId The active player id.
      * @return mixed The next state (UseObservatory).
+     * @throws SystemException When the given card id does not match a valid card or no card can be drawn from given
+     * deck.
+     * @throws UserException When the observatory can not be used.
      */
     #[PossibleAction]
     function actUseObservatory(#[StringParam(enum: self::DECKS)] string $deck, int $card_id, int $activePlayerId)
@@ -166,8 +177,8 @@ class PlayerTurn extends CardState
 
         // Verify Observatory is not already used and current phase is Building
         $obs = $game->getObservatory($card_id);
-        $phase = $game->getGameStateValue('current_phase') % 4;
-        if ($obs['used'] || $game->phases[$phase] != PHASE_BUILDING) {
+        $phase = Phase::fromRound((int)$game->getGameStateValue('current_phase'));
+        if ($obs['used'] || $phase != Phase::Building) {
             throw new UserException(clienttranslate("You cannot use the Observatory right now"));
         }
         // Cannot draw from empty stack or take last card in stack
@@ -195,7 +206,7 @@ class PlayerTurn extends CardState
                 'player_id' => $activePlayerId
             ));
 
-        // Mark Observatrory as used
+        // Mark observatory as used
         $game->setGameStateValue("activated_observatory", $obs['id']);
         $game->setGameStateValue('observatory_' . $obs['id'] . '_used', 1);
         $this->bga->playerStats->inc('observatory_draws', 1, $activePlayerId);

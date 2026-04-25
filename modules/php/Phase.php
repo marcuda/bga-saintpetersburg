@@ -13,15 +13,17 @@ declare(strict_types=1);
 namespace Bga\Games\SaintPetersburg;
 
 /**
- * Defines each state id of the state machine.
+ * Defines each phase of the game.
  */
-enum StateId: int
+enum Phase: string
 {
-    case PLAYER_TURN = 10;
-    case NEXT_PLAYER = 11;
-    case SCORE_PHASE = 12;
-    case NEXT_PHASE = 13;
-    case USE_OBSERVATORY = 14;
-    case USE_PUB = 15;
-    case END_GAME = 99;
+    case Worker = 'Worker';
+    case Building = 'Building';
+    case Aristocrat = 'Aristocrat';
+    case Trading = 'Trading';
+
+    static function fromRound(int $round): Phase
+    {
+        return self::cases()[$round % 4];
+    }
 }
