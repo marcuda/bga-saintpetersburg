@@ -241,7 +241,7 @@ define([
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function() {
                 // Enabled console logs if true
-                this.debug = true;
+                this.debug = false;
 
                 if (this.debug) {
                     console.log('Saint Petersburg constructor');
