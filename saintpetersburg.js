@@ -1705,22 +1705,32 @@ define([
              */
             onPlayerTableSelectionChanged: function() {
                 const items = this.playerTable.getSelectedItems();
+                if (this.debug) {
+                    console.log('onPlayerTableSelectionChanged', items, this.is_trading);
+                }
 
                 if (items.length > 0) {
                     if (this.checkAction('actBuyCard') && this.is_trading) {
                         // Displace card with trading card
                         this.client_state_args.trade_id = items[0].id;
-
-                        if (this.client_state_args.row == this.constants.hand) {
-                            // Play from hand
-                            this.bga.actions.performAction('actPlayCard',
-                                { card_id: this.client_state_args.col, trade_id: this.client_state_args.trade_id });
-                        } else {
-                            // Buy from board
-                            this.bga.actions.performAction('actBuyCard', this.client_state_args);
+                        const card_info = this.possible_moves[this.client_state_args.row][this.client_state_args.col];
+                        if (this.debug) {
+                            console.log('onPlayerTableSelectionChanged', card_info, this.client_state_args);
                         }
 
-                        this.playerTable.unselectAll();
+                        if (!card_info.trades.includes(parseInt(this.client_state_args.trade_id))) {
+                            this.showMessage(_("Wrong type of card to displace"), "error");
+                        } else {
+                            if (this.client_state_args.row == this.constants.hand) {
+                                // Play from hand
+                                this.bga.actions.performAction('actPlayCard',
+                                    { card_id: this.client_state_args.col, trade_id: this.client_state_args.trade_id });
+                            } else {
+                                // Buy from board
+                                this.bga.actions.performAction('actBuyCard', this.client_state_args);
+                            }
+                            this.playerTable.unselectAll();
+                        }
                     } else {
                         // Cannot trade cards right now
                         this.showMessage(_("You must select first select a card to buy"), "error");

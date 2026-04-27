@@ -193,7 +193,7 @@ class CardState extends GameState
         $card_info = $game->getCardInfo($card);
         $disp_info = $game->getCardInfo($disp_card);
         if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
-            ($disp_info['card_type'] == Phase::Worker->name &&
+            ($disp_info['card_type'] == Phase::Worker &&
                 $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
                 $disp_info['card_worker_type'] != WORKER_ALL))
         {
