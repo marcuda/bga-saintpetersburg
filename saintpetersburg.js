@@ -224,6 +224,15 @@ define([
     function(dojo, declare) {
         'use strict';
         
+        // Card width in pixel when out of board in first edition:
+        const CARD_WIDTH_PX = 70;
+        // Card height in pixel when out of board in first edition:
+        const CARD_HEIGHT_PX = 109;
+        // Card width in pixel when out of board in second edition:
+        const CARD_WIDTH_PX_2ND = 73.18;
+        // Card height in pixel when out of board in second edition:
+        const CARD_HEIGHT_PX_2ND = 112;
+
         // Preference values:
         const PREF_PUBLISHER_MESSAGE = 100;
         const PREF_PM_ON = 0;
@@ -248,12 +257,12 @@ define([
                 }
                 this.playerHand = null;         // Stock for current player hand
                 this.playerTable = null;        // Stock for current player table
-                this.cardwidth = 70;            // Standard card width for stock
-                this.cardheight = 112;          // Standard card height for stock
+                // Standard card width for stock
+                this.cardwidth = CARD_WIDTH_PX;
+                // Standard card height for stock
+                this.cardheight = CARD_HEIGHT_PX;
                 this.card_art_row_size = 10;    // Number of cards per row in sprite for stock
                 this.card_art_col_size = 5;     // Number of cards per column in sprite for stock
-                this.cardwidth_big = 96;        // Large card width for tooltip
-                this.cardheight_big = 150;      // Large card height for tooltip
                 this.player_rubles = []         // Counters for all player rubles
                 this.player_tables = [];        // Stocks for all player tables
                 this.player_hands = [];         // Cards held in each player's hand
@@ -293,21 +302,24 @@ define([
                     console.log(gamedatas);
                 }
 
-                if (gamedatas.version == 2) {
+                if (parseInt(gamedatas.version) === 2) {
                     this.dontPreloadImage('board_full.jpg');
                     this.dontPreloadImage('cardbacks_big.jpg');
                     this.dontPreloadImage('cards.jpg');
-                    this.dontPreloadImage('cards_big.jpg');
                     this.dontPreloadImage('icons.jpg');
                     dojo.addClass(dojo.body(), 'stp_2nd_edition');
                     this.card_art_col_size = 6;
-                    this.cardwidth = 73.18;
+                    this.cardwidth = CARD_WIDTH_PX_2ND;
+                    this.cardheight = CARD_HEIGHT_PX_2ND;
                 } else {
                     this.dontPreloadImage('board2.jpg');
                     this.dontPreloadImage('cardbacks2.jpg');
                     this.dontPreloadImage('cards2.jpg');
                     this.dontPreloadImage('icons2.jpg');
                 }
+
+                document.documentElement.style.setProperty('--stp-card-width-px', this.cardwidth + 'px');
+                document.documentElement.style.setProperty('--stp-card-height-px', this.cardheight + 'px');
 
                 this.buildBoard(gamedatas);
                 
@@ -343,8 +355,8 @@ define([
                 // Setting up player boards, tables, cards
                 for (const player_id in gamedatas.players) {
                     // Custom icons and such
-                    const id = player_id;
-                    this.bga.playerPanels.getElement(player_id).insertAdjacentHTML('beforeend', `
+                    const id = parseInt(player_id);
+                    this.bga.playerPanels.getElement(id).insertAdjacentHTML('beforeend', `
                         <div class="stp_board">
                             <div id="rublecount_icon_p${id}" class="imgtext stp_icon stp_icon_ruble"></div>
                             <span id="rublecount_p${id}">?</span>&nbsp;
@@ -379,7 +391,7 @@ define([
                     hand_counter.create('handcount_p' + player_id);
                     hand_counter.setValue(gamedatas.player_hand_size[player_id]);
                     this.player_hand_counts[player_id] = hand_counter;
-                    if (gamedatas.player_hands[player_id] && player_id != this.player_id) {
+                    if (gamedatas.player_hands[player_id] && id !== this.player_id) {
                         // Game option to show player hands enabled
                         // (but no need to do so for current player)
                         this.player_hands[player_id] = [];
@@ -570,7 +582,7 @@ define([
                 // Observatory status
                 for (const i in gamedatas.observatory) {
                     const card = gamedatas.observatory[i];
-                    if (card.used == 1) {
+                    if (parseInt(card.used) === 1) {
                         // Mask card to show it is used
                         dojo.style('card_content_mask_' + card.id, 'display', 'block');
                     }
@@ -668,18 +680,16 @@ define([
                 `);
                 
                 // % of board width:
-                let hor_scale = 12.16;
+                let horStep = 12.16;
                 let hor_padding = 2.7;
-                let hor_adjust6 = 0.27;
                 // % of board height:
-                let ver_scale = 25;
-                let ver_padding = 48.33;
-                if (gameData.version == 2) {
-                    hor_scale = 12.35;
+                let verStep = 25;
+                let ver_padding = 48.13;
+                if (parseInt(gameData.version) === 2) {
+                    horStep = 12.35;
                     hor_padding = 2.2;
-                    hor_adjust6 = 0;
                     // % of board height:
-                    ver_scale = 24.81;
+                    verStep = 24.81;
                     ver_padding = 37.495;
                 }
                 const cards = document.getElementById('stp_cards');
@@ -688,8 +698,8 @@ define([
                     for (let x=0; x<8; x++)
                     {
                         // Count right to left; slight adjust for one misaligned column.
-                        const left = (7 - x) * hor_scale + hor_padding + (x === 6? hor_adjust6: 0);
-                        const top = y * ver_scale + ver_padding;
+                        const left = (7 - x) * horStep + hor_padding;
+                        const top = y * verStep + ver_padding;
                         cards.insertAdjacentHTML('beforebegin',
                             `<div id="square_${x}_${y}" class="stp_square" style="left: ${left}%; top: ${top}%;"></div>`);
                     }
@@ -966,8 +976,8 @@ define([
                 }
                 board.create(this, $(elem), this.cardwidth, this.cardheight);
                 board.image_items_per_row = this.card_art_row_size;
-                let cards = 'cards.png';
-                if (this.gamedatas.version == 2) {
+                let cards = 'cards.jpg';
+                if (parseInt(this.gamedatas.version) === 2) {
                     cards = 'cards2.jpg';
                 }
                 if (this.debug) {
@@ -1020,13 +1030,6 @@ define([
                 const y = Math.floor(card_type_id / this.card_art_row_size);
                 card.artx = 100 * x / (this.card_art_row_size - 1);
                 card.arty = 100 * y / (this.card_art_col_size - 1);
-                // First version image is a bit funky so need to tweak positions
-                if (this.gamedatas.version == 1) {
-                    card.artx += Math.floor(x / 3) * 0.1;
-                    if (y === 1) {
-                        card.arty -= 0.13;
-                    }
-                }
 
                 // card type = <type> [(<worker type> | Trading card [- <worker type>])]
                 if (card.card_type === "Worker") {

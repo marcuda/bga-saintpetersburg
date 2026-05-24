@@ -48,6 +48,13 @@
 
 /********* You can start writing your CSS below this line: **********/
 
+:root {
+    /* Card width when out of board, overridden in js setup. */
+    --stp-card-width-px: 70px;
+    /* Card height when out of board, overridden in js setup. */
+    --stp-card-height-px: 109px;
+}
+
 #stp_game_area {
     display: flex;
     flex-wrap: wrap;
@@ -61,7 +68,7 @@
 
 #stp_gameboard_height_sizer {
     width: 100%;
-    padding-bottom: 64.8648649%;
+    padding-bottom: 65.1179941%;
     position: relative;
     margin: 0;
 }
@@ -101,8 +108,8 @@
 }
 
 #stp_count_Worker {
-    left: 230px;
-    top: 128px;
+    left: 31%;
+    top: 27%;
 }
 
 .stp_2nd_edition #stp_count_Worker {
@@ -111,8 +118,8 @@
 }
 
 #stp_count_Building {
-    left: 372px;
-    top: 128px;
+    left: 50.3%;
+    top: 27%;
 }
 
 .stp_2nd_edition #stp_count_Building {
@@ -121,8 +128,8 @@
 }
 
 #stp_count_Aristocrat {
-    left: 517px;
-    top: 128px;
+    left: 70%;
+    top: 27%;
 }
 
 .stp_2nd_edition #stp_count_Aristocrat {
@@ -131,8 +138,8 @@
 }
 
 #stp_count_Trading {
-    left: 661px;
-    top: 128px;
+    left: 89.3%;
+    top: 27%;
 }
 
 .stp_2nd_edition #stp_count_Trading {
@@ -179,26 +186,28 @@
 }
 
 
-
-.stp_square, .stp_discard, .stp_maskcard, .stp_clickcard, .stp_card, .stp_deck, .stp_cardart_small {
-    width: 70px;
-    height: 112px;
+/* Card sized stuff on board (dimensions in % of board size). */
+.stp_square, .stp_discard, .stp_card, .stp_deck {
+    width: 9.46%;
+    height: 23.24%;
 }
 
-.stp_2nd_edition .stp_square, .stp_2nd_edition .stp_discard, .stp_2nd_edition .stp_clickcard, .stp_2nd_edition .stp_card, .stp_2nd_edition .stp_deck {
+/* Card sized stuff out of board (dimensions in pixels). */
+.stp_maskcard, .stp_clickcard, .stp_cardart_small {
+    width: var(--stp-card-width-px);
+    height: var(--stp-card-height-px);
+}
+
+/* Card sized stuff on board in 2nd edition (dimensions in % of board size). */
+.stp_2nd_edition .stp_square, .stp_2nd_edition .stp_discard, .stp_2nd_edition .stp_card, .stp_2nd_edition .stp_deck {
     width: 9.32%;
     height: 21.84%;
 }
 
-.stp_2nd_edition .stp_maskcard, .stp_2nd_edition .stp_clickcard, .stp_2nd_edition .stp_cardart_small {
-    width: 73.18px;
-    height: 112px;
-}
-
 .stp_discard {
     position: absolute;
-    left: 47px;
-    top: 26px;
+    left: 6.2%;
+    top: 5.2%;
 }
 
 .stp_2nd_edition .stp_discard {
@@ -260,7 +269,7 @@
 
 .stp_card {
     position: absolute;
-    background-image: url('img/cards.png');
+    background-image: url('img/cards.jpg');
     background-size: 1000%;
     cursor: pointer;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
@@ -350,7 +359,8 @@
 
 .stp_deck {
     position: absolute;
-    top: 40px;
+    /* Top of stack when vertical (not horizontal) in % of board size. */
+    top: 7.7%;
     background-image: url('img/cardbacks_big.jpg');
     background-size: 400%;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
@@ -365,7 +375,7 @@
 }
 
 .stp_deck_worker {
-    left: 185px;
+    left: 25%;
     background-position: 0 0;
 }
 
@@ -374,7 +384,7 @@
 }
 
 .stp_deck_building {
-    left: 327px;
+    left: 44.6%;
     background-position: 33.33% 0;
 }
 
@@ -384,7 +394,7 @@
 }
 
 .stp_deck_aristocrat {
-    left: 473px;
+    left: 64.3%;
     background-position: 66.67% 0;
 }
 
@@ -394,7 +404,7 @@
 }
 
 .stp_deck_trading {
-    left: 617px;
+    left: 83.8%;
     background-position: 100% 0;
 }
 
@@ -562,12 +572,13 @@
     cursor:pointer;
 }
 
+/* Class for card’s tooltip. */
 .stp_cardart {
     display:inline-block;
-    background-image:url('img/cards_big.jpg');
+    background-image:url('img/cards.jpg');
     background-size: 1000%;
-    width:96px;
-    height:150px;
+    width:255px;
+    height:397px;
     margin:10px;
     border:4px solid black;
     border-radius:18px
@@ -579,8 +590,9 @@
     height:200px;
 }
 
+/* Class of cards displayed for player hand in a tooltip */
 .stp_cardart_small {
-    background-image: url('img/cards.png');
+    background-image: url('img/cards.jpg');
     background-size: 1000%;
     margin: 1px;
     border: 1px solid black;
