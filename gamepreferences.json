@@ -28,13 +28,31 @@
     },
     "102": {
         "name": "Auto pass passes",
-        "needReload": true,
+        "needReload": false,
         "values": [
             {
                 "name": "Next action"
             },
             {
                 "name": "Immediately"
+            }
+        ]
+    },
+    "103": {
+        "name": "Board size",
+        "needReload": false,
+        "values": [
+            {
+                "name": "Automatic"
+            },
+            {
+                "name": "Small"
+            },
+            {
+                "name": "Medium"
+            },
+            {
+                "name": "Large"
             }
         ]
     }

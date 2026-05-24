@@ -49,10 +49,25 @@
 /********* You can start writing your CSS below this line: **********/
 
 :root {
+    /* Board width, overridden in js adaptInterface. */
+    --stp-board-size: 740px;
+    /* Height to width board ratio, read by js. */
+    --stp-board-height-to-width: 65.1179941%;
+    /* Right margin of board, overridden in js adaptInterface. */
     /* Card width when out of board, overridden in js setup. */
     --stp-card-width-px: 70px;
     /* Card height when out of board, overridden in js setup. */
     --stp-card-height-px: 109px;
+    /* My hand width, overridden in js adaptInterface. */
+    --stp-my-hand-width: 100%;
+    /* My hand height, overridden in js adaptInterface. */
+    --stp-my-hand-height: 145;
+    /* My hand margin-top, overridden in js adaptInterface. */
+    --stp-my-hand-margin-top: 10px;
+    /* My hand margin-left, overridden in js adaptInterface. */
+    --stp-my-hand-margin-left: unset;
+    /* My hand margin-right, overridden in js adaptInterface. */
+    --stp-my-hand-margin-right: unset;
 }
 
 #stp_game_area {
@@ -61,14 +76,14 @@
 }
 
 #stp_gameboard_width_sizer {
-    width: 740px;
+    width: var(--stp-board-size);
     margin: auto;
     flex-shrink: 0;
 }
 
 #stp_gameboard_height_sizer {
     width: 100%;
-    padding-bottom: 65.1179941%;
+    padding-bottom: var(--stp-board-height-to-width);
     position: relative;
     margin: 0;
 }
@@ -147,44 +162,14 @@
     top: 24.5%;
 }
 
-/* smallest screen */
 #stp_myhand_wrap {
-    width: 100%;
-    height: 145px;
+    width: var(--stp-my-hand-width);
+    height: var(--stp-my-hand-height);
+    margin-top: var(--stp-my-hand-margin-top);
+    margin-left: var(--stp-my-hand-margin-left);
     margin-bottom: 0;
+    margin-right: var(--stp-my-hand-margin-right);
 }
-
-/* medium screen */
-@media only screen and (min-width: 1185px) {
-    #stp_board_sizer {
-        margin-right: 10px;
-    }
-
-    #stp_myhand_wrap {
-        width: 150px;
-        height: 260px;
-        margin-top: 200px;
-        margin-right: auto;
-    }
-    .stp_2nd_edition #stp_myhand_wrap {
-        width: 157px;
-    }
-}
-
-/* large screen */
-@media only screen and (min-width: 1340px) {
-    #stp_myhand_wrap {
-        width: 300px;
-        height: 145px;
-        margin-top: 315px;
-    }
-    .stp_2nd_edition #stp_myhand_wrap {
-        width: 313px;
-        height: 145px;
-        margin-top: 315px;
-    }
-}
-
 
 /* Card sized stuff on board (dimensions in % of board size). */
 .stp_square, .stp_discard, .stp_card, .stp_deck {
@@ -217,10 +202,10 @@
 
 .stp_aritable {
     position: absolute;
-    width: 149px;
-    height: 52px;
-    left: 7px;
-    top: 156px;
+    width: 20.1%;
+    height: 10.8%;
+    left: 0.9%;
+    top: 32.5%;
 }
 
 .stp_2nd_edition .stp_aritable {

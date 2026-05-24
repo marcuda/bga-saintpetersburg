@@ -223,7 +223,14 @@ define([
 ],
     function(dojo, declare) {
         'use strict';
-        
+
+        // Board medium width in pixel:
+        const BOARD_MEDIUM_WIDTH = 740;
+        // Board large width in pixel:
+        const BOARD_LARGE_WIDTH = 1400;
+        // Board maximum width in pixel:
+        const BOARD_MAX_WIDTH = 2712;
+
         // Card width in pixel when out of board in first edition:
         const CARD_WIDTH_PX = 70;
         // Card height in pixel when out of board in first edition:
@@ -246,6 +253,19 @@ define([
         const PREF_AUTO_PASS = 102;
         const PREF_AP_NEXT_ACTION = 0;
         const PREF_AP_IMMEDIATELY = 1;
+
+        const PREF_BOARD_SIZE = 103;
+        const PREF_BS_AUTO = 0;
+        const PREF_BS_SMALL = 1;
+        const PREF_BS_MEDIUM = 2;
+        const PREF_BS_LARGE = 3;
+
+        const MY_HAND_MAX_WIDTH = 300;
+        const MY_HAND_MIN_WIDTH = 150;
+        const MY_HAND_MAX_HEIGHT = 260;
+        const MY_HAND_MIN_HEIGHT = 145;
+        const MY_HAND_PADDING = 20;
+        const MY_HAND_MARGIN = 10;
 
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function() {
@@ -281,6 +301,7 @@ define([
                 this.possible_moves = null;     // All possible moves for current player
                 this.constants = null;          // Constant values between client and server
                 this.is_trading = false;        // True if in client state for trading card
+                this.bga.userPreferences.onChange = (prefId, prefValue) => this.onPreferenceChange(prefId, prefValue);
             },
 
             /*
@@ -721,7 +742,162 @@ define([
                 }
 
             },
-            
+
+            onPreferenceChange: function(prefId, prefValue) {
+                if (this.debug) {
+                    console.log("Preference changed", prefId, prefValue, this.bga.userPreferences.get(prefId));
+                }
+
+                switch (prefId) {
+                    case PREF_BOARD_SIZE:
+                        this.onChangePrefBoardSize(prefValue);
+                        break;
+                    case PREF_CARDS_OVERLAP:
+                    case PREF_AUTO_PASS:
+                        // Nothing to do.
+                        break;
+                    default:
+                        if (this.debug) {
+                            console.log('Preference is not handled: ', prefId);
+                        }
+                        break;
+                }
+            },
+
+            onChangePrefBoardSize: function (prefValue) {
+                switch (prefValue) {
+                    case PREF_BS_AUTO:
+                        this.adaptInterface();
+                        break;
+                    case PREF_BS_SMALL:
+                        // interface_min_width is the min value of game_interface_width defined in gameinfos.inc.php.
+                        this.setBoardWidth(this.interface_min_width);
+                        break;
+                    case PREF_BS_MEDIUM:
+                        this.setBoardWidth(BOARD_MEDIUM_WIDTH);
+                        break;
+                    case PREF_BS_LARGE:
+                        this.setBoardWidth(BOARD_LARGE_WIDTH);
+                        break;
+                    default:
+                        if (this.debug) {
+                            console.log('Board size preference value is not handled: ', prefValue);
+                        }
+                        break;
+                }
+            },
+
+            setBoardWidth: function(boardWidth) {
+                if (this.debug) {
+                    console.log('setBoardWidth', boardWidth);
+                }
+                document.documentElement.style.setProperty('--stp-board-size', boardWidth + 'px');
+
+                this.adaptMyHand();
+            },
+
+            adaptMyHand: function () {
+                // Adapt my hand depending on play area size:
+                const playArea = this.bga.gameArea.getElement();
+                const availWidth = playArea.clientWidth;
+                const boardWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--stp-board-size'));
+
+                const boardHeightToWidthRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stp-board-height-to-width')) / 100;
+                const boardHeight = boardWidth * boardHeightToWidthRatio;
+
+                const availWidthForMyHand = availWidth - boardWidth;
+                if (availWidthForMyHand >= MY_HAND_MAX_WIDTH + MY_HAND_PADDING + MY_HAND_MARGIN) {
+                    document.documentElement.style.setProperty('--stp-my-hand-width', MY_HAND_MAX_WIDTH + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-height', MY_HAND_MIN_HEIGHT + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-top', 'auto');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-left', MY_HAND_MARGIN + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-right', 'auto');
+                } else if ((availWidthForMyHand >= MY_HAND_MIN_WIDTH + MY_HAND_PADDING + MY_HAND_MARGIN) && boardHeight >= MY_HAND_MAX_HEIGHT) {
+                    document.documentElement.style.setProperty('--stp-my-hand-width', MY_HAND_MIN_WIDTH + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-height', MY_HAND_MAX_HEIGHT + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-top', 'auto');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-left', MY_HAND_MARGIN + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-right', 'auto');
+                } else {
+                    // Must put my hand below board.
+                    document.documentElement.style.setProperty('--stp-my-hand-width', '100%');
+                    document.documentElement.style.setProperty('--stp-my-hand-height', MY_HAND_MIN_HEIGHT + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-top', MY_HAND_MARGIN + 'px');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-left', 'unset');
+                    document.documentElement.style.setProperty('--stp-my-hand-margin-right', 'unset');
+                }
+                if (this.debug) {
+                    console.log('Available width for my hand: ', availWidthForMyHand);
+                }
+            },
+
+            onScreenWidthChange: function() {
+                if (this.debug) {
+                    console.log('onScreenWidthChange');
+                }
+                if (this.bga.userPreferences.get(PREF_BOARD_SIZE) === PREF_BS_AUTO) {
+                    this.adaptInterface();
+                } else {
+                    this.adaptMyHand();
+                }
+            },
+
+            adaptInterface: function() {
+                if (this.debug) {
+                    console.log('adaptInterface');
+                }
+                if (this.bga.userPreferences.get(PREF_BOARD_SIZE) !== PREF_BS_AUTO) {
+                    // Size is fixed, do nothing.
+                    return;
+                }
+
+                if (document.getElementById('stp_game_area') === null) {
+                    if (this.debug) {
+                        console.log('adaptInterface: interface is not yet built.');
+                    }
+                    return;
+                }
+                // Adapt interface depending on play area size:
+                const playArea = this.bga.gameArea.getElement();
+                const availWidth = playArea.clientWidth;
+
+                const getTotalHeight = (nodeId) => {
+                    return document.getElementById(nodeId).offsetHeight + parseInt(dojo.style($(nodeId), 'margin-top'))
+                        + parseInt(dojo.style($(nodeId), 'margin-bottom'));
+                };
+
+                const availHeight = window.innerHeight - (getTotalHeight('topbar') + getTotalHeight('page-title'));
+                if (this.debug) {
+                    console.log('Available space', availWidth, availHeight, this.interface_min_width);
+                }
+
+                const boardHeightToWidthRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stp-board-height-to-width')) / 100;
+                const playerTableHeight = document.getElementById(`stp_playertable_${this.gamedatas.players_in_order[0]}_wrap`).clientHeight;
+
+                const boardMaxHeight = availHeight - playerTableHeight;
+                const boardMaxWidth = Math.min(BOARD_MAX_WIDTH, availWidth, Math.max(this.interface_min_width, boardMaxHeight / boardHeightToWidthRatio));
+
+                let myHandWidth = MY_HAND_MIN_WIDTH;
+                let myHandHeight = MY_HAND_MAX_HEIGHT;
+                if (boardMaxHeight < MY_HAND_MAX_HEIGHT + MY_HAND_PADDING)
+                {
+                    myHandWidth = MY_HAND_MAX_WIDTH;
+                    myHandHeight = MY_HAND_MIN_HEIGHT;
+                }
+                let boardWidth = boardMaxWidth;
+                const boardMaxWidthWithHandAtSide = availWidth - (myHandWidth + MY_HAND_PADDING + MY_HAND_MARGIN);
+                const boardHeightWithHandAtSide = boardMaxWidthWithHandAtSide * boardHeightToWidthRatio;
+                if (boardMaxWidthWithHandAtSide >= this.interface_min_width && boardHeightWithHandAtSide >= (myHandHeight + MY_HAND_PADDING)) {
+                    // Set board width to a size allowing my hand at its side.
+                    boardWidth = Math.min(boardMaxWidth, boardMaxWidthWithHandAtSide);
+                }
+                if (this.debug) {
+                    console.log(`Player cards height: ${playerTableHeight}; board max height: ${boardMaxHeight}; board width: ${boardWidth}.`);
+                }
+
+                this.setBoardWidth(boardWidth);
+            },
+
             isAutoPassImmediate: function() {
                 if (this.debug) {
                     console.log('isAutoPassImmediate', this.bga.userPreferences.get(PREF_AUTO_PASS));
@@ -1171,16 +1347,29 @@ define([
 
                 dojo.place(this.formatCard(x, y, row, col), 'stp_cards');
 
-                const card_div = this.getCardDiv(row, col);
-                this.placeOnObject(card_div, src);
-                this.slideToObject(card_div, this.getBoardDiv(row, col)).play();
+                const cardDiv = this.getCardDiv(row, col);
+                this.placeOnObject(cardDiv, src);
+                this.slideCard(cardDiv, this.getBoardDiv(row, col));
 
-                this.addTooltipHtml(card_div, this.getCardTooltip(idx, 0));
-                dojo.connect($(card_div), 'onclick', this, 'onSelectCard');
+                this.addTooltipHtml(cardDiv, this.getCardTooltip(idx, 0));
+                dojo.connect($(cardDiv), 'onclick', this, 'onSelectCard');
             },
             
             formatCard: function(x, y, row, col) {
                 return `<div class="stp_card" id="card_${col}_${row}" style="background-position:${x}% ${y}%"></div>`;
+            },
+
+            slideCard: function(cardDiv, dest) {
+                const animation = this.slideToObject(cardDiv, dest);
+                dojo.connect(animation, 'onEnd', () => {
+                    const destElem = document.getElementById(dest);
+                    const destElemTop = destElem.style.top;
+                    const destElemLeft = destElem.style.left;
+                    const cardElem = document.getElementById(cardDiv);
+                    cardElem.style.top = destElemTop;
+                    cardElem.style.left = destElemLeft;
+                });
+                animation.play();
             },
 
             /*
@@ -1722,6 +1911,7 @@ define([
                         }
 
                         if (!card_info.trades.includes(parseInt(this.client_state_args.trade_id))) {
+                            // TODO check if wrong type or not enough rubbles and set message accordingly.
                             this.showMessage(_("Wrong type of card to displace"), "error");
                         } else {
                             if (this.client_state_args.row == this.constants.hand) {
@@ -1947,6 +2137,8 @@ define([
 
                 this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
                 this.setIncome(notif.args.player_id, notif.args.income);
+                // Board size might have to be adjusted to keep all current player bought cards visible.
+                this.adaptInterface();
             },
 
             /*
@@ -2065,10 +2257,10 @@ define([
                     if (new_col !== old_col) {
                         const old_card = this.getCardDiv(row, old_col);
                         const new_card = this.getCardDiv(row, new_col);
-                        // Slide card right to new position
-                        this.slideToObject(old_card, this.getBoardDiv(row, new_col)).play();
                         // Update card DOM id for new position
                         dojo.attr(old_card, 'id', new_card);
+                        // Slide card right to new position
+                        this.slideCard(new_card, this.getBoardDiv(row, new_col));
                         this.resetTooltip(old_card, new_card);
                     }
                 }
@@ -2087,10 +2279,9 @@ define([
                     const col = notif.args.columns[i];
                     const old_card = this.getCardDiv(0, col);
                     const new_card = this.getCardDiv(1, col);
-                    // Slide card down to new position
-                    this.slideToObject(old_card, this.getBoardDiv(1, col)).play();
                     // Update card DOM id for new position
                     dojo.attr(old_card, 'id', new_card);
+                    this.slideCard(new_card, this.getBoardDiv(1, col));
                     this.resetTooltip(old_card, new_card);
                 }
             },
