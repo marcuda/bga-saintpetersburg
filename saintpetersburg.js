@@ -216,12 +216,12 @@ const customStockUpdateDisplay = function (from) {
 
 
 define([
-    "dojo", "dojo/_base/declare",
-    "ebg/core/gamegui",
-    "ebg/counter",
-    "ebg/stock"
-],
-    function(dojo, declare) {
+        "dojo", "dojo/_base/declare",
+        "ebg/core/gamegui",
+        "ebg/counter",
+        "ebg/stock"
+    ],
+    function (dojo, declare) {
         'use strict';
 
         // Board medium width in pixel:
@@ -244,12 +244,12 @@ define([
         const PREF_PUBLISHER_MESSAGE = 100;
         const PREF_PM_ON = 0;
         const PREF_PM_OFF = 1;
-        
+
         const PREF_CARDS_OVERLAP = 101;
         const PREF_CO_HORIZONTAL = 0;
         const PREF_CO_NONE = 1;
         const PREF_CO_VERTICAL = 2;
-        
+
         const PREF_AUTO_PASS = 102;
         const PREF_AP_NEXT_ACTION = 0;
         const PREF_AP_IMMEDIATELY = 1;
@@ -268,7 +268,7 @@ define([
         const MY_HAND_MARGIN = 10;
 
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
-            constructor: function() {
+            constructor: function () {
                 // Enabled console logs if true
                 this.debug = false;
 
@@ -317,7 +317,7 @@ define([
                 "gamedatas" argument contains all datas retrieved by your "getAllDatas" PHP method.
             */
 
-            setup: function(gamedatas) {
+            setup: function (gamedatas) {
                 if (this.debug) {
                     console.log("Starting game setup");
                     console.log(gamedatas);
@@ -343,7 +343,7 @@ define([
                 document.documentElement.style.setProperty('--stp-card-height-px', this.cardheight + 'px');
 
                 this.buildBoard(gamedatas);
-                
+
                 if (this.bga.userPreferences.get(PREF_PUBLISHER_MESSAGE) === PREF_PM_ON) {
                     // Show message from publisher player has not seen/acknowledged
                     dojo.style('publisher_msg', 'display', 'block');
@@ -452,7 +452,7 @@ define([
 
                     // Player income
                     // Counters for rubles and points, each an array for Worker/Building/Aristocrat phases
-                    this.player_income[player_id] = { 'rubles': [], 'points': [] };
+                    this.player_income[player_id] = {'rubles': [], 'points': []};
                     for (let i = 0; i < 3; i++) {
                         this.player_income[player_id].rubles[i] = new ebg.counter();
                         this.player_income[player_id].rubles[i].create('income_rubles_p' + player_id + '_' + i);
@@ -617,13 +617,13 @@ define([
                 }
             },
 
-            buildBoard: function(gameData) {
+            buildBoard: function (gameData) {
                 if (this.debug) {
                     console.log("buildBoard");
                 }
                 const PUBLISHER_MSG = dojo.string.substitute(
                     _('A word from ${publisherName}: the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the new artwork is ready.'),
-                    { publisherName: 'Hans im Glück' });
+                    {publisherName: 'Hans im Glück'});
                 this.bga.gameArea.getElement().insertAdjacentHTML('beforeend', `
                     <div id="publisher_msg" style="display: none; margin-bottom: 5px; margin-right: 10px">
                         <div class="roundedbox" style="width: 100%;">
@@ -699,7 +699,7 @@ define([
                     <div id="button_4"></div>
                     <div id="button_autopass"></div>
                 `);
-                
+
                 // % of board width:
                 let horStep = 12.16;
                 let hor_padding = 2.7;
@@ -714,10 +714,8 @@ define([
                     ver_padding = 37.495;
                 }
                 const cards = document.getElementById('stp_cards');
-                for (let y=0; y<2; y++)
-                {
-                    for (let x=0; x<8; x++)
-                    {
+                for (let y = 0; y < 2; y++) {
+                    for (let x = 0; x < 8; x++) {
                         // Count right to left; slight adjust for one misaligned column.
                         const left = (7 - x) * horStep + hor_padding;
                         const top = y * verStep + ver_padding;
@@ -725,7 +723,7 @@ define([
                             `<div id="square_${x}_${y}" class="stp_square" style="left: ${left}%; top: ${top}%;"></div>`);
                     }
                 }
-                
+
                 const playerTables = document.getElementById('stp_playertables');
                 // Template block for player boards
                 // Get correct order relative to current player
@@ -831,7 +829,7 @@ define([
                 }
             },
 
-            onScreenWidthChange: function() {
+            onScreenWidthChange: function () {
                 if (this.debug) {
                     console.log('onScreenWidthChange');
                 }
@@ -842,7 +840,7 @@ define([
                 }
             },
 
-            adaptInterface: function() {
+            adaptInterface: function () {
                 if (this.debug) {
                     console.log('adaptInterface');
                 }
@@ -879,8 +877,7 @@ define([
 
                 let myHandWidth = MY_HAND_MIN_WIDTH;
                 let myHandHeight = MY_HAND_MAX_HEIGHT;
-                if (boardMaxHeight < MY_HAND_MAX_HEIGHT + MY_HAND_PADDING)
-                {
+                if (boardMaxHeight < MY_HAND_MAX_HEIGHT + MY_HAND_PADDING) {
                     myHandWidth = MY_HAND_MAX_WIDTH;
                     myHandHeight = MY_HAND_MIN_HEIGHT;
                 }
@@ -898,7 +895,7 @@ define([
                 this.setBoardWidth(boardWidth);
             },
 
-            isAutoPassImmediate: function() {
+            isAutoPassImmediate: function () {
                 if (this.debug) {
                     console.log('isAutoPassImmediate', this.bga.userPreferences.get(PREF_AUTO_PASS));
                 }
@@ -912,7 +909,7 @@ define([
             // onEnteringState: this method is called each time we are entering into a new game state.
             //                  You can use this method to perform some user interface changes at this moment.
             //
-            onEnteringState: function(stateName, args) {
+            onEnteringState: function (stateName, args) {
                 if (this.debug) console.log('Entering state: ' + stateName);
 
                 switch (stateName) {
@@ -978,7 +975,7 @@ define([
             // onLeavingState: this method is called each time we are leaving a game state.
             //                 You can use this method to perform some user interface changes at this moment.
             //
-            onLeavingState: function(stateName) {
+            onLeavingState: function (stateName) {
                 if (this.debug) console.log('Leaving state: ' + stateName);
 
                 // Reset selections for all items
@@ -996,7 +993,7 @@ define([
             // onUpdateActionButtons: in this method you can manage "action buttons" that are displayed in the
             //                        action status bar (ie: the HTML links in the status bar).
             //        
-            onUpdateActionButtons: function(stateName, args) {
+            onUpdateActionButtons: function (stateName, args) {
                 if (this.debug) console.log('onUpdateActionButtons: ' + stateName);
                 if (this.debug) console.log(args);
 
@@ -1094,7 +1091,7 @@ define([
             /*
              * Update all income values for the player
              */
-            setIncome: function(player_id, income) {
+            setIncome: function (player_id, income) {
                 for (let i = 0; i < 3; i++) {
                     // Use getValue/incValue rather than setValue to get the change highlights
                     let v = this.player_income[player_id].rubles[i].getValue();
@@ -1107,32 +1104,32 @@ define([
             /*
              * Return the div id for the given card location
              */
-            getCardDiv: function(row, col) {
+            getCardDiv: function (row, col) {
                 return this.getLocationDiv(row, col, 'card');
             },
 
             /*
              * Return the div id for the given board location
              */
-            getBoardDiv: function(row, col) {
+            getBoardDiv: function (row, col) {
                 return this.getLocationDiv(row, col, 'square');
             },
 
-            getLocationDiv: function(row, col, prefix) {
+            getLocationDiv: function (row, col, prefix) {
                 return prefix + '_' + col + '_' + row;
             },
 
             /*
              * Return true if button is disabled (grayed-out)
              */
-            isButtonDisabled: function(button) {
+            isButtonDisabled: function (button) {
                 return dojo.hasClass(button.id, 'bgabutton_gray');
             },
 
             /*
              * Player clicks okay on note from publisher
              */
-            ackPublisherMessage: function() {
+            ackPublisherMessage: function () {
                 // Remove message banner
                 dojo.style('publisher_msg', 'display', 'none');
                 // Save user preference to not show banner
@@ -1142,7 +1139,7 @@ define([
             /*
              * Build stock element for player hand and tables
              */
-            createCardStock: function(elem, mode, overlap) {
+            createCardStock: function (elem, mode, overlap) {
                 const board = new ebg.stock();
                 if (overlap !== 0) {
                     board.updateDisplay = customStockUpdateDisplay;
@@ -1169,7 +1166,7 @@ define([
             /*
              * Create additional content for card elements
              */
-            setupNewCard: function(card_div, card_type_id, card_id) {
+            setupNewCard: function (card_div, card_type_id, card_id) {
                 this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id, 0));
 
                 // Observatory is only card needing extra elements
@@ -1197,7 +1194,7 @@ define([
             /*
              * Generate HTML tooltip for given card
              */
-            getCardTooltip: function(card_type_id, eff_cost) {
+            getCardTooltip: function (card_type_id, eff_cost) {
                 // Get card info and copy to modify
                 const card = dojo.clone(this.card_infos[card_type_id]);
 
@@ -1254,7 +1251,7 @@ define([
              * Update backend tooltip array to move a tooltip from one div to
              * another, for when a card is moved and its id is changed
              */
-            resetTooltip: function(old_id, new_id) {
+            resetTooltip: function (old_id, new_id) {
                 // XXX 
                 // This manipulates BGA Tooltip API rather than recreating it from scratch
                 // Potentially an issue with future API changes...
@@ -1268,7 +1265,7 @@ define([
             /*
              * Set the card backs and detailed tooltip for player hand to show all cards held
              */
-            updateHandTooltip: function(player_id) {
+            updateHandTooltip: function (player_id) {
                 // Update card backs in player panel
                 // Remove existing icons
                 for (let i = 0; i < 4; i++) {
@@ -1332,7 +1329,7 @@ define([
              * Card specified by its sprite index (idx), source element (src)
              * for slide animation (i.e. card stack)
              */
-            addCardOnBoard: function(row, col, idx, src) {
+            addCardOnBoard: function (row, col, idx, src) {
                 if (src === undefined) {
                     src = 'stp_gameboard'
                 }
@@ -1354,12 +1351,12 @@ define([
                 this.addTooltipHtml(cardDiv, this.getCardTooltip(idx, 0));
                 dojo.connect($(cardDiv), 'onclick', this, 'onSelectCard');
             },
-            
-            formatCard: function(x, y, row, col) {
+
+            formatCard: function (x, y, row, col) {
                 return `<div class="stp_card" id="card_${col}_${row}" style="background-position:${x}% ${y}%"></div>`;
             },
 
-            slideCard: function(cardDiv, dest) {
+            slideCard: function (cardDiv, dest) {
                 const animation = this.slideToObject(cardDiv, dest);
                 dojo.connect(animation, 'onEnd', () => {
                     const destElem = document.getElementById(dest);
@@ -1375,7 +1372,7 @@ define([
             /*
              * Rotate and/or place starting player tokens on player boards
              */
-            setTokens: function(tokens, animate) {
+            setTokens: function (tokens, animate) {
                 const delay = 1000; // 1s animation
                 const players = {};
 
@@ -1412,7 +1409,7 @@ define([
                 if (animate) {
                     // Call this function again without animation to set permanent token icons
                     // A bit overly complicated but animation callbacks were not working
-                    setTimeout(dojo.hitch(this, function() {
+                    setTimeout(dojo.hitch(this, function () {
                         this.setTokens(tokens, false);
                     }), delay);
                 }
@@ -1421,7 +1418,7 @@ define([
             /*
              * Rotate card stacks for given phase
              */
-            setPhase: function(phase) {
+            setPhase: function (phase) {
                 const prev_phase = this.current_phase;
                 this.current_phase = phase;
                 if (prev_phase !== '') {
@@ -1446,7 +1443,7 @@ define([
                 dojo.forEach(
                     ['transform', 'WebkitTransform', 'msTransform',
                         'MozTransform', 'OTransform'],
-                    function(name) {
+                    function (name) {
                         if (typeof dojo.body().style[name] != 'undefined') {
                             transform = name;
                         }
@@ -1455,7 +1452,7 @@ define([
 
                 // Card stack for current phase is up and all others rotated 90 deg
                 // Rotate all stacks to the correct angle for the given phase
-                dojo.forEach(this.phases, function(name) {
+                dojo.forEach(this.phases, function (name) {
                     const node = dojo.byId('deck_' + name);
                     let curve = [-90, -90]; // no-op
 
@@ -1470,7 +1467,7 @@ define([
                     // Rotate
                     new dojo.Animation({
                         curve: curve,
-                        onAnimate: function(v) {
+                        onAnimate: function (v) {
                             node.style[transform] = 'rotate(' + v + 'deg)';
                         }
                     }).play();
@@ -1480,9 +1477,9 @@ define([
             /*
              * Highlight selected card and any possible moves
              */
-            setSelections: function() {
+            setSelections: function () {
                 if (this.debug) {
-                     console.log('setSelections', this.possible_moves, this.is_trading);
+                    console.log('setSelections', this.possible_moves, this.is_trading);
                 }
 
                 if (this.is_trading) {
@@ -1516,7 +1513,7 @@ define([
                                     div = this.player_tables[this.player_id].getItemDivId(col);
                                 }
                                 if (this.debug) {
-                                     console.log('setSelections', row, col, card, div);
+                                    console.log('setSelections', row, col, card, div);
                                 }
                                 dojo.addClass(div, 'stp_selectable');
 
@@ -1558,7 +1555,7 @@ define([
             /*
              * Add card drawn with Observatory to middle of board
              */
-            showObservatoryChoice: function(args) {
+            showObservatoryChoice: function (args) {
                 const card_id = this.getCardDiv(this.constants.observatory, 0);
                 if ($(card_id)) {
                     // Card already exists on board
@@ -1593,7 +1590,7 @@ define([
              * OR
              *   "       "         "       "   is empty meaning game will end soon
              */
-            setDeckTooltip: function(phase, cards) {
+            setDeckTooltip: function (phase, cards) {
                 let txt = "";
                 if (phase === this.current_phase) {
                     // Mark as active phase
@@ -1623,7 +1620,7 @@ define([
             /*
              * Player clicks an active card
              */
-            onSelectCard: function(evt) {
+            onSelectCard: function (evt) {
                 dojo.stopEvent(evt);
                 // Selection of a card is allowed if and only if play card action is allowed (not taking rubles and hand in account).
                 if (!this.checkAction('actPlayCard'))
@@ -1656,7 +1653,7 @@ define([
             /*
              * Player clicks 'Add to hand' button
              */
-            onAddCard: function(evt) {
+            onAddCard: function (evt) {
                 dojo.stopEvent(evt);
                 if (!this.checkAction('actAddCard'))
                     return;
@@ -1672,7 +1669,7 @@ define([
             /*
              * Player clicks 'Buy' button for card
              */
-            onBuyCard: function(evt) {
+            onBuyCard: function (evt) {
                 dojo.stopEvent(evt);
                 if (!this.checkAction('actBuyCard'))
                     return;
@@ -1709,7 +1706,7 @@ define([
             /*
              * Player clicks 'Buy' button for card (from hand)
              */
-            onPlayCard: function(evt) {
+            onPlayCard: function (evt) {
                 dojo.stopEvent(evt);
                 if (!this.checkAction('actPlayCard')) {
                     this.playerHand.unselectAll();
@@ -1742,7 +1739,7 @@ define([
                     });
                 } else {
                     // Send play action to server
-                    this.bga.actions.performAction('actPlayCard', { card_id: this.client_state_args.col });
+                    this.bga.actions.performAction('actPlayCard', {card_id: this.client_state_args.col});
                 }
 
                 this.playerHand.unselectAll();
@@ -1751,7 +1748,7 @@ define([
             /*
              * Player clicks 'Cancel' button (several actions).
              */
-            onCancelCard: function(evt) {
+            onCancelCard: function (evt) {
                 dojo.stopEvent(evt);
                 // Cancel is allowed if and only if add card action is allowed (not taking rubles and hand in account).
                 if (this.checkAction('actAddCard')) {
@@ -1763,7 +1760,7 @@ define([
             /*
              * Player clicks 'Pass' button (not for Pub)
              */
-            onPass: function(evt) {
+            onPass: function (evt) {
                 dojo.stopEvent(evt);
                 this.bga.actions.performAction('actPass');
             },
@@ -1771,32 +1768,32 @@ define([
             /*
              * Player clicks 'Auto pass' button
              */
-            onAutoPass: function(evt) {
+            onAutoPass: function (evt) {
                 dojo.stopEvent(evt);
                 const pass = this.isAutoPassImmediate() && !this.gamedatas.autopass && this.isCurrentPlayerActive()
                     && !this.gamedatas.buyOnly && this.checkAction('actPass', true);
                 if (this.debug) {
-                     console.log('onAutoPass', pass);
+                    console.log('onAutoPass', pass);
                 }
                 // No action check (player can be not active)
                 this.bga.actions.performAction('actAutoPass', {
                     pass: pass
-                }, { checkAction: false });
+                }, {checkAction: false});
             },
 
             /*
              * Player clicks 'Cancel' button on auto pass banner
              */
-            onCancelAutoPass: function(evt) {
+            onCancelAutoPass: function (evt) {
                 dojo.stopEvent(evt);
                 // No action check (player may not be active)
-                this.bga.actions.performAction('actCancelAutoPass', {}, { checkAction: false });
+                this.bga.actions.performAction('actCancelAutoPass', {}, {checkAction: false});
             },
 
             /*
              * Player clicks '-1' button for Pub
              */
-            onOneLessPoint: function(evt) {
+            onOneLessPoint: function (evt) {
                 dojo.stopEvent(evt);
 
                 this.pub_points -= 1;
@@ -1826,7 +1823,7 @@ define([
             /*
              * Player clicks '+1' button for Pub
              */
-            onOneMorePoint: function(evt) {
+            onOneMorePoint: function (evt) {
                 dojo.stopEvent(evt);
 
                 this.pub_points += 1;
@@ -1856,16 +1853,16 @@ define([
             /*
              * Player clicks 'Buy' button for Pub
              */
-            onBuyPoints: function(evt) {
+            onBuyPoints: function (evt) {
                 dojo.stopEvent(evt);
-                this.bga.actions.performAction('actBuyPoints', { points: this.pub_points });
+                this.bga.actions.performAction('actBuyPoints', {points: this.pub_points});
                 this.pub_points = 0;
             },
 
             /*
              * Player clicks a card in their hand
              */
-            onPlayerHandSelectionChanged: function() {
+            onPlayerHandSelectionChanged: function () {
                 const items = this.playerHand.getSelectedItems();
 
                 if (items.length > 0) {
@@ -1895,7 +1892,7 @@ define([
             /*
              * Player clicks a card on their table
              */
-            onPlayerTableSelectionChanged: function() {
+            onPlayerTableSelectionChanged: function () {
                 const items = this.playerTable.getSelectedItems();
                 if (this.debug) {
                     console.log('onPlayerTableSelectionChanged', items, this.is_trading);
@@ -1904,20 +1901,37 @@ define([
                 if (items.length > 0) {
                     if (this.checkAction('actBuyCard') && this.is_trading) {
                         // Displace card with trading card
-                        this.client_state_args.trade_id = items[0].id;
+                        this.client_state_args.trade_id = parseInt(items[0].id);
                         const card_info = this.possible_moves[this.client_state_args.row][this.client_state_args.col];
                         if (this.debug) {
                             console.log('onPlayerTableSelectionChanged', card_info, this.client_state_args);
                         }
 
-                        if (!card_info.trades.includes(parseInt(this.client_state_args.trade_id))) {
-                            // TODO check if wrong type or not enough rubbles and set message accordingly.
-                            this.showMessage(_("Wrong type of card to displace"), "error");
+                        if (!card_info.trades.includes(this.client_state_args.trade_id)) {
+                            const selectedCardInfo = this.card_infos[items[0].type];
+                            const tradeCardInfo = this.card_infos[card_info.card_type];
+                            if (this.debug) {
+                                console.log('onPlayerTableSelectionChanged', tradeCardInfo, selectedCardInfo);
+                            }
+                            const tradeCost = Math.max(1, parseInt(card_info.cost) - selectedCardInfo.card_cost);
+                            if (tradeCost > this.player_rubles[this.bga.players.getCurrentPlayerId()].getValue()) {
+                                this.showMessage(_("You do not have enough rubles"), "error");
+                            } else {
+                                // Player as enough money. If
+                                if (parseInt(items[0].type) === parseInt(this.constants.observatory) && tradeCardInfo.card_trade_type === "Building") {
+                                    // Card to displace is observatory and trade card trade type is building, it means
+                                    // that the observatory was used and can not be displaced.
+                                    this.showMessage(_("You cannot displace an Observatory after using it"), "error");
+                                } else {
+                                    // Only remaining case is the selected card is not of the right type.
+                                    this.showMessage(_("Wrong type of card to displace"), "error");
+                                }
+                            }
                         } else {
-                            if (this.client_state_args.row == this.constants.hand) {
+                            if (parseInt(this.client_state_args.row) === parseInt(this.constants.hand)) {
                                 // Play from hand
                                 this.bga.actions.performAction('actPlayCard',
-                                    { card_id: this.client_state_args.col, trade_id: this.client_state_args.trade_id });
+                                    {card_id: this.client_state_args.col, trade_id: this.client_state_args.trade_id});
                             } else {
                                 // Buy from board
                                 this.bga.actions.performAction('actBuyCard', this.client_state_args);
@@ -1935,7 +1949,7 @@ define([
             /*
              * Player clicks Observatory on their board
              */
-            onClickObservatory: function(evt) {
+            onClickObservatory: function (evt) {
                 dojo.stopEvent(evt);
 
                 if (this.is_trading) {
@@ -1964,7 +1978,7 @@ define([
             /*
              * Player clicks Observatory button
              */
-            onButtonObservatory: function(evt) {
+            onButtonObservatory: function (evt) {
                 dojo.stopEvent(evt);
 
                 // No card event to pull id from so just use first listed card in moves
@@ -1977,7 +1991,7 @@ define([
             /*
              * Player uses Observatory (card or button)
              */
-            useObservatory: function(obs_card_id) {
+            useObservatory: function (obs_card_id) {
                 if (!this.checkAction('actUseObservatory'))
                     return;
 
@@ -1997,27 +2011,29 @@ define([
             /*
              * Player clicks a card stack
              */
-            onClickDeck: function(evt) {
+            onClickDeck: function (evt) {
                 if (this.debug) {
                     console.log('onClickDeck: ' + evt.currentTarget.id);
                 }
                 dojo.stopEvent(evt);
                 if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable') && this.checkAction('actUseObservatory')) {
-                    this.bga.actions.performAction('actUseObservatory', { deck: evt.currentTarget.id, card_id: this.client_state_args.card_id});
+                    this.bga.actions.performAction('actUseObservatory', {
+                        deck: evt.currentTarget.id,
+                        card_id: this.client_state_args.card_id
+                    });
                 }
             },
 
             /*
              * Player clicks 'Discard' button for Observatory
              */
-            onDiscardCard: function(evt) {
+            onDiscardCard: function (evt) {
                 if (this.debug) {
                     console.log('onDiscardCard');
                 }
                 dojo.stopEvent(evt);
                 this.bga.actions.performAction('actDiscardCard');
             },
-
 
 
             ///////////////////////////////////////////////////
@@ -2032,7 +2048,7 @@ define([
                       your saintpetersburg.game.php file.
             
             */
-            setupNotifications: function() {
+            setupNotifications: function () {
                 if (this.debug) {
                     console.log('notifications subscriptions setup');
                 }
@@ -2061,7 +2077,7 @@ define([
             /*
              * Message for player toggling auto pass
              */
-            notif_autoPass: function(notif) {
+            notif_autoPass: function (notif) {
                 if (this.debug) {
                     console.log('autopass notif', notif);
                 }
@@ -2086,7 +2102,7 @@ define([
             /*
              * Message for player passing
              */
-            notif_pass: function(notif) {
+            notif_pass: function (notif) {
                 if (this.debug) {
                     console.log('pass notif', notif);
                 }
@@ -2099,7 +2115,7 @@ define([
             /*
              * Message for player buying card
              */
-            notif_buyCard: function(notif) {
+            notif_buyCard: function (notif) {
                 if (this.debug) {
                     console.log('buy card notif', notif);
                 }
@@ -2144,7 +2160,7 @@ define([
             /*
              * Message for player adding card to their hand
              */
-            notif_addCard: function(notif) {
+            notif_addCard: function (notif) {
                 if (this.debug) console.log('add card notif');
                 if (this.debug) console.log(notif);
 
@@ -2171,7 +2187,7 @@ define([
                     // Other player - move card to player board and destroy
                     const anim = this.slideToObject(this.getCardDiv(row, col),
                         this.bga.playerPanels.getElement(notif.args.player_id));
-                    dojo.connect(anim, 'onEnd', function(node) {
+                    dojo.connect(anim, 'onEnd', function (node) {
                         dojo.destroy(node);
                     });
                     anim.play();
@@ -2192,7 +2208,7 @@ define([
             /*
              * Message for player playing card from their hand
              */
-            notif_playCard: function(notif) {
+            notif_playCard: function (notif) {
                 if (this.debug) {
                     console.log('buy card notif', notif);
                 }
@@ -2245,7 +2261,7 @@ define([
             /*
              * Move all cards on board to right-most positions
              */
-            notif_shiftRight: function(notif) {
+            notif_shiftRight: function (notif) {
                 if (this.debug) {
                     console.log('notif shift right', notif);
                 }
@@ -2270,7 +2286,7 @@ define([
             /*
              * Move all cards on board from upper to lower row
              */
-            notif_shiftDown: function(notif) {
+            notif_shiftDown: function (notif) {
                 if (this.debug) {
                     console.log('notif shift down', notif);
                 }
@@ -2289,7 +2305,7 @@ define([
             /*
              * Message for each player's end of phase scoring
              */
-            notif_scorePhase: function(notif) {
+            notif_scorePhase: function (notif) {
                 if (this.debug) {
                     console.log('notif score phase', notif);
                 }
@@ -2304,7 +2320,7 @@ define([
             /*
              * Message for new phase starting
              */
-            notif_nextPhase: function(notif) {
+            notif_nextPhase: function (notif) {
                 if (this.debug) {
                     console.log('notif next phase', notif);
                 }
@@ -2339,7 +2355,7 @@ define([
             /*
              * Message for all updated player scores
              */
-            notif_newScores: function(notif) {
+            notif_newScores: function (notif) {
                 if (this.debug) {
                     console.log('notif new scores', notif);
                 }
@@ -2360,7 +2376,7 @@ define([
              * Message for discarding cards from board either
              * from new round or discarded Observatory draw
              */
-            notif_discard: function(notif) {
+            notif_discard: function (notif) {
                 if (this.debug) {
                     console.log('notif discard', notif);
                 }
@@ -2380,7 +2396,7 @@ define([
 
                     // Move to discard pile and destroy
                     const anim = this.slideToObject(this.getCardDiv(row, col), 'discard_pile');
-                    dojo.connect(anim, 'onEnd', function(node) {
+                    dojo.connect(anim, 'onEnd', function (node) {
                         dojo.destroy(node);
                     });
                     anim.play();
@@ -2390,7 +2406,7 @@ define([
             /*
              * Message for new round starting
              */
-            notif_newRound: function(notif) {
+            notif_newRound: function (notif) {
                 if (this.debug) {
                     console.log('notif new round', notif);
                 }
@@ -2410,7 +2426,7 @@ define([
             /*
              * Message for player buying points with Pub
              */
-            notif_buyPoints: function(notif) {
+            notif_buyPoints: function (notif) {
                 if (this.debug) {
                     console.log('notif buy points', notif);
                 }
@@ -2428,7 +2444,7 @@ define([
             /*
              * Message for player drawing a card with Observatory
              */
-            notif_observatory: function(notif) {
+            notif_observatory: function (notif) {
                 if (this.debug) {
                     console.log('notif observatory', notif);
                 }
@@ -2440,7 +2456,7 @@ define([
             /*
              * Message for end of game starting
              */
-            notif_lastRound: function() {
+            notif_lastRound: function () {
                 // In addition to log show message in game window
                 this.showMessage(_('This is now the final round!'), 'info');
                 dojo.style('stp_final_label', 'display', 'block');
