@@ -250,6 +250,9 @@ define([
         const PREF_CO_NONE = 1;
         const PREF_CO_VERTICAL = 2;
 
+        const HORIZONTAL_OVERLAP = 60;
+        const VERTICAL_OVERLAP = 30;
+
         const PREF_AUTO_PASS = 102;
         const PREF_AP_NEXT_ACTION = 0;
         const PREF_AP_IMMEDIATELY = 1;
@@ -354,9 +357,9 @@ define([
                 let duplicate_overlap = 0;
                 this.duplicate_vertical = false;
                 if (this.bga.userPreferences.get(PREF_CARDS_OVERLAP) === PREF_CO_HORIZONTAL) {
-                    duplicate_overlap = 60;
+                    duplicate_overlap = HORIZONTAL_OVERLAP;
                 } else if (this.bga.userPreferences.get(PREF_CARDS_OVERLAP) === PREF_CO_VERTICAL) {
-                    duplicate_overlap = 30;
+                    duplicate_overlap = VERTICAL_OVERLAP;
                     this.duplicate_vertical = true;
                 }
 
@@ -751,6 +754,8 @@ define([
                         this.onChangePrefBoardSize(prefValue);
                         break;
                     case PREF_CARDS_OVERLAP:
+                        this.onChangePrefOverlap(prefValue);
+                        break;
                     case PREF_AUTO_PASS:
                         // Nothing to do.
                         break;
@@ -782,6 +787,36 @@ define([
                             console.log('Board size preference value is not handled: ', prefValue);
                         }
                         break;
+                }
+            },
+
+            onChangePrefOverlap: function (prefValue) {
+                let overlap = 0;
+                switch (prefValue) {
+                    case PREF_CO_NONE:
+                        this.duplicate_vertical = false;
+                        break;
+                    case PREF_CO_HORIZONTAL:
+                        this.duplicate_vertical = false;
+                        overlap = HORIZONTAL_OVERLAP;
+                        break;
+                    case PREF_CO_VERTICAL:
+                        this.duplicate_vertical = true;
+                        overlap = VERTICAL_OVERLAP;
+                        break;
+                    default:
+                        if (this.debug) {
+                            console.log('Card overlap preference value is not handled: ', prefValue);
+                        }
+                        return;
+                }
+                if (typeof this.player_tables != "undefined") {
+                    for (const playerId in this.player_tables) {
+                        const board = this.player_tables[playerId];
+                        board.duplicate_overlap = overlap;
+                        board.duplicate_vertical = this.duplicate_vertical;
+                        board.updateDisplay();
+                    }
                 }
             },
 
