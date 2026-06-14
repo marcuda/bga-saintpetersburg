@@ -305,6 +305,7 @@ class Game extends \Bga\GameFramework\Table
 
         // Cards counts for each deck
         $result['decks'] = $this->cards->countCardsInLocations();
+        $result['lastDiscarded'] = $this->cards->getCardOnTop("discard");
 
         // Full card info used for tooltips
         $result['card_infos'] = $this->getCardInfos();
@@ -324,7 +325,8 @@ class Game extends \Bga\GameFramework\Table
             'top_row' => 0,
             'bottom_row' => 1,
             'hand' => ROW_HAND,
-            'observatory' => ROW_OBSERVATORY
+            'observatory' => ROW_OBSERVATORY,
+            'discardRow' => ROW_DISCARD
         );
 
         $result['buyOnly'] = $this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0;

@@ -56,6 +56,7 @@ if (!defined("CARD_PUB")) {
     define("BOTTOM_ROW", "board_bottom");
     define("ROW_HAND", 33);
     define("ROW_OBSERVATORY", CARD_OBSERVATORY);
+    define("ROW_DISCARD", 99);
 
     // I18N
     // Cannot translate phases above as they are used in client logic

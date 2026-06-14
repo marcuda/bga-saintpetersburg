@@ -68,6 +68,9 @@
     --stp-my-hand-margin-left: unset;
     /* My hand margin-right, overridden in js adaptInterface. */
     --stp-my-hand-margin-right: unset;
+    /* Discard position, read by js. */
+    --stp-discard-top: 5.2%;
+    --stp-discard-left: 6.2%;
 }
 
 #stp_game_area {
@@ -191,8 +194,8 @@
 
 .stp_discard {
     position: absolute;
-    left: 6.2%;
-    top: 5.2%;
+    left: var(--stp-discard-left);
+    top: var(--stp-discard-top);
 }
 
 .stp_2nd_edition .stp_discard {
@@ -259,6 +262,10 @@
     cursor: pointer;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
     border-radius: 14.3% / 8.93%;
+}
+
+.stp_card.stp_discarded {
+    cursor: auto;
 }
 
 .stp_2nd_edition .stp_card {

@@ -270,6 +270,11 @@ define([
         const MY_HAND_PADDING = 20;
         const MY_HAND_MARGIN = 10;
 
+        // Game logic constants
+        // Fake column numbers to be used to handle discarded cards.
+        const DISCARDED_COL = 0;
+        const MOVE_TO_DISCARD_COL = 1;
+
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function () {
                 // Enabled console logs if true
@@ -305,6 +310,8 @@ define([
                 this.constants = null;          // Constant values between client and server
                 this.is_trading = false;        // True if in client state for trading card
                 this.bga.userPreferences.onChange = (prefId, prefValue) => this.onPreferenceChange(prefId, prefValue);
+
+                this.onSelectCard = this.onSelectCard.bind(this);
             },
 
             /*
@@ -322,8 +329,7 @@ define([
 
             setup: function (gamedatas) {
                 if (this.debug) {
-                    console.log("Starting game setup");
-                    console.log(gamedatas);
+                    console.log("Starting game setup", gamedatas);
                 }
 
                 if (parseInt(gamedatas.version) === 2) {
@@ -596,11 +602,11 @@ define([
                 }
                 for (const i in gamedatas.board_top) {
                     const card = gamedatas.board_top[i];
-                    this.addCardOnBoard(0, card.location_arg, card.type_arg);
+                    this.addCardOnBoard(0, card.location_arg, parseInt(card.type_arg));
                 }
                 for (const i in gamedatas.board_bottom) {
                     const card = gamedatas.board_bottom[i];
-                    this.addCardOnBoard(1, card.location_arg, card.type_arg);
+                    this.addCardOnBoard(1, card.location_arg, parseInt(card.type_arg));
                 }
 
                 // Observatory status
@@ -612,12 +618,21 @@ define([
                     }
                 }
 
+                // Discard pile
+                if (gamedatas.lastDiscarded !== null) {
+                    this.addCardOnBoard(this.constants.discardRow, DISCARDED_COL, parseInt(gamedatas.lastDiscarded.type_arg))
+                }
+
                 // Setup game notifications to handle (see "setupNotifications" method below)
                 this.setupNotifications();
 
                 if (this.debug) {
                     console.log("Ending game setup");
                 }
+            },
+
+            getCSSVariable: function(name) {
+                return getComputedStyle(document.documentElement).getPropertyValue(name);
             },
 
             buildBoard: function (gameData) {
@@ -833,9 +848,9 @@ define([
                 // Adapt my hand depending on play area size:
                 const playArea = this.bga.gameArea.getElement();
                 const availWidth = playArea.clientWidth;
-                const boardWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--stp-board-size'));
+                const boardWidth = parseInt(this.getCSSVariable('--stp-board-size'));
 
-                const boardHeightToWidthRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stp-board-height-to-width')) / 100;
+                const boardHeightToWidthRatio = parseFloat(this.getCSSVariable('--stp-board-height-to-width')) / 100;
                 const boardHeight = boardWidth * boardHeightToWidthRatio;
 
                 const availWidthForMyHand = availWidth - boardWidth;
@@ -904,7 +919,7 @@ define([
                     console.log('Available space', availWidth, availHeight, this.interface_min_width);
                 }
 
-                const boardHeightToWidthRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stp-board-height-to-width')) / 100;
+                const boardHeightToWidthRatio = parseFloat(this.getCSSVariable('--stp-board-height-to-width')) / 100;
                 const playerTableHeight = document.getElementById(`stp_playertable_${this.gamedatas.players_in_order[0]}_wrap`).clientHeight;
 
                 const boardMaxHeight = availHeight - playerTableHeight;
@@ -1361,47 +1376,59 @@ define([
 
             /*
              * Place a card on the game board at the given row,col location.
-             * Card specified by its sprite index (idx), source element (src)
+             * Card specified by its card type, source element (src)
              * for slide animation (i.e. card stack)
              */
-            addCardOnBoard: function (row, col, idx, src) {
+            addCardOnBoard: function (row, col, cardType, src) {
                 if (src === undefined) {
                     src = 'stp_gameboard'
                 }
 
-                // Sprite index
-                const x = 100 * (idx % this.card_art_row_size) / (this.card_art_row_size - 1);
-                const y = 100 * Math.floor(idx / this.card_art_row_size) / (this.card_art_col_size - 1);
+                this.placeNewCard(cardType, row, col);
 
-                if (this.debug) {
-                    console.log('adding card type ' + idx + ' at col,row ' + col + ',' + row);
-                }
-
-                dojo.place(this.formatCard(x, y, row, col), 'stp_cards');
-
+                const discarded = (row == this.constants.discardRow);
                 const cardDiv = this.getCardDiv(row, col);
-                this.placeOnObject(cardDiv, src);
-                this.slideCard(cardDiv, this.getBoardDiv(row, col));
-
-                this.addTooltipHtml(cardDiv, this.getCardTooltip(idx, 0));
-                dojo.connect($(cardDiv), 'onclick', this, 'onSelectCard');
+                if (discarded) {
+                    const discardedCard = document.getElementById(cardDiv);
+                    discardedCard.classList.add("stp_discarded");
+                    discardedCard.style.top = this.getCSSVariable('--stp-discard-top');
+                    discardedCard.style.left = this.getCSSVariable('--stp-discard-left');
+                } else {
+                    this.placeOnObject(cardDiv, src);
+                    this.slideCard(cardDiv, this.getBoardDiv(row, col));
+                    document.getElementById(cardDiv).addEventListener("click", this.onSelectCard);
+                }
+                this.addTooltipHtml(cardDiv, this.getCardTooltip(cardType, 0));
             },
 
             formatCard: function (x, y, row, col) {
                 return `<div class="stp_card" id="card_${col}_${row}" style="background-position:${x}% ${y}%"></div>`;
             },
 
+            placeNewCard: function (cardType, row, col) {
+                // Sprite index
+                const x = 100 * (cardType % this.card_art_row_size) / (this.card_art_row_size - 1);
+                const y = 100 * Math.floor(cardType / this.card_art_row_size) / (this.card_art_col_size - 1);
+
+                if (this.debug) {
+                    console.log('adding card type ' + cardType + ' at col,row ' + col + ',' + row);
+                }
+                dojo.place(this.formatCard(x, y, row, col), 'stp_cards');
+            },
+
             slideCard: function (cardDiv, dest) {
                 const animation = this.slideToObject(cardDiv, dest);
                 dojo.connect(animation, 'onEnd', () => {
-                    const destElem = document.getElementById(dest);
-                    const destElemTop = destElem.style.top;
-                    const destElemLeft = destElem.style.left;
-                    const cardElem = document.getElementById(cardDiv);
-                    cardElem.style.top = destElemTop;
-                    cardElem.style.left = destElemLeft;
+                    this.placeAt(cardDiv, dest);
                 });
                 animation.play();
+            },
+
+            placeAt: function (cardDivId, destId) {
+                const destElem = document.getElementById(destId);
+                const cardElem = document.getElementById(cardDivId);
+                cardElem.style.top = destElem.style.top;
+                cardElem.style.left = destElem.style.left;
             },
 
             /*
@@ -1606,17 +1633,13 @@ define([
                 const num_cards = this.deck_counters[args.card.type].incValue(-1);
                 this.setDeckTooltip(args.card.type, num_cards);
 
-                // Sprite index
-                const idx = args.card.type_arg;
-                const x = 100 * (idx % this.card_art_row_size) / (this.card_art_row_size - 1);
-                const y = 100 * Math.floor(idx / this.card_art_row_size) / (this.card_art_col_size - 1);
-
+                const cardType = parseInt(args.card.type_arg);
                 // Place and animate card draw
-                dojo.place(this.formatCard(x, y, this.constants.observatory, 0), 'stp_cards');
+                this.placeNewCard(cardType, this.constants.observatory, 0);
                 this.placeOnObject(card_id, 'deck_' + args.card.type);
                 dojo.addClass(card_id, 'stp_selected');
                 this.slideToObject(card_id, 'stp_gameboard').play();
-                this.addTooltipHtml(card_id, this.getCardTooltip(args.card.type_arg, args.cost));
+                this.addTooltipHtml(card_id, this.getCardTooltip(cardType, args.cost));
             },
 
             /*
@@ -2170,9 +2193,20 @@ define([
                 }
 
                 if (notif.args.trade_id > 0) {
-                    // Remove displaced card from table
-                    this.player_tables[notif.args.player_id].removeFromStockById(
-                        notif.args.trade_id, 'discard_pile');
+                    // Remove displaced card from table.
+                    const displacedCard = this.player_tables[notif.args.player_id].getItemById(notif.args.trade_id);
+                    // Duplicate the card going to be removed from player table to place it on top of to be removed one.
+                    this.placeNewCard(displacedCard.type, this.constants.discardRow, MOVE_TO_DISCARD_COL);
+                    const discardedCardId = this.getCardDiv(this.constants.discardRow, MOVE_TO_DISCARD_COL);
+                    this.placeOnObject(discardedCardId, `stp_playertable_${notif.args.player_id}_item_${displacedCard.id}`);
+                    // Remove from player table.
+                    this.player_tables[notif.args.player_id].removeFromStockById(displacedCard.id);
+                    // Slide copy to discard.
+                    const anim = this.slideToObject(discardedCardId, 'discard_pile');
+                    dojo.connect(anim, 'onEnd', (node)=> {
+                        this.setAsLastDiscarded(discardedCardId);
+                    });
+                    anim.play();
                 }
 
                 // Move card from board to player table
@@ -2373,7 +2407,7 @@ define([
                 // Draw new cards onto board
                 let draw = 0;
                 for (const i in notif.args.cards) {
-                    this.addCardOnBoard(0, i, notif.args.cards[i], deck);
+                    this.addCardOnBoard(0, i, parseInt(notif.args.cards[i]), deck);
                     draw++;
                 }
 
@@ -2419,6 +2453,7 @@ define([
                 // Clear all pass
                 this.enableAllPlayerPanels();
 
+                const lastIndex = notif.args.cards.length - 1;
                 for (const i in notif.args.cards) {
                     const card = notif.args.cards[i];
                     // Card location
@@ -2430,12 +2465,33 @@ define([
                     }
 
                     // Move to discard pile and destroy
-                    const anim = this.slideToObject(this.getCardDiv(row, col), 'discard_pile');
-                    dojo.connect(anim, 'onEnd', function (node) {
-                        dojo.destroy(node);
+                    const discardedCardId = this.getCardDiv(row, col);
+                    const anim = this.slideToObject(discardedCardId, 'discard_pile');
+                    dojo.connect(anim, 'onEnd', (node)=> {
+                        if (i != lastIndex) {
+                            dojo.destroy(node);
+                        } else {
+                            this.setAsLastDiscarded(discardedCardId);
+                        }
                     });
                     anim.play();
                 }
+            },
+
+            setAsLastDiscarded: function (discardedCardId) {
+                const newId = this.getCardDiv(this.constants.discardRow, DISCARDED_COL);
+                if ($(newId)) {
+                    // Destroy previous discarded card.
+                    dojo.destroy(newId);
+                }
+                // Update card DOM id for new position
+                dojo.attr(discardedCardId, 'id', newId);
+                this.resetTooltip(discardedCardId, newId);
+                const discardedCard = document.getElementById(newId);
+                discardedCard.classList.add("stp_discarded");
+                discardedCard.removeEventListener("click", this.onSelectCard);
+                discardedCard.style.top = this.getCSSVariable('--stp-discard-top');
+                discardedCard.style.left = this.getCSSVariable('--stp-discard-left');
             },
 
             /*
