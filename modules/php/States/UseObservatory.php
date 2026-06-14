@@ -45,18 +45,25 @@ class UseObservatory extends CardState
         if ($cards == null || count($cards) != 1) {
             throw new SystemException("Impossible observatory recall");
         }
-        // Possible actions
+
         $card = array_shift($cards);
         $rubles = $game->getRubles($activePlayerId);
         $hand_full = $game->isHandFull($activePlayerId);
-        $possible_moves = $game->getPossibleMoves($activePlayerId, $card, $rubles, $hand_full);
         $obs_id = $game->getGameStateValue("activated_observatory");
-        $possible_moves['card'] = $card;
-        $possible_moves['obs_id'] = $game->getGameStateValue('observatory_' . $obs_id . '_id');
-        $possible_moves['player_id'] = $activePlayerId;
-        $possible_moves['i18n'] = array('card_name');
-        
-        return $possible_moves;
+
+        return [
+            '_private' => [
+                $activePlayerId => [
+                    'possibleMoves' => $game->getPossibleMoves($activePlayerId, $card, $rubles, $hand_full)
+                ]
+            ],
+            // Drawn card is not private (rules book is not saying it but tournaments rules are usually not private).
+            'card' => $card,
+            'obs_id' => $game->getGameStateValue('observatory_' . $obs_id . '_id'),
+            'player_id' => $activePlayerId,
+            'card_name' => $game->getCardName($card),
+            'i18n' => array('card_name')
+        ];
     }
 
     /**

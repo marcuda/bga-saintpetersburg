@@ -36,19 +36,20 @@ class PlayerTurn extends CardState
     /**
      * Get the state arguments to be sent to client.
      * Main turn for player to select a card and add/buy/trade.
-     * Return all possible moves
-     *
-     * N.B. pseudo private info included here (cards in hand)
-     * although the same info is available to any player
-     * paying attention and/or and keeping notes and is
-     * also recorded in the logs. TODO: fix it?
+     * Return all possible moves.
      *
      * @param int $activePlayerId The active player id.
      * @return array All possible moves.
      */
     public function getArgs(int $activePlayerId): array
     {
-        return $this->game->getAllPossibleMoves($activePlayerId);
+        return [
+            '_private' => [
+                $activePlayerId => [
+                    'possibleMoves' => $this->game->getAllPossibleMoves($activePlayerId)
+                ]
+            ],
+        ];
     }
 
     /**

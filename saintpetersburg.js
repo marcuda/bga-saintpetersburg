@@ -960,7 +960,9 @@ define([
             //                  You can use this method to perform some user interface changes at this moment.
             //
             onEnteringState: function (stateName, args) {
-                if (this.debug) console.log('Entering state: ' + stateName);
+                if (this.debug) {
+                    console.log(`Entering state: “${stateName}”`, args);
+                }
 
                 switch (stateName) {
                     case 'PlayerTurn':
@@ -969,16 +971,20 @@ define([
                                 this.gamedatas.gamestate.descriptionmyturn = '${you} must choose a card';
                                 this.updatePageTitle();
                             } else {
-                                if (this.debug) console.log(this.getActivePlayerId());
+                                if (this.debug) {
+                                    console.log(this.getActivePlayerId());
+                                }
                                 const player = this.gamedatas.players[this.getActivePlayerId()];
                                 $("pagemaintitletext").innerHTML = dojo.string.substitute(_('${actplayer} must choose a card'),
                                     {actplayer: '<span style="font-weight:bold;color:#' + player.color + ';">' + player.name + '</span>'});
                             }
                         }
-                        this.possible_moves = args.args;
                         this.client_state_args = {};
                         if (this.isCurrentPlayerActive()) {
+                            this.possible_moves = args.args._private.possibleMoves;
                             this.setSelections();
+                        } else {
+                            this.possible_moves = {};
                         }
                         break;
                     case 'client_tradeCard':
@@ -1002,21 +1008,25 @@ define([
                     case 'UseObservatory':
                         this.possible_moves = {};
                         this.possible_moves[this.constants.observatory] = {};
-                        this.possible_moves[this.constants.observatory][0] = args.args;
+                        if (this.isCurrentPlayerActive()) {
+                            this.possible_moves[this.constants.observatory][0] = args.args._private.possibleMoves;
+                        } else {
+                            args.args._private = { possibleMoves: { cost: -1 }};
+                        }
                         this.client_state_args = {
                             row: this.constants.observatory,
                             col: 0
                         };
-                        this.showObservatoryChoice(args.args);
+                        this.showObservatoryChoice(args.args.obs_id, args.args.card, args.args._private.possibleMoves.cost);
                         break;
                     case 'UsePub':
                         // Pub negates auto pass
                         dojo.style('autopass_msg', 'display', 'none');
-                        if (args.args[this.player_id] === undefined) {
-                            // Should not get here...
+                        if (args.args._private === undefined) {
+                            // Current player does not have a pub (but someone else does).
                             this.max_pub_points = 0;
                         } else {
-                            this.max_pub_points = args.args[this.player_id];
+                            this.max_pub_points = args.args._private.maxPoints;
                         }
                         break;
                 }
@@ -1044,14 +1054,15 @@ define([
             //                        action status bar (ie: the HTML links in the status bar).
             //        
             onUpdateActionButtons: function (stateName, args) {
-                if (this.debug) console.log('onUpdateActionButtons: ' + stateName);
-                if (this.debug) console.log(args);
+                if (this.debug) {
+                    console.log(`onUpdateActionButtons: “${stateName}”`, args);
+                }
 
                 if (this.isCurrentPlayerActive()) {
                     switch (stateName) {
                         case 'PlayerTurn':
                             // Options: observatory?, pass
-                            if (args[this.constants.observatory].length === undefined) {
+                            if (args._private.possibleMoves[this.constants.observatory].length === undefined) {
                                 // args is possible moves and will have an object, which has no length,
                                 // for Observatory if valid, otherwise it will be an empty array (length == 0)
                                 this.addActionButton("button_1", _("Observatory"), "onButtonObservatory");
@@ -1100,7 +1111,7 @@ define([
                         case 'UsePub': {
                             // Options: -1, +1, buy, pass
                             let color = "blue";
-                            if (args[this.player_id] == 0) { // max points player can buy
+                            if (parseInt(args._private.maxPoints[this.player_id]) === 0) {
                                 color = "gray";
                             }
                             this.addActionButton("button_1", "-1", "onOneLessPoint", null, false, "gray");
@@ -1113,10 +1124,11 @@ define([
                             this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
                         case 'UseObservatory': {
+                            const possibleMoves = args._private.possibleMoves;
                             // Options: buy, add, cancel
-                            const buy_color = args.can_buy ? "blue" : "gray";
-                            const add_color = args.can_add ? "blue" : "gray";
-                            this.addActionButton("button_1", _("Buy") + " (" + args.cost + ")", "onBuyCard", null, false, buy_color);
+                            const buy_color = possibleMoves.can_buy ? "blue" : "gray";
+                            const add_color = possibleMoves.can_add ? "blue" : "gray";
+                            this.addActionButton("button_1", _("Buy") + " (" + possibleMoves.cost + ")", "onBuyCard", null, false, buy_color);
                             this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                             this.addActionButton("button_3", _("Discard"), "onDiscardCard");
                             break;
@@ -1617,7 +1629,10 @@ define([
             /*
              * Add card drawn with Observatory to middle of board
              */
-            showObservatoryChoice: function (args) {
+            showObservatoryChoice: function (obs_id, card, effectiveCost) {
+                if (this.debug) {
+                    console.log('showObservatoryChoice', obs_id, card, effectiveCost);
+                }
                 const card_id = this.getCardDiv(this.constants.observatory, 0);
                 if ($(card_id)) {
                     // Card already exists on board
@@ -1627,19 +1642,19 @@ define([
                 }
 
                 // Disable Observatory
-                dojo.style('card_content_mask_' + args.obs_id, 'display', 'block');
+                dojo.style('card_content_mask_' + obs_id, 'display', 'block');
 
                 // Remove one card from selected deck
-                const num_cards = this.deck_counters[args.card.type].incValue(-1);
-                this.setDeckTooltip(args.card.type, num_cards);
+                const num_cards = this.deck_counters[card.type].incValue(-1);
+                this.setDeckTooltip(card.type, num_cards);
 
-                const cardType = parseInt(args.card.type_arg);
+                const cardType = parseInt(card.type_arg);
                 // Place and animate card draw
                 this.placeNewCard(cardType, this.constants.observatory, 0);
-                this.placeOnObject(card_id, 'deck_' + args.card.type);
+                this.placeOnObject(card_id, 'deck_' + card.type);
                 dojo.addClass(card_id, 'stp_selected');
                 this.slideToObject(card_id, 'stp_gameboard').play();
-                this.addTooltipHtml(card_id, this.getCardTooltip(cardType, args.cost));
+                this.addTooltipHtml(card_id, this.getCardTooltip(cardType, effectiveCost));
             },
 
             /*

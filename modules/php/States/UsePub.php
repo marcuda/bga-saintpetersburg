@@ -44,26 +44,24 @@ class UsePub extends GameState
     function getArgs(): array
     {
         $game = $this->game;
-        $players = array();
+        $maxPointsPerPlayerId = [];
         $pubs = $game->cards->getCardsOfTypeInLocation(Phase::Building->name, CARD_PUB, 'table');
         
         // Determine which players own the Pubs
         foreach ($pubs as $card) {
             $player_id = $card['location_arg'];
-            if (key_exists($player_id, $players)) {
-                $players[$player_id] += 5;
+            if (key_exists($player_id, $maxPointsPerPlayerId)) {
+                $maxPointsPerPlayerId[$player_id] += 5;
             } else {
-                $players[$player_id] = 5;
+                $maxPointsPerPlayerId[$player_id] = 5;
             }
         }
-        
+        $players = [];
         // Determine available rubles for Pub owner(s)
-        foreach ($players as $player_id => $points) {
+        foreach ($maxPointsPerPlayerId as $player_id => $maxPoints) {
             $rubles = $game->getRubles($player_id);
             $poss_buys = intdiv($rubles, 2);
-            // TODO Rubles are private by default, $poss_buys is indicating the minimum of rubles a player owns
-            //   and might even give away a max, it should not be public.
-            $players[$player_id] = min($points, $poss_buys);
+            $players['_private'][$player_id]['maxPoints'] = min($maxPoints, $poss_buys);
         }
         
         return $players;
