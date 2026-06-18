@@ -333,8 +333,8 @@ define([
                 }
 
                 if (parseInt(gamedatas.version) === 2) {
-                    this.dontPreloadImage('board_full.jpg');
-                    this.dontPreloadImage('cardbacks_big.jpg');
+                    this.dontPreloadImage('board.jpg');
+                    this.dontPreloadImage('cardbacks.jpg');
                     this.dontPreloadImage('cards.jpg');
                     this.dontPreloadImage('icons.jpg');
                     dojo.addClass(dojo.body(), 'stp_2nd_edition');

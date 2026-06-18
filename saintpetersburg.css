@@ -98,7 +98,7 @@
 #stp_gameboard {
     width: 100%;
     height: 100%;
-    background-image: url('img/board_full.jpg');
+    background-image: url('img/board.jpg');
     background-size: contain;
     background-repeat: no-repeat;
     position: absolute;
@@ -177,7 +177,7 @@
 /* Card sized stuff on board (dimensions in % of board size). */
 .stp_square, .stp_discard, .stp_card, .stp_deck {
     width: 9.46%;
-    height: 23.24%;
+    height: 22.8%;
 }
 
 /* Card sized stuff out of board (dimensions in pixels). */
@@ -320,7 +320,7 @@
 [class^="stp_cardicon_"] {
     width: 15px;
     height: 24px;
-    background-image: url('img/cardbacks_big.jpg');
+    background-image: url('img/cardbacks.jpg');
     background-size: cover;
     display: inline-block;
     margin: 2px;
@@ -353,10 +353,10 @@
     position: absolute;
     /* Top of stack when vertical (not horizontal) in % of board size. */
     top: 7.7%;
-    background-image: url('img/cardbacks_big.jpg');
+    background-image: url('img/cardbacks.jpg');
     background-size: 400%;
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
-    border-radius: 6px;
+    border-radius: 14.3% / 8.93%;
 }
 
 .stp_2nd_edition .stp_deck {
