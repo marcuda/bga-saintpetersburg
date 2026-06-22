@@ -160,7 +160,7 @@ const customStockUpdateDisplay = function (from) {
                 dojo.addClass(item_div_obj, "stockitem_unselectable");
             }
             dojo.connect(item_div_obj, "onclick", this, "onClickOnItem");
-            if (parseInt(type.image_position) !== 0) {
+            if (type.image_position !== 0) {
                 let _115d = 0;
                 let _115e = 0;
                 if (this.image_items_per_row) {
@@ -578,7 +578,7 @@ define([
                             <td>45</td>
                             <td>55</td>
                         </tr></tbody></table>
-                    </div>`, 'aristocrat_table');
+                    </div>`);
 
                 // Player hand (no hand for spectator)
                 if (!this.bga.players.isCurrentPlayerSpectator()) {
@@ -968,15 +968,12 @@ define([
                     case 'PlayerTurn':
                         if (this.gamedatas.buyOnly) {
                             if (this.isCurrentPlayerActive()) {
-                                this.gamedatas.gamestate.descriptionmyturn = '${you} must choose a card';
-                                this.updatePageTitle();
+                                this.bga.statusBar.setTitle(_('${you} must choose a card'));
                             } else {
                                 if (this.debug) {
                                     console.log(this.getActivePlayerId());
                                 }
-                                const player = this.gamedatas.players[this.getActivePlayerId()];
-                                $("pagemaintitletext").innerHTML = dojo.string.substitute(_('${actplayer} must choose a card'),
-                                    {actplayer: '<span style="font-weight:bold;color:#' + player.color + ';">' + player.name + '</span>'});
+                                this.bga.statusBar.setTitle(_('${actplayer} must choose a card'));
                             }
                         }
                         this.client_state_args = {};
@@ -1145,7 +1142,7 @@ define([
 
             /*
             
-                Here, you can define some utility methods that you can use everywhere in your javascript
+                Here, you can define some utility methods that you can use everywhere in your JavaScript
                 script.
             
             */
@@ -1340,7 +1337,7 @@ define([
                 const backs = this.player_hand_backs[player_id];
                 for (let i = 0; i < backs.length; i++) {
                     const card_type = backs[i];
-                    var div = 'cardicon_p' + player_id + '_' + i;
+                    const div = 'cardicon_p' + player_id + '_' + i;
                     dojo.addClass(div, 'stp_cardicon_' + card_type);
                     this.addTooltip(div, _(card_type) + ' ' + _('card in player hand'), '');
                 }
@@ -1711,7 +1708,7 @@ define([
                 this.client_state_args.col = col;
                 this.client_state_args.row = row;
 
-                let desc = '';
+                let desc;
                 if (this.gamedatas.buyOnly) {
                     desc = _("${card_name}: ${you} may buy");
                 } else {
@@ -2218,7 +2215,7 @@ define([
                     this.player_tables[notif.args.player_id].removeFromStockById(displacedCard.id);
                     // Slide copy to discard.
                     const anim = this.slideToObject(discardedCardId, 'discard_pile');
-                    dojo.connect(anim, 'onEnd', (node)=> {
+                    dojo.connect(anim, 'onEnd', ()=> {
                         this.setAsLastDiscarded(discardedCardId);
                     });
                     anim.play();
@@ -2316,6 +2313,7 @@ define([
                     // Other players - add card to table
                     this.player_tables[notif.args.player_id].addToStockWithId(
                         notif.args.card_idx, notif.args.card_id,
+                        // Despite linter warning, it is working that way.
                         this.bga.playerPanels.getElement(notif.args.player_id));
                 }
 
@@ -2446,7 +2444,7 @@ define([
 
                 for (const player_id in notif.args.scores) {
                     const newScore = notif.args.scores[player_id];
-                    this.bga.playerPanels.getScoreCounter(player_id).toValue(newScore);
+                    this.bga.playerPanels.getScoreCounter(parseInt(player_id)).toValue(newScore);
                     if (notif.args.rubles && this.player_rubles[player_id]) {
                         // End game only when rubles are traded for points
                         const newRubles = notif.args.rubles[player_id];
