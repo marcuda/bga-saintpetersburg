@@ -48,7 +48,28 @@ class ScorePhase extends GameState
         
         if ($phase == Phase::Building) {
             // Allow pub to be used if owned
-            return UsePub::class;
+            $nextState = UsePub::class;
+            if ($game->optNewSociety()) {
+                // Some other buildings might have to be handled before pub.
+                $nextPlayer = $game->getGuildHallPlayer();
+                if (!is_null($nextPlayer)) {
+                    $nextState = UseGuildHall::class;
+                } else {
+                    $nextPlayer = $game->getTradingHousePlayer();
+                    if (!is_null($nextPlayer)) {
+                        if ($game->getRubles($nextPlayer) > 0) {
+                            $nextState = UseTradingHouse::class;
+                        } else {
+                            $game->skipTradingHouse($nextPlayer);
+                            $nextPlayer = null;
+                        }
+                    }
+                }
+                if (!is_null($nextPlayer)) {
+                    $this->gamestate->changeActivePlayer($nextPlayer);
+                }
+            }
+            return $nextState;
         }
         return NextPhase::class;
     }
@@ -69,7 +90,37 @@ class ScorePhase extends GameState
         $scores = array();
         foreach ($players as $player_id => $player) {
             list($points, $rubles) = $game->computeScoring($player_id, $phase);
-            
+
+            if ($rubles < 0) {
+                // Player is losing money (Sycophant), check they can afford it:
+                $balance = $game->getRubles($player_id) + $rubles;
+                $sycophants = $game->cards->getCardsOfTypeInLocation(Phase::Aristocrat->name, CARD_SYCOPHANT, 'table', $player_id);
+                while ($balance < 0) {
+                    // Must discard one Sycophant.
+                    $sycophant = array_shift($sycophants);
+                    // Discard:
+                    $game->cards->playCard($sycophant['id']);
+                    ++$balance;
+                    ++$rubles;
+                    if ($balance < 0) {
+                        $this->bga->notify->all('discard', '${player_name} can not pay Sycophant and must discard it.', [
+                            'player_id' => $player_id,
+                            'player_name' => $game->getPlayerNameById($player_id),
+                            'card_id' => $sycophant['id']
+                        ]);
+                    } else {
+                        // Last discarded card, also update unique aristocrats and income.
+                        $this->bga->notify->all('tableDiscard', '${player_name} can not pay Sycophant and must discard it.', [
+                            'player_id' => $player_id,
+                            'player_name' => $game->getPlayerNameById($player_id),
+                            'card_id' => $sycophant['id'],
+                            'aristocrats' => $game->uniqueAristocrats($player_id),
+                            'income' => $game->getIncome($player_id)
+                        ]);
+                    }
+                }
+            }
+
             // Update scores, stats, and log
             $scores[$player_id] = $this->bga->playerScore->inc($player_id, $points, null);
             $this->bga->playerStats->inc('points_total', $points, $player_id);
@@ -78,7 +129,7 @@ class ScorePhase extends GameState
             $game->incRubles($player_id, $rubles);
             $this->bga->playerStats->inc('rubles_total', $rubles, $player_id);
             $this->bga->playerStats->inc('rubles_' . $phase->name, $rubles, $player_id);
-            
+
             $msg = clienttranslate('${player_name} earns ${rubles} Ruble(s) and ${points} Point(s)');
             $this->bga->notify->all('scorePhase', $msg, array(
                 'player_id' => $player_id,
@@ -104,11 +155,15 @@ class ScorePhase extends GameState
         $scores = array();
         $rubles = array();
         foreach ($players as $player_id => $player) {
-            // Each different aristocrat (up to 10) is worth that many points
+            // Each different aristocrat (up to 10) is worth that many points, up to 55.
             // 1 = 1, 2 = 1+2 = 3, 3 = 1+2+3 = 6, ... 10 = 1+2+3+...+10 = 55
             // or more simply: n(n+1)/2
             $num_ari = $game->uniqueAristocrats($player_id);
             $points_ari = min(55, $num_ari * ($num_ari + 1) / 2);
+            if ($game->optNewSociety() && $num_ari > 10) {
+                // Each aristocrat above 10 is worth 10 points.
+                $points_ari += (10 * ($num_ari - 10));
+            }
             $this->bga->playerScore->inc($player_id, $points_ari, null);
             $this->playerStats->set('points_aristocrats_end', $points_ari, $player_id);
             

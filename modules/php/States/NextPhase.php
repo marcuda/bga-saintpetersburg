@@ -72,6 +72,11 @@ class NextPhase extends GameState
                     $game->setGameStateValue('observatory_' . $i . '_used', 0);
                 }
             }
+
+            // Reset used debtor’s prison:
+            if ($game->getGameStateValue('debtors_prison_used') == 1) {
+                $game->setGameStateValue('debtors_prison_used', 0);
+            }
             
             $this->bga->tableStats->inc('rounds_number', 1);
             

@@ -95,6 +95,10 @@
     padding-bottom: 65.3425213%;
 }
 
+#stp_discard_stock_container {
+    width: 100%;
+}
+
 #stp_gameboard {
     width: 100%;
     height: 100%;
@@ -117,8 +121,10 @@
 
 #stp_phase_label {
     position: relative;
-    left: -50%;
+    left: 0;
     top: 2%;
+    text-align: center;
+    z-index: 1;
 }
 
 .stp_2nd_edition #stp_phase_label {
@@ -219,7 +225,7 @@
 }
 
 .stp_aritooltip {
-    max-width: 300px;
+    max-width: 340px;
 }
 
 .stp_aritooltip table {

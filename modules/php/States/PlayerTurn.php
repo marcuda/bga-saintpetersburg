@@ -132,6 +132,32 @@ class PlayerTurn extends CardState
     }
 
     /**
+     * Player use debtor’s prison.
+     * @param int $activePlayerId The active player id.
+     * @return mixed The next state (UsePrison).
+     * @throws SystemException If not in building phase or prison already used or no card in discard pile.
+     */
+    #[PossibleAction]
+    function actUsePrison(int $activePlayerId)
+    {
+        $game = $this->game;
+        if (Phase::fromRound((int)$game->getGameStateValue('current_phase')) != Phase::Building) {
+            throw new SystemException('Debtor’s prison must be used in building phase.');
+        }
+        if ($game->getGameStateValue('debtors_prison_used') != 0) {
+            throw new SystemException('Debtor’s prison already used.');
+        }
+        // Check at least on card in discard.
+        if ($game->cards->countCardInLocation('discard') < 1) {
+            throw new SystemException('Attempt to use prison without any discarded card.');
+        }
+
+        $game->setGameStateValue('debtors_prison_used', 1);
+        $this->bga->playerStats->inc('prisonPicks', 1, $activePlayerId);
+        return UsePrison::class;
+    }
+
+    /**
      * Player passes their turn.
      * @param int $activePlayerId The active player id.
      * @return mixed The next state (NextPlayer or ScorePhase).

@@ -273,7 +273,7 @@ define([
         // Game logic constants
         // Fake column numbers to be used to handle discarded cards.
         const DISCARDED_COL = 0;
-        const MOVE_TO_DISCARD_COL = 1;
+        const MOVE_DISCARD_COL = 1;
 
         return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
             constructor: function () {
@@ -290,8 +290,9 @@ define([
                 // Standard card height for stock
                 this.cardheight = CARD_HEIGHT_PX;
                 this.card_art_row_size = 10;    // Number of cards per row in sprite for stock
-                this.card_art_col_size = 5;     // Number of cards per column in sprite for stock
+                this.card_art_col_size = 7;     // Number of cards per column in sprite for stock
                 this.player_rubles = []         // Counters for all player rubles
+                this.discardStock = null        // Discard stock.
                 this.player_tables = [];        // Stocks for all player tables
                 this.player_hands = [];         // Cards held in each player's hand
                 this.player_hand_backs = [];    // Card back types for cards in each player's hand
@@ -381,6 +382,11 @@ define([
                 // Used in game board setup
                 this.card_infos = gamedatas.card_infos;
                 this.constants = gamedatas.constants;
+
+                if (gamedatas.newSociety) {
+                    this.discardStock = this.createCardStock('stp_discard_stock', 0, duplicate_overlap);
+                    this.discardStock.onItemCreate = this.setupNewDiscardedCard.bind(this);
+                }
 
                 // Setting up player boards, tables, cards
                 for (const player_id in gamedatas.players) {
@@ -535,7 +541,7 @@ define([
                 // Ensure the elements are created and set cards to zero
                 for (const i in this.phases) {
                     const phase = this.phases[i];
-                    if (this.deck_counters[phase] == undefined) {
+                    if (this.deck_counters[phase] === undefined) {
                         // No counter created means deck is empty
                         dojo.addClass('deck_' + phase, 'stp_emptydeck')
                         dojo.style('stp_count_' + phase, 'color', 'red');
@@ -550,7 +556,40 @@ define([
                 // Aristocrat table helper tooltip
                 const text = _('Players score end game bonus points for each different type of Aristocrat they own, which is tracked in the player panel.');
 
-                this.addTooltipHtml('aristocrat_table', `
+                if (gamedatas.newSociety) {
+                    this.addTooltipHtml('aristocrat_table', `
+                    <div class="stp_aritooltip">
+                        <p>${text}</p>
+                        <table><tbody><tr style="background-color:rgb(252,185,115);">
+                            <th>${_('Unique Aristocrats')}</th>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>6</td>
+                            <td>7</td>
+                            <td>8</td>
+                            <td>9</td>
+                            <td>10</td>
+                            <td>\>10</td>
+                        </tr><tr>
+                            <th>${_('Bonus Points')}</th>
+                            <td>1</td>
+                            <td>3</td>
+                            <td>6</td>
+                            <td>10</td>
+                            <td>15</td>
+                            <td>21</td>
+                            <td>28</td>
+                            <td>36</td>
+                            <td>45</td>
+                            <td>55</td>
+                            <td>${_('+10 × others unique')}</td>
+                        </tr></tbody></table>
+                    </div>`);
+                } else {
+                    this.addTooltipHtml('aristocrat_table', `
                     <div class="stp_aritooltip">
                         <p>${text}</p>
                         <table><tbody><tr style="background-color:rgb(252,185,115);">
@@ -579,7 +618,7 @@ define([
                             <td>55</td>
                         </tr></tbody></table>
                     </div>`);
-
+                }
                 // Player hand (no hand for spectator)
                 if (!this.bga.players.isCurrentPlayerSpectator()) {
                     this.playerHand = this.createCardStock('stp_myhand', 1, 0);
@@ -618,9 +657,18 @@ define([
                     }
                 }
 
+                if (gamedatas.newSociety) {
+                    // Debtor’s Prison status.
+                    const prisonData = gamedatas.prison;
+                    if (parseInt(prisonData.used) === 1) {
+                        // Mask card to show it is used
+                        dojo.style('card_content_mask_' + prisonData.id, 'display', 'block');
+                    }
+                }
+
                 // Discard pile
                 if (gamedatas.lastDiscarded !== null) {
-                    this.addCardOnBoard(this.constants.discardRow, DISCARDED_COL, parseInt(gamedatas.lastDiscarded.type_arg))
+                    this.addCardOnBoard(this.constants.discardRow, DISCARDED_COL, parseInt(gamedatas.lastDiscarded.type_arg));
                 }
 
                 // Setup game notifications to handle (see "setupNotifications" method below)
@@ -670,14 +718,16 @@ define([
 
                     <!-- Game board, card stacks and play area -->
                     <div id="stp_game_area">
+                        <div id="stp_discard_stock_container" class="whiteblock">
+                            <h3>${_('Discarded cards')}</h3>
+                            <div id="stp_discard_stock"></div>
+                        </div>
                         <div id="stp_gameboard_width_sizer">
                             <div id="stp_gameboard_height_sizer">
                                 <div id="stp_gameboard">
                                     <div id="discard_pile" class="stp_discard"></div>
                                     <div id="aristocrat_table" class="stp_aritable"></div>
-                                    <div id="stp_game_board_center">
-                                        <div id="stp_phase_label" class="stp_label"></div>
-                                    </div>
+                                    <div id="stp_phase_label" class="stp_label"></div>
                                     <div id="stp_final_label" class="stp_label" style="display: none;">${_('FINAL ROUND')}</div>
                                     <div id="decks">
                                         <div id="deck_Worker" class="stp_deck stp_deck_worker"></div>
@@ -718,6 +768,9 @@ define([
                     <div id="button_autopass"></div>
                 `);
 
+                // Hide discard stock.
+                document.getElementById("stp_discard_stock_container").style.display = 'none';
+
                 // % of board width:
                 let horStep = 12.16;
                 let hor_padding = 2.7;
@@ -734,7 +787,7 @@ define([
                 const cards = document.getElementById('stp_cards');
                 for (let y = 0; y < 2; y++) {
                     for (let x = 0; x < 8; x++) {
-                        // Count right to left; slight adjust for one misaligned column.
+                        // Count right to left.
                         const left = (7 - x) * horStep + hor_padding;
                         const top = y * verStep + ver_padding;
                         cards.insertAdjacentHTML('beforebegin',
@@ -831,6 +884,11 @@ define([
                         board.duplicate_overlap = overlap;
                         board.duplicate_vertical = this.duplicate_vertical;
                         board.updateDisplay();
+                    }
+                    if (this.discardStock !== null) {
+                        this.discardStock.duplicate_overlap = overlap;
+                        this.discardStock.duplicate_vertical = this.duplicate_vertical;
+                        this.discardStock.updateDisplay();
                     }
                 }
             },
@@ -1016,6 +1074,15 @@ define([
                         };
                         this.showObservatoryChoice(args.args.obs_id, args.args.card, args.args._private.possibleMoves.cost);
                         break;
+                    case 'UsePrison':
+                        // Only active player is seeing discard pile.
+                        if (this.isCurrentPlayerActive()) {
+                            this.possible_moves = {};
+                            this.possible_moves[this.constants.discardStock] = args.args._private.possibleMoves;
+                            this.showDiscardStock(args.args._private.possibleMoves);
+                            this.setSelections();
+                        }
+                        break;
                     case 'UsePub':
                         // Pub negates auto pass
                         dojo.style('autopass_msg', 'display', 'none');
@@ -1058,21 +1125,26 @@ define([
                 if (this.isCurrentPlayerActive()) {
                     switch (stateName) {
                         case 'PlayerTurn':
-                            // Options: observatory?, pass
+                            // Options: observatory?, debtor’s prison?, pass
                             if (args._private.possibleMoves[this.constants.observatory].length === undefined) {
                                 // args is possible moves and will have an object, which has no length,
                                 // for Observatory if valid, otherwise it will be an empty array (length == 0)
                                 this.addActionButton("button_1", _("Observatory"), "onButtonObservatory");
                             }
+                            if (args._private.possibleMoves[this.constants.prison].length === undefined) {
+                                // args is possible moves and will have an object, which has no length,
+                                // for prison if valid, otherwise it will be an empty array (length == 0)
+                                this.addActionButton("button_2", _("Debtor’s Prison"), "onButtonPrison");
+                            }
                             if (!this.gamedatas.buyOnly) {
-                                this.addActionButton("button_2", _("Pass"), "onPass");
+                                this.addActionButton("button_3", _("Pass"), "onPass");
                                 if (!this.gamedatas.autopass) {
                                     this.addActionButton("button_autopass", _("Enable auto pass"), "onAutoPass", null, false, "red");
                                 }
                             }
                             break;
                         case 'client_selectCard': {
-                            // Options: buy, add, cancel
+                            // Options: buy, add, discard?, cancel
                             const buy_color = args.can_buy ? "blue" : "gray";
                             const add_color = args.can_add ? "blue" : "gray";
                             let buy_text = _("Buy");
@@ -1085,7 +1157,10 @@ define([
                             if (!this.gamedatas.buyOnly) {
                                 this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                             }
-                            this.addActionButton("button_3", _("Cancel"), "onCancelCard", null, false, "red");
+                            if (this.possible_moves[this.constants.discardStock] !== undefined) {
+                                this.addActionButton("button_3", _("Discard"), "onDiscardCard");
+                            }
+                            this.addActionButton("button_4", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
                         }
                         case 'client_playCard': {
@@ -1106,7 +1181,7 @@ define([
                             this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
                         case 'UsePub': {
-                            // Options: -1, +1, buy, pass
+                            // Options: -1, +1, buy
                             let color = "blue";
                             if (parseInt(args._private.maxPoints[this.player_id]) === 0) {
                                 color = "gray";
@@ -1114,6 +1189,27 @@ define([
                             this.addActionButton("button_1", "-1", "onOneLessPoint", null, false, "gray");
                             this.addActionButton("button_2", "+1", "onOneMorePoint", null, false, color);
                             this.addActionButton("button_3", _("Buy") + " " + this.pub_points + " (" + this.pub_points * 2 + ")", "onBuyPoints");
+                            break;
+                        }
+                        case 'UseTradingHouse': {
+                            // Options: buy, pass
+                            let color = "blue";
+                            if (!args._private.canBuy) {
+                                color = "gray";
+                            }
+                            this.addActionButton("button_1", _("Buy"), "onTradingHouseBuyPoints", null, false, color);
+                            this.addActionButton("button_2", _("Pass"), "onTradingHousePass");
+                            break;
+                        }
+                        case 'UseGuildHall': {
+                            // Options: 4 rubles, 3 rubles 1 point, 2 rubles 2 points, 1 ruble 3 points, 4 points.
+                            // Using ₽ (ruble symbol) would be anachronic as this symbol was adopted in 2013 (created
+                            // around 2007) while the game action take place in 1703.
+                            this.addActionButton("button_1", _("4 rubles"), "onGuildHall4R");
+                            this.addActionButton("button_2", _("3 rubles 1 point"), "onGuildHall3R1P");
+                            this.addActionButton("button_3", _("2 rubles 2 points"), "onGuildHall2R2P");
+                            this.addActionButton("button_4", _("1 ruble 3 points"), "onGuildHall1R3P");
+                            this.addActionButton("button_5", _("4 points"), "onGuildHall4P");
                             break;
                         }
                         case 'client_useObservatory':
@@ -1164,7 +1260,38 @@ define([
              * Return the div id for the given card location
              */
             getCardDiv: function (row, col) {
-                return this.getLocationDiv(row, col, 'card');
+                if (this.debug) {
+                    console.log('getCardDiv', row, col, this.constants);
+                }
+                let div;
+                switch (parseInt(row)) {
+                    case this.constants.hand:
+                        div = this.playerHand.getItemDivId(col);
+                        break;
+                    case this.constants.observatory:
+                        if (col === 0) {
+                            // Drawn Observatory card
+                            div = this.getLocationDiv(this.constants.observatory, col, 'card');
+                        } else {
+                            // Observatory on table
+                            div = this.player_tables[this.player_id].getItemDivId(col);
+                        }
+                        break;
+                    case this.constants.prison:
+                        // Debtor’s Prison.
+                        div = this.player_tables[this.player_id].getItemDivId(col);
+                        break;
+                    case this.constants.discardStock:
+                        // Discarded card selectable for Debtor’s Prison.
+                        div = this.discardStock.getItemDivId(col);
+                        break;
+                    default:
+                        // Board card.
+                        div = this.getLocationDiv(row, col, 'card');
+                        break;
+                }
+
+                return div;
             },
 
             /*
@@ -1176,6 +1303,26 @@ define([
 
             getLocationDiv: function (row, col, prefix) {
                 return prefix + '_' + col + '_' + row;
+            },
+
+            /**
+             * Get the card move source id for animation.
+             * @param row The card row.
+             * @param col The card col.
+             * @param cardId The card id.
+             */
+            getCardSource: function (row, col, cardId) {
+                if (row === this.constants.observatory) {
+                    return 'stp_gameboard';
+                }
+                if (row === this.constants.discardRow) {
+                    // Debtor’s Prison pick.
+                    if (this.discardStock.count() === 0) {
+                        return 'discard_pile';
+                    }
+                    return this.getCardDiv(this.constants.discardStock, cardId);
+                }
+                return this.getBoardDiv(row, col);
             },
 
             /*
@@ -1215,8 +1362,11 @@ define([
                 if (this.debug) {
                     console.log('card_infos', this.gamedatas.card_infos);
                 }
-                for (let i = 0; i < this.gamedatas.card_infos.length; ++i) {
-                    board.addItemType(i, this.gamedatas.card_infos[i].card_model, this.bga.images.getImgUrl(cards), i);
+                const cardsURL = this.bga.images.getImgUrl(cards);
+                for (const i in this.gamedatas.card_infos) {
+                    const cardId = parseInt(i);
+                    const index = this.getCardArtIndex(cardId);
+                    board.addItemType(cardId, this.gamedatas.card_infos[i].weight, cardsURL, index);
                 }
                 board.setSelectionMode(mode);
                 return board;
@@ -1228,8 +1378,9 @@ define([
             setupNewCard: function (card_div, card_type_id, card_id) {
                 this.addTooltipHtml(card_div.id, this.getCardTooltip(card_type_id, 0));
 
-                // Observatory is only card needing extra elements
-                if (card_type_id == this.constants.observatory && card_div.id.substring(0, 10) !== 'stp_myhand') {
+                // Observatory and debtor’s prison are only cards needing extra elements
+                if ((card_type_id == this.constants.observatory || card_type_id == this.constants.prison)
+                    && card_div.id.substring(0, 10) !== 'stp_myhand') {
                     // Get player and card ids to add templated html
                     const player_id = parseInt(card_div.id.split('_')[1]);
                     let id = card_id.split('_');
@@ -1242,7 +1393,11 @@ define([
 
                     if (player_id === this.player_id) {
                         // Active player can click on card
-                        dojo.connect(card_div, 'onclick', this, 'onClickObservatory');
+                        if (card_type_id == this.constants.observatory) {
+                            dojo.connect(card_div, 'onclick', this, 'onClickObservatory');
+                        } else {
+                            dojo.connect(card_div, 'onclick', this, 'onClickPrison');
+                        }
                     } else {
                         // Other player, no active content
                         dojo.style('card_content_active_' + id, 'display', 'none');
@@ -1251,15 +1406,44 @@ define([
             },
 
             /*
+             * Create additional content for card elements
+             */
+            setupNewDiscardedCard: function (cardDiv, cardTypeId, cardStringId) {
+                if (this.debug) {
+                    console.log('setupNewDiscardedCard', cardDiv, cardTypeId, cardStringId);
+                }
+                // Find card in possible moves:
+                const splitId = cardStringId.split('_');
+                const cardId = parseInt(splitId[splitId.length - 1]);
+                const card = this.possible_moves[this.constants.discardStock][cardId];
+
+                this.addTooltipHtml(cardDiv.id, this.getCardTooltip(cardTypeId, card.cost));
+
+                cardDiv.insertAdjacentHTML('beforeend', `
+                    <div id="card_content_${cardId}">
+                        <div id="card_content_active_${cardId}" class="stp_clickcard"></div>
+                    </div>`);
+                cardDiv.addEventListener("click", this.onSelectDiscardedCard.bind(this));
+            },
+
+            getCardArtIndex: function (cardId) {
+                const card = this.card_infos[cardId];
+                if (typeof card.artIndex != "undefined") {
+                    return parseInt(card.artIndex);
+                }
+                return cardId;
+            },
+
+            /*
              * Generate HTML tooltip for given card
              */
             getCardTooltip: function (card_type_id, eff_cost) {
                 // Get card info and copy to modify
                 const card = dojo.clone(this.card_infos[card_type_id]);
-
+                const index = this.getCardArtIndex(card_type_id);
                 // Sprite index
-                const x = card_type_id % this.card_art_row_size;
-                const y = Math.floor(card_type_id / this.card_art_row_size);
+                const x = index % this.card_art_row_size;
+                const y = Math.floor(index / this.card_art_row_size);
                 card.artx = 100 * x / (this.card_art_row_size - 1);
                 card.arty = 100 * y / (this.card_art_col_size - 1);
 
@@ -1355,8 +1539,9 @@ define([
 
                     // Display correct art for each card in hand
                     for (let i = 0; i < hand.length; i++) {
-                        artx[i] = 100 * (hand[i] % this.card_art_row_size) / (this.card_art_row_size - 1);
-                        arty[i] = 100 * Math.floor(hand[i] / this.card_art_row_size) / (this.card_art_col_size - 1);
+                        const index = this.getCardArtIndex(hand[i]);
+                        artx[i] = 100 * (index % this.card_art_row_size) / (this.card_art_row_size - 1);
+                        arty[i] = 100 * Math.floor(index / this.card_art_row_size) / (this.card_art_col_size - 1);
                         disp[i] = 'inline-block';
                     }
 
@@ -1410,17 +1595,28 @@ define([
                 this.addTooltipHtml(cardDiv, this.getCardTooltip(cardType, 0));
             },
 
+            updateLastDiscardedCard: function(lastDiscardedCard) {
+                const previousDiscarded = document.getElementById(this.getCardDiv(this.constants.discardRow, DISCARDED_COL));
+                if (null !== previousDiscarded) {
+                    previousDiscarded.remove();
+                }
+                if (lastDiscardedCard) {
+                    this.addCardOnBoard(this.constants.discardRow, DISCARDED_COL, parseInt(lastDiscardedCard.type_arg));
+                }
+            },
+
             formatCard: function (x, y, row, col) {
                 return `<div class="stp_card" id="card_${col}_${row}" style="background-position:${x}% ${y}%"></div>`;
             },
 
             placeNewCard: function (cardType, row, col) {
+                const index = this.getCardArtIndex(cardType);
                 // Sprite index
-                const x = 100 * (cardType % this.card_art_row_size) / (this.card_art_row_size - 1);
-                const y = 100 * Math.floor(cardType / this.card_art_row_size) / (this.card_art_col_size - 1);
+                const x = 100 * (index % this.card_art_row_size) / (this.card_art_row_size - 1);
+                const y = 100 * Math.floor(index / this.card_art_row_size) / (this.card_art_col_size - 1);
 
                 if (this.debug) {
-                    console.log('adding card type ' + cardType + ' at col,row ' + col + ',' + row);
+                    console.log(`adding card type ${cardType} with index ${index} -> x ${x} y ${y} at col ${col} and row ${row}`);
                 }
                 dojo.place(this.formatCard(x, y, row, col), 'stp_cards');
             },
@@ -1438,6 +1634,25 @@ define([
                 const cardElem = document.getElementById(cardDivId);
                 cardElem.style.top = destElem.style.top;
                 cardElem.style.left = destElem.style.left;
+            },
+
+            discardPlayerCard: function(playerId, cardId) {
+                const discardedCard = this.player_tables[playerId].getItemById(cardId);
+                if (this.debug) {
+                    console.log('discardPlayerCard', playerId, cardId, discardedCard);
+                }
+                // Duplicate the card going to be removed from player table to place it on top of to be removed one.
+                this.placeNewCard(discardedCard.type, this.constants.discardRow, MOVE_DISCARD_COL);
+                const discardedCardDivId = this.getCardDiv(this.constants.discardRow, MOVE_DISCARD_COL);
+                this.placeOnObject(discardedCardDivId, `stp_playertable_${playerId}_item_${discardedCard.id}`);
+                // Remove from player table.
+                this.player_tables[playerId].removeFromStockById(discardedCard.id);
+                // Slide copy to discard.
+                const anim = this.slideToObject(discardedCardDivId, 'discard_pile');
+                dojo.connect(anim, 'onEnd', ()=> {
+                    this.setAsLastDiscarded(discardedCardDivId);
+                });
+                anim.play();
             },
 
             /*
@@ -1574,22 +1789,14 @@ define([
                         for (const col in this.possible_moves[row]) {
                             const card = this.possible_moves[row][col];
                             if (card.can_buy || card.can_add) {
-                                // Board
-                                let div = this.getCardDiv(row, col);
-                                if (row == this.constants.hand) {
-                                    // Hand
-                                    div = this.playerHand.getItemDivId(col);
-                                } else if (row == this.constants.observatory) {
-                                    // Observatory
-                                    div = this.player_tables[this.player_id].getItemDivId(col);
-                                }
+                                const div = this.getCardDiv(row, col);
                                 if (this.debug) {
                                     console.log('setSelections', row, col, card, div);
                                 }
                                 dojo.addClass(div, 'stp_selectable');
 
                                 // Update card tooltip with adjusted cost
-                                if (row != this.constants.observatory) {
+                                if (row != this.constants.observatory && row != this.constants.prison) {
                                     this.addTooltipHtml(div, this.getCardTooltip(card.card_type, card.cost));
                                 }
                             }
@@ -1601,20 +1808,7 @@ define([
                 const row = this.client_state_args.row;
                 const col = this.client_state_args.col;
                 if (row !== undefined && col !== undefined) {
-                    let div;
-                    if (row === 0 || row === 1) {
-                        div = this.getCardDiv(row, col);
-                    } else if (row == this.constants.hand) {
-                        div = this.playerHand.getItemDivId(col);
-                    } else if (row == this.constants.observatory) {
-                        if (col === 0) {
-                            // Drawn Observatory card
-                            div = this.getCardDiv(this.constants.observatory, col);
-                        } else {
-                            // Observatory on table
-                            div = this.player_tables[this.player_id].getItemDivId(col);
-                        }
-                    }
+                    const div = this.getCardDiv(row, col);
                     if (this.debug) {
                         console.log('SELECTED: ', row, col, div);
                     }
@@ -1652,6 +1846,57 @@ define([
                 dojo.addClass(card_id, 'stp_selected');
                 this.slideToObject(card_id, 'stp_gameboard').play();
                 this.addTooltipHtml(card_id, this.getCardTooltip(cardType, effectiveCost));
+            },
+
+            showDiscardStock: function (possibleMoves) {
+                if (this.debug) {
+                    console.log('showDiscardStock', possibleMoves);
+                }
+
+                // Disable Debtor’s Prison:
+                document.getElementById('card_content_mask_' + this.gamedatas.prison.id).style.display = 'block';
+                // Show discard stock:
+                document.getElementById("stp_discard_stock_container").style.display = 'block';
+                // Add cards only if not already done.
+                if (this.discardStock.count() === 0) {
+                    for (const index in possibleMoves) {
+                        const card = possibleMoves[index];
+                        this.discardStock.addToStockWithId(
+                            card.card_type, card.card_id, 'discard_pile');
+                    }
+                }
+                // Hide last discarded card as it is going to be displayed in stock now:
+                document.getElementById(this.getCardDiv(this.constants.discardRow, DISCARDED_COL)).style.display = 'none';
+            },
+
+            hideDiscardStock: function() {
+                if (this.discardStock !== null) {
+                    const discardedCards = this.discardStock.getAllItems();
+                    if (discardedCards.length === 0) {
+                        // No animation of cards going back to discard, hide discard stock immediately.
+                        document.getElementById("stp_discard_stock_container").style.display = 'none';
+                    }
+                    for (const index in discardedCards) {
+                        if (this.debug) {
+                            console.log('hideDiscardStock', discardedCards[index]);
+                        }
+                        // Move back card to discard pile.
+                        const discardedCard = this.discardStock.getItemById(discardedCards[index].id);
+                        const col = MOVE_DISCARD_COL + parseInt(index);
+                        // Duplicate the card going to be removed from discard stock to place it on top of to be removed one.
+                        this.placeNewCard(discardedCard.type, this.constants.discardRow, col);
+                        const discardedCardDivId = this.getCardDiv(this.constants.discardRow, col);
+                        this.placeOnObject(discardedCardDivId, `stp_discard_stock_item_${discardedCard.id}`);
+                        // Slide copy to discard.
+                        const anim = this.slideToObject(discardedCardDivId, 'discard_pile');
+                        dojo.connect(anim, 'onEnd', ()=> {
+                            document.getElementById(discardedCardDivId).remove();
+                            document.getElementById("stp_discard_stock_container").style.display = 'none';
+                        });
+                        anim.play();
+                    }
+                    this.discardStock.removeAll();
+                }
             },
 
             /*
@@ -1692,8 +1937,11 @@ define([
              */
             onSelectCard: function (evt) {
                 dojo.stopEvent(evt);
-                // Selection of a card is allowed if and only if play card action is allowed (not taking rubles and hand in account).
-                if (!this.checkAction('actPlayCard'))
+                if (this.debug) {
+                    console.log('onSelectCard', evt);
+                }
+                // Selection of a card is allowed if and only if add card action is allowed (not taking hand in account).
+                if (!this.checkAction('actAddCard'))
                     return;
 
                 // Clear any previous selection
@@ -1716,6 +1964,34 @@ define([
                 }
                 this.setClientState('client_selectCard', {
                     descriptionmyturn: desc,
+                    args: card_info
+                });
+            },
+
+            /*
+             * Player clicks a discarded card (Debtor’s Prison action).
+             */
+            onSelectDiscardedCard: function (evt) {
+                dojo.stopEvent(evt);
+                if (this.debug) {
+                    console.log('onSelectDiscardedCard', evt.currentTarget);
+                }
+
+                // Clear any previous selection
+                this.client_state_args = {};
+
+                // Card location
+                const splitId = evt.currentTarget.id.split('_');
+                const col = parseInt(splitId[splitId.length - 1]);
+                const row = this.constants.discardStock;
+                const card_info = this.possible_moves[row][col];
+
+                this.client_state_args.col = col;
+                this.client_state_args.row = row;
+                this.client_state_args.cardId = col;
+
+                this.setClientState('client_selectCard', {
+                    descriptionmyturn: "${card_name}: ${you} may buy or add to hand or discard",
                     args: card_info
                 });
             },
@@ -1930,6 +2206,62 @@ define([
             },
 
             /*
+             * Player clicks 'Buy' button for Trading House.
+             */
+            onTradingHouseBuyPoints: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actBuyPoints');
+            },
+
+            /*
+             * Player clicks 'Pass' button for Trading House.
+             */
+            onTradingHousePass: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actPass');
+            },
+
+            /*
+             * Player clicks '4 rubles' button for Guild Hall.
+             */
+            onGuildHall4R: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actChoose', { rubles: 4});
+            },
+
+            /*
+             * Player clicks '3 rubles 1 point' button for Guild Hall.
+             */
+            onGuildHall3R1P: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actChoose', { rubles: 3});
+            },
+
+            /*
+             * Player clicks '2 rubles 2 points' button for Guild Hall.
+             */
+            onGuildHall2R2P: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actChoose', { rubles: 2});
+            },
+
+            /*
+             * Player clicks '1 ruble 3 points' button for Guild Hall.
+             */
+            onGuildHall1R3P: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actChoose', { rubles: 1});
+            },
+
+            /*
+             * Player clicks '4 points' button for Guild Hall.
+             */
+            onGuildHall4P: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actChoose', { rubles: 0});
+            },
+
+            /*
              * Player clicks a card in their hand
              */
             onPlayerHandSelectionChanged: function () {
@@ -2046,6 +2378,33 @@ define([
             },
 
             /*
+             * Player clicks Debtor’s Prison on their board
+             */
+            onClickPrison: function (evt) {
+                dojo.stopEvent(evt);
+
+                if (this.is_trading) {
+                    // In trade state
+                    // Do not register click and let state machine handle the rest
+                    return;
+                }
+
+                if (this.current_phase !== this.phases[1]) {
+                    // Not building phase, can't use
+                    this.showMessage(_("You can only use the Debtor’s Prison during the Building phase"), "error");
+                    return;
+                }
+
+                if (dojo.getStyle('card_content_mask_' + this.gamedatas.prison.id, 'display') !== 'none') {
+                    // Prison card already used (mask is on)
+                    this.showMessage(_("You can only use the Debtor’s Prison once per round"), "error");
+                    return;
+                }
+
+                this.bga.actions.performAction('actUsePrison');
+            },
+
+            /*
              * Player clicks Observatory button
              */
             onButtonObservatory: function (evt) {
@@ -2056,6 +2415,14 @@ define([
                     this.useObservatory(i);
                     return;
                 }
+            },
+
+            /*
+             * Player clicks prison button
+             */
+            onButtonPrison: function (evt) {
+                dojo.stopEvent(evt);
+                this.bga.actions.performAction('actUsePrison');
             },
 
             /*
@@ -2086,23 +2453,33 @@ define([
                     console.log('onClickDeck: ' + evt.currentTarget.id);
                 }
                 dojo.stopEvent(evt);
-                if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable') && this.checkAction('actUseObservatory')) {
-                    this.bga.actions.performAction('actUseObservatory', {
-                        deck: evt.currentTarget.id,
-                        card_id: this.client_state_args.card_id
-                    });
+                if (this.checkAction('actUseObservatory')) {
+                    if (dojo.hasClass(evt.currentTarget.id, 'stp_selectable')) {
+                        this.bga.actions.performAction('actUseObservatory', {
+                            deck: evt.currentTarget.id,
+                            card_id: this.client_state_args.card_id
+                        });
+                    } else {
+                        const phase = evt.currentTarget.id.split('_')[1];
+                        const cardsLeft = this.deck_counters[phase].getValue()
+                        if (cardsLeft === 0) {
+                            this.showMessage(_("Card stack is empty"), "error");
+                        } else {
+                            this.showMessage(_("You cannot draw the last card"), "error");
+                        }
+                    }
                 }
             },
 
             /*
-             * Player clicks 'Discard' button for Observatory
+             * Player clicks 'Discard' button for Observatory or Debtor’s Prison.
              */
             onDiscardCard: function (evt) {
                 if (this.debug) {
                     console.log('onDiscardCard');
                 }
                 dojo.stopEvent(evt);
-                this.bga.actions.performAction('actDiscardCard');
+                this.bga.actions.performAction('actDiscardCard', this.client_state_args);
             },
 
 
@@ -2134,6 +2511,8 @@ define([
                 this.notifqueue.setSynchronous('shiftDown', 500);
                 dojo.subscribe('discard', this, 'notif_discard');
                 this.notifqueue.setSynchronous('discard', 1000);
+                dojo.subscribe('tableDiscard', this, 'notifTableDiscard');
+                this.notifqueue.setSynchronous('tableDiscard', 1000);
                 dojo.subscribe('scorePhase', this, 'notif_scorePhase');
                 dojo.subscribe('nextPhase', this, 'notif_nextPhase');
                 this.notifqueue.setSynchronous('nextPhase', 1000);
@@ -2142,6 +2521,7 @@ define([
                 dojo.subscribe('newRound', this, 'notif_newRound');
                 dojo.subscribe('buyPoints', this, 'notif_buyPoints');
                 dojo.subscribe('observatory', this, 'notif_observatory');
+                dojo.subscribe('guildHall', this , 'notifGuildHall');
             },
 
             /*
@@ -2187,7 +2567,7 @@ define([
              */
             notif_buyCard: function (notif) {
                 if (this.debug) {
-                    console.log('buy card notif', notif);
+                    console.log('notif_buyCard', notif);
                 }
 
                 // Clear all pass
@@ -2196,35 +2576,30 @@ define([
                 // Card position on board
                 const row = notif.args.card_row;
                 let col = notif.args.card_loc;
-                let src = this.getBoardDiv(row, col);
+                const src = this.getCardSource(row, col, notif.args.card_id);
 
                 if (row === this.constants.observatory) {
-                    // Observatory pick
                     col = 0;
-                    src = 'stp_gameboard';
+                } else if (row === this.constants.discardRow) {
+                    // Update last discarded card as it may be the one taken.
+                    this.updateLastDiscardedCard(notif.args.lastDiscarded);
                 }
 
                 if (notif.args.trade_id > 0) {
                     // Remove displaced card from table.
-                    const displacedCard = this.player_tables[notif.args.player_id].getItemById(notif.args.trade_id);
-                    // Duplicate the card going to be removed from player table to place it on top of to be removed one.
-                    this.placeNewCard(displacedCard.type, this.constants.discardRow, MOVE_TO_DISCARD_COL);
-                    const discardedCardId = this.getCardDiv(this.constants.discardRow, MOVE_TO_DISCARD_COL);
-                    this.placeOnObject(discardedCardId, `stp_playertable_${notif.args.player_id}_item_${displacedCard.id}`);
-                    // Remove from player table.
-                    this.player_tables[notif.args.player_id].removeFromStockById(displacedCard.id);
-                    // Slide copy to discard.
-                    const anim = this.slideToObject(discardedCardId, 'discard_pile');
-                    dojo.connect(anim, 'onEnd', ()=> {
-                        this.setAsLastDiscarded(discardedCardId);
-                    });
-                    anim.play();
+                    this.discardPlayerCard(notif.args.player_id, notif.args.trade_id);
                 }
 
                 // Move card from board to player table
-                dojo.destroy('card_' + col + '_' + row);
+                if (row !== this.constants.discardRow) {
+                    dojo.destroy('card_' + col + '_' + row);
+                }
                 this.player_tables[notif.args.player_id].addToStockWithId(
                     notif.args.card_idx, notif.args.card_id, src);
+                if (row === this.constants.discardRow && this.discardStock.count() > 0) {
+                    this.discardStock.removeFromStockById(notif.args.card_id);
+                    this.hideDiscardStock();
+                }
 
                 if (this.player_rubles[notif.args.player_id]) {
                     // Active player sees ruble count after playing cost
@@ -2242,8 +2617,9 @@ define([
              * Message for player adding card to their hand
              */
             notif_addCard: function (notif) {
-                if (this.debug) console.log('add card notif');
-                if (this.debug) console.log(notif);
+                if (this.debug) {
+                    console.log('notif_addCard', notif);
+                }
 
                 // Clear all pass
                 this.enableAllPlayerPanels();
@@ -2251,22 +2627,37 @@ define([
                 // Card position on board
                 const row = notif.args.card_row;
                 let col = notif.args.card_loc;
-                let src = this.getBoardDiv(row, col);
+                const src = this.getCardSource(row, col, notif.args.card_id);
 
                 if (row === this.constants.observatory) {
-                    // Observatory pick
                     col = 0;
-                    src = 'stp_gameboard';
+                } else if (row === this.constants.discardRow) {
+                    // Update last discarded card as it may be the one taken.
+                    this.updateLastDiscardedCard(notif.args.lastDiscarded);
                 }
 
                 if (this.player_id == notif.args.player_id) {
                     // Active player - add card to hand
-                    dojo.destroy(this.getCardDiv(row, col));
-                    this.playerHand.addToStockWithId(
-                        notif.args.card_idx, notif.args.card_id, src);
+                    if (row !== this.constants.discardRow) {
+                        document.getElementById(this.getCardDiv(row, col)).remove();
+                    }
+                    this.playerHand.addToStockWithId(notif.args.card_idx, notif.args.card_id, src);
+                    if (row === this.constants.discardRow && this.discardStock.count() > 0) {
+                        this.discardStock.removeFromStockById(notif.args.card_id);
+                        this.hideDiscardStock();
+                    }
                 } else {
+                    let cardDivId;
+                    if (row !== this.constants.discardRow) {
+                        cardDivId = this.getCardDiv(row, col);
+                    } else {
+                        // Create the card and place it on discard pile.
+                        this.placeNewCard(notif.args.card_idx, this.constants.discardRow, MOVE_DISCARD_COL);
+                        cardDivId = this.getCardDiv(this.constants.discardRow, MOVE_DISCARD_COL);
+                        this.placeOnObject(cardDivId, src);
+                    }
                     // Other player - move card to player board and destroy
-                    const anim = this.slideToObject(this.getCardDiv(row, col),
+                    const anim = this.slideToObject(cardDivId,
                         this.bga.playerPanels.getElement(notif.args.player_id));
                     dojo.connect(anim, 'onEnd', function (node) {
                         dojo.destroy(node);
@@ -2287,11 +2678,11 @@ define([
             },
 
             /*
-             * Message for player playing card from their hand
+             * Message for player playing a card from their hand.
              */
             notif_playCard: function (notif) {
                 if (this.debug) {
-                    console.log('buy card notif', notif);
+                    console.log('notif_playCard', notif);
                 }
 
                 // Clear all pass
@@ -2299,8 +2690,7 @@ define([
 
                 if (notif.args.trade_id > 0) {
                     // Remove displaced card from table
-                    this.player_tables[notif.args.player_id].removeFromStockById(
-                        notif.args.trade_id, 'discard_pile');
+                    this.discardPlayerCard(notif.args.player_id, notif.args.trade_id);
                 }
 
                 if (notif.args.player_id == this.player_id) {
@@ -2456,7 +2846,7 @@ define([
 
             /*
              * Message for discarding cards from board either
-             * from new round or discarded Observatory draw
+             * from new round or discarded Observatory or Debtor’s Prison draw
              */
             notif_discard: function (notif) {
                 if (this.debug) {
@@ -2466,41 +2856,75 @@ define([
                 // Clear all pass
                 this.enableAllPlayerPanels();
 
-                const lastIndex = notif.args.cards.length - 1;
+                const lastIndex = parseInt(notif.args.cards.length) - 1;
                 for (const i in notif.args.cards) {
                     const card = notif.args.cards[i];
                     // Card location
-                    const row = card.row;
+                    const row = parseInt(card.row);
                     let col = card.col;
-                    if (row == this.constants.observatory) {
+                    if (row === parseInt(this.constants.observatory)) {
                         // Observatory pick
                         col = 0;
                     }
-
-                    // Move to discard pile and destroy
-                    const discardedCardId = this.getCardDiv(row, col);
-                    const anim = this.slideToObject(discardedCardId, 'discard_pile');
-                    dojo.connect(anim, 'onEnd', (node)=> {
-                        if (i != lastIndex) {
-                            dojo.destroy(node);
-                        } else {
-                            this.setAsLastDiscarded(discardedCardId);
+                    if (row === parseInt(this.constants.discardRow)) {
+                        document.getElementById(this.getCardDiv(this.constants.discardRow, DISCARDED_COL)).remove();
+                        this.addCardOnBoard(this.constants.discardRow, DISCARDED_COL, parseInt(col));
+                        if (this.discardStock.count() > 0) {
+                            this.hideDiscardStock();
                         }
-                    });
-                    anim.play();
+                    } else {
+                        // Move to discard pile and destroy
+                        const discardedCardId = this.getCardDiv(row, col);
+                        const anim = this.slideToObject(discardedCardId, 'discard_pile');
+                        dojo.connect(anim, 'onEnd', (node) => {
+                            if (parseInt(i) !== lastIndex) {
+                                dojo.destroy(node);
+                            } else {
+                                this.setAsLastDiscarded(discardedCardId);
+                            }
+                        });
+                        anim.play();
+                    }
                 }
             },
 
-            setAsLastDiscarded: function (discardedCardId) {
-                const newId = this.getCardDiv(this.constants.discardRow, DISCARDED_COL);
-                if ($(newId)) {
+            /*
+             * Message for discarding a card from player table.
+             */
+            notifTableDiscard: function(notif) {
+                if (this.debug) {
+                    console.log('notifTableDiscard', notif);
+                }
+                // Remove discarded card from table.
+                this.discardPlayerCard(notif.args.player_id, notif.args.card_id);
+                if (notif.args.aristocrats !== undefined) {
+                    this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
+
+                }
+                this.setIncome(notif.args.player_id, notif.args.income);
+            },
+
+            /**
+             * Set a card built as 'MOVE_DISCARD_COL' as the last discarded card.
+             * @param discardedCardDivId A discarded card div id.
+             */
+            setAsLastDiscarded: function (discardedCardDivId) {
+                const newDivId = this.getCardDiv(this.constants.discardRow, DISCARDED_COL);
+                if (this.debug) {
+                    console.log('setAsLastDiscarded', discardedCardDivId, newDivId);
+                }
+                const previousDiscarded = document.getElementById(newDivId);
+                if (null !== previousDiscarded) {
+                    if (this.debug) {
+                        console.log('setAsLastDiscarded', previousDiscarded);
+                    }
                     // Destroy previous discarded card.
-                    dojo.destroy(newId);
+                    previousDiscarded.remove();
                 }
                 // Update card DOM id for new position
-                dojo.attr(discardedCardId, 'id', newId);
-                this.resetTooltip(discardedCardId, newId);
-                const discardedCard = document.getElementById(newId);
+                dojo.attr(discardedCardDivId, 'id', newDivId);
+                this.resetTooltip(discardedCardDivId, newDivId);
+                const discardedCard = document.getElementById(newDivId);
                 discardedCard.classList.add("stp_discarded");
                 discardedCard.removeEventListener("click", this.onSelectCard);
                 discardedCard.style.top = this.getCSSVariable('--stp-discard-top');
@@ -2555,6 +2979,23 @@ define([
 
                 // Observatory no longer scores this round
                 this.player_income[notif.args.player_id].points[1].incValue(-1);
+            },
+
+            /*
+             * Message to update counters of player having chosen guild hall scoring.
+             */
+            notifGuildHall: function (notif) {
+                if (this.debug) {
+                    console.log('notif Guild Hall', notif);
+                }
+
+                const playerId = parseInt(notif.args.player_id);
+                this.bga.playerPanels.getScoreCounter(playerId).toValue(notif.args.score);
+                if (notif.args.totalRubles !== undefined) {
+                    this.player_rubles[playerId].toValue(notif.args.totalRubles);
+                } else if (notif.args._private !== undefined) {
+                    this.player_rubles[playerId].toValue(notif.args._private.totalRubles);
+                }
             },
 
             /*

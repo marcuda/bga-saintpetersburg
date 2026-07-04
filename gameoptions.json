@@ -1,4 +1,15 @@
 {
+    "103": {
+        "name": "The New Society",
+        "values": [
+            {
+                "name": "No"
+            },
+            {
+                "name": "Yes"
+            }
+        ]
+    },
     "100": {
         "name": "Show other player rubles",
         "values": [

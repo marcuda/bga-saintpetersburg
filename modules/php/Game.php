@@ -35,6 +35,7 @@ class Game extends \Bga\GameFramework\Table
         Phase::Trading->name => 30
     ];
     private array $card_infos;
+    private array $newSocietyCardData;
     private array $card_infos2nd;
     
     function __construct()
@@ -62,18 +63,14 @@ class Game extends \Bga\GameFramework\Table
             "observatory_0_used" => 21,    // 1 if first Observatory has been used this round
             "observatory_1_used" => 22,    // 1 if second Observatory has been used this round
             "activated_observatory" => 23, // index (0/1) of Observatory being actively used
+            "debtors_prison_used" => 24,   // 1 if Debtor’s Prison has been used this round.
 
             // Game options
             "show_player_rubles" => OPT_SHOW_RUBLES,
             "show_player_hands" => OPT_SHOW_HANDS,
             "version" => OPT_VERSION,
-            "market" => OPT_MARKET,
+            "newSociety" => OPT_NEW_SOCIETY,
             "banquet" => OPT_BANQUET,
-            "company" => OPT_COMPANY,
-            "assistants" => OPT_ASSISTANTS,
-            "events" => OPT_EVENTS,
-            "assignments" => OPT_ASSIGNMENTS,
-            "obstacles" => OPT_OBSTACLES,
         ));
 
         $this->cards = $this->bga->deckFactory->createDeck('card');
@@ -159,6 +156,11 @@ class Game extends \Bga\GameFramework\Table
         $this->bga->playerStats->init("points_rubles_end", 0);
         $this->bga->playerStats->init("points_hand_end", 0);
 
+        if ($this->optNewSociety()) {
+            $this->playerStats->init('tradingHousePoints', 0);
+            $this->bga->playerStats->init("prisonPicks", 0);
+        }
+
         // Init cards and decks
         // Create all cards
         $cards = array();
@@ -189,6 +191,9 @@ class Game extends \Bga\GameFramework\Table
         }
         $this->setGameStateInitialValue("activated_observatory", -1);
 
+        // Initialize global to handle debtor’s prison use:
+        $this->setGameStateInitialValue("debtors_prison_used", 0);
+
         // Starting draw based on number of players
         $this->drawCards($num_players * 2, 0, Phase::Worker);
 
@@ -213,6 +218,7 @@ class Game extends \Bga\GameFramework\Table
         $result = array();
 
         $result['version'] = $this->optEdition();
+        $result['newSociety'] = $this->optNewSociety();
         
         // !! We must only return information visible by this player!!
         $current_player_id = (int)$this->getCurrentPlayerId();
@@ -305,7 +311,7 @@ class Game extends \Bga\GameFramework\Table
 
         // Cards counts for each deck
         $result['decks'] = $this->cards->countCardsInLocations();
-        $result['lastDiscarded'] = $this->cards->getCardOnTop("discard");
+        $result['lastDiscarded'] = $this->cards->getCardOnTop('discard');
 
         // Full card info used for tooltips
         $result['card_infos'] = $this->getCardInfos();
@@ -320,12 +326,24 @@ class Game extends \Bga\GameFramework\Table
         }
         $result['observatory'] = $obs;
 
-        // Constant value for identifying an Observatory
+        if ($this->optNewSociety()) {
+            // Debtor’s prison status:
+            $prisonCards = $this->cards->getCardsOfType(Phase::Building->name, CARD_DEBTORS_PRISON);
+            $result['prison'] = [
+                // Always only one prison.
+                'id' => reset($prisonCards)['id'],
+                'used' => $this->getGameStateValue('debtors_prison_used')
+            ];
+        }
+
+        // Constant value for identifying card location.
         $result['constants'] = array(
             'top_row' => 0,
             'bottom_row' => 1,
             'hand' => ROW_HAND,
             'observatory' => ROW_OBSERVATORY,
+            'prison' => ROW_DEBTORS_PRISON,
+            'discardStock' => ROW_DISCARD_STOCK,
             'discardRow' => ROW_DISCARD
         );
 
@@ -445,14 +463,13 @@ class Game extends \Bga\GameFramework\Table
     }
 
     /*
-     * Comparison function for sorting cards by model,
-     * which will naturally sort by cost as well
+     * Comparison function for sorting cards by weight.
      */
     function compareCards(array $a, array $b): int
     {
         $infoA = $this->getCardInfo($a);
         $infoB = $this->getCardInfo($b);
-        return $infoB['card_model'] - $infoA['card_model'];
+        return $infoB['weight'] - $infoA['weight'];
     }
     
     /*
@@ -462,6 +479,9 @@ class Game extends \Bga\GameFramework\Table
      */
     function getCardInfos(): array
     {
+        if ($this->optNewSociety()) {
+            return $this->newSocietyCardData;
+        }
         if ($this->opt2ndEdition()) {
             return $this->card_infos2nd;
         }
@@ -511,7 +531,7 @@ class Game extends \Bga\GameFramework\Table
 
         // -1 if taken from the lower row
         if ($row != 1) {
-            // Other locations (e.g. hand, Observatory) give no discount
+            // Other locations (e.g. hand, Observatory, discard) give no discount
             $row = 0;
         }
         $cost = $card_info['card_cost'] - $row;
@@ -526,17 +546,8 @@ class Game extends \Bga\GameFramework\Table
                 $cost--;
             }
 
-            // -1 for blue buildings if player owns Carpenter Workshop
-            if ($pcard['type_arg'] == CARD_CARPENTER_WORKSHOP && 
-                $this->isBuilding($card))
-            {
-                $cost--;
-            }
-
-            // -1 for red aristocrats if player owns Gold Smelter
-            if ($pcard['type_arg'] == CARD_GOLD_SMELTER &&
-                $this->isAristocrat($card))
-            {
+            if (isset($pcard_info['discount']) && array_any($pcard_info['discount'], fn(Phase $type) => $this->isCardType($card, $type))) {
+                // Player own a card granting a discount on this type of card.
                 $cost--;
             }
         }
@@ -596,10 +607,26 @@ class Game extends \Bga\GameFramework\Table
         $points = 0;
         $rubles = 0;
 
-        $taxman = false;
-        $workers = 0;
-        $theater = false;
-        $aristocrats = 0;
+        $perTypeBonus = [
+            Phase::Worker->value => [
+                'cardCount' => 0,
+                'points' => 0,
+                'rubles' => 0
+            ],
+            Phase::Building->value => [
+                'cardCount' => 0,
+                'points' => 0,
+                'rubles' => 0
+            ],
+            Phase::Aristocrat->value => [
+                'cardCount' => 0,
+                'points' => 0,
+                'rubles' => 0
+            ]
+        ];
+
+        $weavingCount = 0;
+        $textileFactory = false;
 
         $cards = $this->cards->getCardsInLocation('table', $player_id);
         foreach ($cards as $card) {
@@ -615,32 +642,39 @@ class Game extends \Bga\GameFramework\Table
                 $points += $card_info['card_points'];
                 $rubles += $card_info['card_rubles'];
 
-                // These two special cards score based on other cards
-                if ($card['type_arg'] == CARD_TAX_MAN) {
-                    $taxman = true;
-                } else if ($card['type_arg'] == CARD_MARIINSKIJ_THEATER) {
-                    $theater = true;
+                if (isset($card_info['rublePer'])) {
+                    $perTypeBonus[$card_info['rublePer']->value]['rubles']++;
+                }
+                if (isset($card_info['pointPer'])) {
+                    $perTypeBonus[$card_info['pointPer']->value]['points']++;
+                }
+                if ($card['type_arg'] == CARD_TEXTILE_FACTORY) {
+                    $textileFactory = true;
                 }
             }
 
             // Count cards for special scoring
             if ($this->isWorker($card)) {
-                $workers++;
+                $perTypeBonus[Phase::Worker->value]['cardCount']++;
+                $workerType = $this->getCardInfo($card)['card_worker_type'];
+                if ($workerType == WORKER_WOOL || $workerType == WORKER_ALL) {
+                    ++$weavingCount;
+                }
+            } else if ($this->isBuilding($card)) {
+                $perTypeBonus[Phase::Building->value]['cardCount']++;
             } else if ($this->isAristocrat($card)) {
-                $aristocrats++;
+                $perTypeBonus[Phase::Aristocrat->value]['cardCount']++;
             }
         }
 
         // Score special cards
-        if ($taxman) {
-            $rubles += $workers;
+        foreach ($perTypeBonus as $bonus) {
+            $rubles += ($bonus['rubles'] * $bonus['cardCount']);
+            $points += ($bonus['points'] * $bonus['cardCount']);
         }
-        if ($theater) {
-            if ($this->opt2ndEdition()) {
-                $points += $aristocrats;
-            } else {
-                $rubles += $aristocrats;
-            }
+
+        if ($textileFactory) {
+            $points += (2 * $weavingCount);
         }
 
         return array($points, $rubles);
@@ -675,7 +709,7 @@ class Game extends \Bga\GameFramework\Table
         // Draw cards from phase stack
         $unsorted = $this->cards->pickCardsForLocation($nbr, 'deck_' . $phase->name, TOP_ROW);
 
-        // Sort by type/cost
+        // Sort by weight
         usort($unsorted, array($this, 'compareCards'));
 
         // Update location_arg for board position
@@ -710,6 +744,45 @@ class Game extends \Bga\GameFramework\Table
 
         // Card not one of the two known Observatories
         throw new SystemException("Invalid Observatory ID");
+    }
+
+    /**
+     * Get the id of player owning the Guild Hall if any.
+     * @return int|null A player id or null.
+     */
+    function getGuildHallPlayer(): ?int
+    {
+        $guildHall = $this->cards->getCardsOfTypeInLocation(Phase::Trading->name, CARD_GUILD_HALL, 'table');
+        // Determine which player own the Guild Hall (only one possible).
+        foreach ($guildHall as $card) {
+            return (int)$card['location_arg'];
+        }
+        return null;
+    }
+
+    /**
+     * Get the id of player owning the Trading House if any.
+     * @return int|null A player id or null.
+     */
+    function getTradingHousePlayer(): ?int
+    {
+        $tradingHouse = $this->cards->getCardsOfTypeInLocation(Phase::Building->name, CARD_TRADING_HOUSE, 'table');
+        // Determine which player own the Trading House (only one possible).
+        foreach ($tradingHouse as $card) {
+            return (int)$card['location_arg'];
+        }
+        return null;
+    }
+
+    function skipTradingHouse($playerId)
+    {
+        $playerData = $this->loadPlayersBasicInfos();
+        // Player has no money and must pass trading house.
+        $this->bga->notify->all('message', clienttranslate('${player_name} declines to use the Trading House'),
+            ['player_name' => $playerData[$playerId]['player_name']]);
+        // Inform player they passed automatically
+        $msg = clienttranslate('You cannot play and were forced to pass automatically');
+        $this->notify->player($playerId, 'log', $msg);
     }
 
     /*
@@ -754,9 +827,10 @@ class Game extends \Bga\GameFramework\Table
                 // Not correct trading type
                 continue;
             }
-            if ($card_info['card_trade_type'] == Phase::Worker &&
-                $card_info['card_worker_type'] != $p_info['card_worker_type'] &&
-                    $p_info['card_worker_type'] != WORKER_ALL)
+            if ($card_info['card_trade_type'] == Phase::Worker
+                && $card_info['card_worker_type'] != $p_info['card_worker_type']
+                && $card_info['card_worker_type'] != WORKER_ALL
+                && $p_info['card_worker_type'] != WORKER_ALL)
             {
                 // Not correct worker type.
                 continue;
@@ -824,7 +898,8 @@ class Game extends \Bga\GameFramework\Table
             0 => array(),
             1 => array(),
             ROW_HAND => array(),
-            ROW_OBSERVATORY => array()
+            ROW_OBSERVATORY => array(),
+            ROW_DEBTORS_PRISON => []
         );
 
         // Cards on board
@@ -846,7 +921,7 @@ class Game extends \Bga\GameFramework\Table
                 $player_id, $card, $rubles);
         }
 
-        // Observatory
+        // Observatory and debtor’s prison
         $current_phase = Phase::fromRound((int)$this->getGameStateValue('current_phase'));
         if ($current_phase == Phase::Building) {
             $cards = $this->cards->getCardsOfTypeInLocation(
@@ -859,6 +934,19 @@ class Game extends \Bga\GameFramework\Table
                         'can_add' => true,
                         'can_buy' => false
                     );
+                }
+            }
+            if ($this->cards->countCardsInLocation('discard') > 0) {
+                $cards = $this->cards->getCardsOfTypeInLocation(
+                    Phase::Building->name, CARD_DEBTORS_PRISON, 'table', $player_id);
+                foreach ($cards as $card) {
+                    if ($this->getGameStateValue('debtors_prison_used') == 0) {
+                        $possible_moves[ROW_DEBTORS_PRISON][$card['id']] = array(
+                            // To trigger possible move styling.
+                            'can_add' => true,
+                            'can_buy' => false
+                        );
+                    }
                 }
             }
         }
@@ -959,7 +1047,12 @@ class Game extends \Bga\GameFramework\Table
     {
         return $this->optEdition() == 2;
     }
-    
+
+    function optNewSociety(): bool
+    {
+        return $this->bga->tableOptions->get(OPT_NEW_SOCIETY) == 1;
+    }
+
     //////////////////////////////////////////////////////////////////////////////
     //////////// Player actions common to several states.
     //////////// 

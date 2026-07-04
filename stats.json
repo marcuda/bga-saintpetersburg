@@ -57,6 +57,11 @@
             "name": "Points bought with Pub",
             "type": "int"
         },
+        "tradingHousePoints": {
+            "id": 28,
+            "name": "Points bought with Trading House",
+            "type": "int"
+        },
         "rubles_total": {
             "id": 19,
             "name": "Rubles from played cards",
@@ -100,6 +105,11 @@
         "observatory_draws": {
             "id": 27,
             "name": "Cards drawn with Observatory",
+            "type": "int"
+        },
+        "prisonPicks": {
+            "id": 29,
+            "name": "Cards picked with Debtor’s Prison",
             "type": "int"
         }
     }

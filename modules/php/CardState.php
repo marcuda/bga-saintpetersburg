@@ -38,12 +38,12 @@ class CardState extends GameState
      */
     protected function addCard(int $row, int $col, int $activePlayerId): string
     {
-        $card = $this->getSelectedCard($row, $col);
-        
         // Verify player hand is not full
         if ($this->game->isHandFull($activePlayerId)) {
             throw new UserException(clienttranslate("Your hand is full"));
         }
+
+        $card = $this->getSelectedCard($row, $col);
         // Add to hand
         $dest = 'hand';
         $notif = 'addCard';
@@ -160,7 +160,8 @@ class CardState extends GameState
             'trade_id' => $trade_id,
             'trade_name' => $trade_name,
             'aristocrats' => $game->uniqueAristocrats($playerId),
-            'income' => $income
+            'income' => $income,
+            'lastDiscarded' => $game->cards->getCardOnTop('discard')
         ]);
         
         // Reset globals
@@ -193,18 +194,23 @@ class CardState extends GameState
         $card_info = $game->getCardInfo($card);
         $disp_info = $game->getCardInfo($disp_card);
         if ($card_info['card_trade_type'] != $disp_info['card_type'] ||
-            ($disp_info['card_type'] == Phase::Worker &&
-                $card_info['card_worker_type'] != $disp_info['card_worker_type'] &&
-                $disp_info['card_worker_type'] != WORKER_ALL))
+            ($disp_info['card_type'] == Phase::Worker
+                && $card_info['card_worker_type'] != $disp_info['card_worker_type']
+                && $card_info['card_worker_type'] != WORKER_ALL
+                && $disp_info['card_worker_type'] != WORKER_ALL))
         {
             throw new UserException(clienttranslate("Wrong type of card to displace"));
         }
         
-        // Check if trading used Observatory
+        // Check if trading used Observatory.
         if ($disp_card['type_arg'] == CARD_OBSERVATORY) {
             $obs = $game->getObservatory($disp_id);
             if ($obs['used']) {
                 throw new UserException(clienttranslate("You cannot displace an Observatory after using it"));
+            }
+        } else if ($disp_card['type_arg'] == CARD_DEBTORS_PRISON) {
+            if ($game->getGameStateValue('debtors_prison_used')) {
+                throw new UserException(clienttranslate("You cannot displace a Debtor’s Prison after using it"));
             }
         }
     }
@@ -228,6 +234,13 @@ class CardState extends GameState
         } else if ($row == ROW_OBSERVATORY) {
             $loc = 'obs_tmp';
             $col = $game->getActivePlayerId();
+        } else if ($row == ROW_DISCARD) {
+            // $col holds the card id.
+            $card = $game->cards->getCard($col);
+            if ($card == null || $card['location'] != 'discard') {
+                throw new SystemException("No discarded card of id $col.");
+            }
+            return $card;
         } else {
             throw new SystemException("Unexpected row $row.");
         }

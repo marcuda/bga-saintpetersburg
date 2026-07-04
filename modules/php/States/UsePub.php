@@ -10,8 +10,6 @@
 declare(strict_types = 1);
 namespace Bga\Games\SaintPetersburg\States;
 
-use Bga\GameFramework\Components\Counters\OutOfRangeCounterException;
-use Bga\GameFramework\Components\Counters\UnknownPlayerException;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
@@ -23,7 +21,7 @@ use Bga\Games\SaintPetersburg\Phase;
 use Bga\Games\SaintPetersburg\StateId;
 
 /**
- * This active player state allow a player having a pub to buy points.
+ * This multiple active player state allow players having a pub to buy points.
  */
 class UsePub extends GameState
 {
@@ -134,22 +132,22 @@ class UsePub extends GameState
             // Verify player can pay the cost
             $rubles = $game->getRubles($currentPlayerId);
             $cost = $points * 2;
-            if ($cost > $rubles)
+            if ($cost > $rubles) {
                 throw new UserException(clienttranslate("You do not have enough rubles"));
-                
-                // Update rubles, points, stats
-                $game->incRubles($currentPlayerId, -$cost);
-                $this->bga->playerStats->inc('rubles_spent', $cost, $currentPlayerId);
-                $this->bga->playerScore->inc($currentPlayerId, $points, null);
-                $this->bga->playerStats->inc('pub_points', $points, $currentPlayerId);
-                
-                $msg = clienttranslate('${player_name} uses Pub to buy ${points} Point(s) for ${cost} Rubles');
-                $this->bga->notify->all('buyPoints', $msg, array(
-                    'player_id' => $currentPlayerId,
-                    'player_name' => $game->getPlayerNameById($currentPlayerId),
-                    'points' => $points,
-                    'cost' => $cost
-                ));
+            }
+            // Update rubles, points, stats
+            $game->incRubles($currentPlayerId, -$cost);
+            $this->bga->playerStats->inc('rubles_spent', $cost, $currentPlayerId);
+            $this->bga->playerScore->inc($currentPlayerId, $points, null);
+            $this->bga->playerStats->inc('pub_points', $points, $currentPlayerId);
+
+            $msg = clienttranslate('${player_name} uses Pub to buy ${points} Point(s) for ${cost} Rubles');
+            $this->bga->notify->all('buyPoints', $msg, array(
+                'player_id' => $currentPlayerId,
+                'player_name' => $game->getPlayerNameById($currentPlayerId),
+                'points' => $points,
+                'cost' => $cost
+            ));
         } else {
             // No points, skip it
             $this->bga->notify->all('message', clienttranslate('${player_name} declines to use the Pub bonus'), array(

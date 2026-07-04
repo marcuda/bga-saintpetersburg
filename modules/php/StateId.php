@@ -23,5 +23,9 @@ enum StateId: int
     case NEXT_PHASE = 13;
     case USE_OBSERVATORY = 14;
     case USE_PUB = 15;
+    case USE_GUILD_HALL = 16;
+    case TRADING_HOUSE_PLAYER = 17;
+    case USE_TRADING_HOUSE = 18;
+    case USE_DEBTORS_PRISON = 19;
     case END_GAME = 99;
 }

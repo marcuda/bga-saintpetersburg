@@ -25,14 +25,32 @@ use Bga\Games\SaintPetersburg\Phase;
 if (!defined("CARD_PUB")) {
     // Special card types
     define("CARD_SHIP", 4);
-    define("CARD_CARPENTER_WORKSHOP", 6);
-    define("CARD_GOLD_SMELTER", 7);
+    define("CARD_CZAR_AND_CARPENTER", 5);
+    define("CARD_WHARF", 10);
     define("CARD_PUB", 11);
     define("CARD_WAREHOUSE", 12);
+    define("CARD_VILLAGE", 13);
     define("CARD_MARKET", 14);
     define("CARD_OBSERVATORY", 15);
+    define("CARD_FIREHOUSE", 17);
+    define("CARD_HOSPITAL", 18);
+    define("CARD_ACADEMY", 21);
     define("CARD_MARIINSKIJ_THEATER", 22);
+    define("CARD_ADMINISTRATOR", 33);
+    define("CARD_WAREHOUSE_MANAGER", 34);
+    define("CARD_SECRETARY", 35);
+    define("CARD_CONTROLLER", 36);
+    define("CARD_JUDGE", 37);
+    define("CARD_MISTRESS", 38);
     define("CARD_TAX_MAN", 45);
+    define("CARD_OBSHCHINA_COMMUNE", 51);
+    define("CARD_COFFEE_HOUSE", 53);
+    define("CARD_DEBTORS_PRISON", 54);
+    define("CARD_TRADING_HOUSE", 57);
+    define("CARD_GUILD_HALL", 60);
+    define("CARD_TEXTILE_FACTORY", 61);
+    define("CARD_SYCOPHANT", 62);
+    define("CARD_MAYOR", 66);
 
     // Worker types
     define("WORKER_ALL", clienttranslate("Any"));
@@ -41,7 +59,8 @@ if (!defined("CARD_PUB")) {
     define("WORKER_WOOL", clienttranslate("Wool"));
     define("WORKER_FUR", clienttranslate("Fur"));
     define("WORKER_SHIP", clienttranslate("Shipping"));
-    
+    define("WORKER_WHEAT", clienttranslate("Wheat"));
+
     // Market goods
     define("MARKET_NONE", "None");
     define("MARKET_SACK", clienttranslate("Grain sack"));
@@ -56,6 +75,10 @@ if (!defined("CARD_PUB")) {
     define("BOTTOM_ROW", "board_bottom");
     define("ROW_HAND", 33);
     define("ROW_OBSERVATORY", CARD_OBSERVATORY);
+    define("ROW_DEBTORS_PRISON", CARD_DEBTORS_PRISON);
+    // Location for cards temporarily displayed in a stock component for Debtor’s Prison.
+    define("ROW_DISCARD_STOCK", 98);
+    // Location of discarded card.
     define("ROW_DISCARD", 99);
 
     // I18N
@@ -70,13 +93,8 @@ if (!defined("CARD_PUB")) {
     define("OPT_SHOW_RUBLES", 100);
     define("OPT_SHOW_HANDS", 101);
     define("OPT_VERSION", 102);
-    define("OPT_MARKET", 103);
+    define("OPT_NEW_SOCIETY", 103);
     define("OPT_BANQUET", 104);
-    define("OPT_COMPANY", 105);
-    define("OPT_ASSISTANTS", 106);
-    define("OPT_EVENTS", 107);
-    define("OPT_ASSIGNMENTS", 108);
-    define("OPT_OBSTACLES", 109);
 }
 
 /*
@@ -139,7 +157,7 @@ $this->card_infos = array(
         "card_points" => 0,
         "card_nbr" => 6
     ),
-    5 => array( 
+    CARD_CZAR_AND_CARPENTER => array(
         "card_name" => clienttranslate("Czar and Carpenter"),
         "card_type" => Phase::Worker,
         "card_worker_type" => WORKER_ALL,
@@ -149,7 +167,7 @@ $this->card_infos = array(
         "card_nbr" => 1,
         "card_text" => clienttranslate("Czar Peter can be displaced by any green trading card")
     ),
-    CARD_CARPENTER_WORKSHOP => array(
+    6 => array(
         "card_name" => clienttranslate("Carpenter Workshop"),
         "card_type" => Phase::Trading,
         "card_trade_type" => Phase::Worker,
@@ -158,9 +176,10 @@ $this->card_infos = array(
         "card_rubles" => 3,
         "card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => clienttranslate("Blue building cards cost you 1 less ruble to buy")
+        "card_text" => clienttranslate("Blue building cards cost you 1 less ruble to buy"),
+        "discount" => [Phase::Building]
     ),
-    CARD_GOLD_SMELTER => array(
+    7 => array(
         "card_name" => clienttranslate("Gold Smelter"),
         "card_type" => Phase::Trading,
         "card_trade_type" => Phase::Worker,
@@ -169,7 +188,8 @@ $this->card_infos = array(
         "card_rubles" => 3,
         "card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => clienttranslate("Red aristocrat cards cost you 1 less ruble to buy")
+        "card_text" => clienttranslate("Red aristocrat cards cost you 1 less ruble to buy"),
+        "discount" => [Phase::Aristocrat]
     ),
     8 => array(
         "card_name" => clienttranslate("Weaving Mill"),
@@ -191,7 +211,7 @@ $this->card_infos = array(
         "card_points" => 2,
         "card_nbr" => 3
     ),
-    10 => array(
+    CARD_WHARF => array(
         "card_name" => clienttranslate("Wharf"),
         "card_type" => Phase::Trading,
         "card_trade_type" => Phase::Worker,
@@ -221,7 +241,7 @@ $this->card_infos = array(
         "card_nbr" => 1,
         "card_text" => clienttranslate("You can hold up to 4 cards in your hand")
     ),
-    13 => array( 
+    CARD_VILLAGE => array(
         "card_name" => clienttranslate("Potjomkin's Village"),
         "card_type" => Phase::Building,
         "card_trade_type" => Phase::Building,
@@ -257,7 +277,7 @@ $this->card_infos = array(
         "card_points" => 2,
         "card_nbr" => 5
     ),
-    17 => array( 
+    CARD_FIREHOUSE => array(
         "card_name" => clienttranslate("Firehouse"),
         "card_type" => Phase::Building,
         "card_cost" => 11,
@@ -265,7 +285,7 @@ $this->card_infos = array(
         "card_points" => 3,
         "card_nbr" => 3
     ),
-    18 => array( 
+    CARD_HOSPITAL => array(
         "card_name" => clienttranslate("Hospital"),
         "card_type" => Phase::Building,
         "card_cost" => 14,
@@ -289,7 +309,7 @@ $this->card_infos = array(
         "card_points" => 6,
         "card_nbr" => 2
     ),
-    21 => array( 
+    CARD_ACADEMY => array(
         "card_name" => clienttranslate("Academy"),
         "card_type" => Phase::Building,
         "card_cost" => 23,
@@ -302,10 +322,11 @@ $this->card_infos = array(
         "card_type" => Phase::Trading,
         "card_trade_type" => Phase::Building,
         "card_cost" => 10,
-        "card_rubles" => 0, // 1 per aristocrat
+        "card_rubles" => 0,
         "card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => clienttranslate("+1 ruble per red aristocrat in your play area")
+        "card_text" => clienttranslate("+1 ruble per red aristocrat in your play area"),
+        "rublePer" => Phase::Aristocrat
     ),
     23 => array(
         "card_name" => clienttranslate("Bank"),
@@ -396,7 +417,7 @@ $this->card_infos = array(
         "card_points" => 0,
         "card_nbr" => 6
     ),
-    33 => array( 
+    CARD_ADMINISTRATOR => array(
         "card_name" => clienttranslate("Administrator"),
         "card_type" => Phase::Aristocrat,
         "card_cost" => 7,
@@ -404,7 +425,7 @@ $this->card_infos = array(
         "card_points" => 0,
         "card_nbr" => 5
     ),
-    34 => array( 
+    CARD_WAREHOUSE_MANAGER => array(
         "card_name" => clienttranslate("Warehouse Manager"),
         "card_type" => Phase::Aristocrat,
         "card_cost" => 10,
@@ -412,7 +433,7 @@ $this->card_infos = array(
         "card_points" => 0,
         "card_nbr" => 5
     ),
-    35 => array( 
+    CARD_SECRETARY => array(
         "card_name" => clienttranslate("Secretary"),
         "card_type" => Phase::Aristocrat,
         "card_cost" => 12,
@@ -420,7 +441,7 @@ $this->card_infos = array(
         "card_points" => 0,
         "card_nbr" => 4
     ),
-    36 => array( 
+    CARD_CONTROLLER => array(
         "card_name" => clienttranslate("Controller"),
         "card_type" => Phase::Aristocrat,
         "card_cost" => 14,
@@ -428,7 +449,7 @@ $this->card_infos = array(
         "card_points" => 1,
         "card_nbr" => 3
     ),
-    37 => array( 
+    CARD_JUDGE => array(
         "card_name" => clienttranslate("Judge"),
         "card_type" => Phase::Aristocrat,
         "card_cost" => 16,
@@ -436,7 +457,7 @@ $this->card_infos = array(
         "card_points" => 2,
         "card_nbr" => 2
     ),
-    38 => array( 
+    CARD_MISTRESS => array(
         "card_name" => clienttranslate("Mistress of Ceremonies"),
         "card_type" => Phase::Aristocrat,
         "card_cost" => 18,
@@ -506,7 +527,8 @@ $this->card_infos = array(
         "card_rubles" => 0, // 1 per worker
         "card_points" => 0,
         "card_nbr" => 1,
-        "card_text" => clienttranslate("+1 ruble per green worker in your play area")
+        "card_text" => clienttranslate("+1 ruble per green worker in your play area"),
+        "rublePer" => Phase::Worker
     ),
     46 => array( 
         "card_name" => clienttranslate("Admiral"),
@@ -534,6 +556,199 @@ $this->card_infos = array(
         "card_rubles" => 0,
         "card_points" => 6,
         "card_nbr" => 1
+    ),
+);
+
+/*
+ * Card data delta of the New Society expansion.
+ * array index = index of card sprite art (db type_arg, might be superseded by artIndex).
+ * card_name = printed name of card
+ * card_type = type of card (db type)
+ * card_trade_type = identifier of trading type (color)
+ * card_worker_type = type of worker for trading (green cards upper right symbol)
+ * card_cost = cost in upper left corner
+ * card_rubles = rubles gained during scoring
+ * card_points = points gained during scoring
+ * card_nbr = number of this card in deck
+ * card_text = explanation of any additional card effects (for tooltip)
+ * artIndex = index of card sprite art (db type_arg, supersede array index).
+ */
+$newSocietyCardDelta = array(
+    CARD_CZAR_AND_CARPENTER => array(
+        "card_cost" => 3,
+        "card_rubles" => 2,
+        "artIndex" => 50
+    ),
+    CARD_WHARF => array(
+        "card_nbr" => 4
+    ),
+    CARD_OBSERVATORY => array(
+        "card_cost" => 8,
+        "artIndex" => 55
+    ),
+    CARD_FIREHOUSE => array(
+        "card_nbr" => 5
+    ),
+    CARD_HOSPITAL => array(
+        "card_nbr" => 4
+    ),
+    CARD_ACADEMY => array(
+        "card_cost" => 25,
+        "card_points" => 9,
+        "artIndex" => 56
+    ),
+    CARD_MARIINSKIJ_THEATER => array(
+        "card_name" => clienttranslate("Mariinski Theater"),
+        "card_cost" => 20,
+        "card_text" => clienttranslate("+1 point per red aristocrat in your play area"),
+        "rublePer" => null,
+        "pointPer" => Phase::Aristocrat,
+        "artIndex" => 59
+    ),
+    CARD_ADMINISTRATOR => array(
+        "card_nbr" => 6
+    ),
+    CARD_WAREHOUSE_MANAGER => array(
+        "card_nbr" => 6
+    ),
+    CARD_SECRETARY => array(
+        "card_nbr" => 5
+    ),
+    CARD_CONTROLLER => array(
+        "card_nbr" => 4
+    ),
+    CARD_JUDGE => array(
+        "card_nbr" => 3
+    ),
+    CARD_MISTRESS => array(
+        "card_rubles" => 3,
+        "card_points" => 4,
+        "artIndex" => 63
+    ),
+    49 => array(
+        "card_name" => clienttranslate("New Farmer"),
+        "card_type" => Phase::Worker,
+        "card_worker_type" => WORKER_WHEAT,
+        "card_cost" => 9,
+        "card_rubles" => 3,
+        "card_points" => 1,
+        "card_nbr" => 6
+    ),
+    CARD_OBSHCHINA_COMMUNE => array(
+        "card_name" => clienttranslate("Obshchina Commune"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Worker,
+        "card_worker_type" => WORKER_WHEAT,
+        "card_cost" => 13,
+        "card_rubles" => 3,
+        "card_points" => 2,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Green worker cards cost you 1 less ruble to buy"),
+        "discount" => [Phase::Worker]
+    ),
+    52 => array(
+        "card_name" => clienttranslate("New Society"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Worker,
+        "card_worker_type" => WORKER_ALL,
+        "card_cost" => 15,
+        "card_rubles" => 6,
+        "card_points" => 2,
+        "card_nbr" => 1
+    ),
+    CARD_COFFEE_HOUSE => array(
+        "card_name" => clienttranslate("Coffee House"),
+        "card_type" => Phase::Building,
+        "card_cost" => 6,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("+1 ruble per red aristocrat in your play area"),
+        "rublePer" => Phase::Aristocrat
+    ),
+    CARD_DEBTORS_PRISON => array(
+        "card_name" => clienttranslate("Debtor’s Prison"),
+        "card_type" => Phase::Building,
+        "card_cost" => 8,
+        "card_rubles" => 0,
+        "card_points" => 1,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("During blue actions you may search the discard pile and take any 1 card from it, which then must be paid for or put into your hand or discarded. The prison then cannot be scored or used until the next round.")
+    ),
+    CARD_TRADING_HOUSE => array(
+        "card_name" => clienttranslate("Trading House"),
+        "card_type" => Phase::Building,
+        "card_cost" => 2,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("After scoring, you may buy 2 points for 3 rubles")
+    ),
+    58 => array(
+        "card_name" => clienttranslate("St Petersburg University"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Building,
+        "card_cost" => 18,
+        "card_rubles" => 0,
+        "card_points" => 6,
+        "card_nbr" => 1
+    ),
+    CARD_GUILD_HALL => array(
+        "card_name" => clienttranslate("Guild Hall"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Building,
+        "card_cost" => 13,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Earn four rubles or victory points in any combination")
+    ),
+    CARD_TEXTILE_FACTORY => array(
+        "card_name" => clienttranslate("Textile Factory"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Building,
+        "card_cost" => 16,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Earns 2 victory points for each card with a weaving symbol")
+    ),
+    CARD_SYCOPHANT => array(
+        "card_name" => clienttranslate("Sycophant"),
+        "card_type" => Phase::Aristocrat,
+        "card_cost" => 1,
+        "card_rubles" => -1,
+        "card_points" => 0,
+        "card_nbr" => 2
+    ),
+    64 => array(
+        "card_name" => clienttranslate("Merchant"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Aristocrat,
+        "card_cost" => 6,
+        "card_rubles" => 3,
+        "card_points" => 0,
+        "card_nbr" => 1
+    ),
+    65 => array(
+        "card_name" => clienttranslate("Lt. Kije"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Aristocrat,
+        "card_cost" => 12,
+        "card_rubles" => 0,
+        "card_points" => 3,
+        "card_nbr" => 1
+    ),
+    CARD_MAYOR => array(
+        "card_name" => clienttranslate("Mayor"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Aristocrat,
+        "card_cost" => 13,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("+1 ruble per blue building in your play area"),
+        "rublePer" => Phase::Building
     ),
 );
 
@@ -641,6 +856,31 @@ $card_infos2nd_delta = array(
     ),
 );
 
+$applyDelta = function(&$data, $delta) {
+    foreach ($delta as $idx => $card) {
+        if (isset($data[$idx]) || isset($card['card_model'])) {
+            if (!isset($data[$idx])) {
+                $data[$idx] = $data[$card['card_model']];
+            }
+            foreach ($card as $field => $value) {
+                if (is_null($value)) {
+                    unset($data[$idx][$field]);
+                } else {
+                    $data[$idx][$field] = $value;
+                }
+            }
+        } else {
+            $data[$idx] = $card;
+        }
+    }
+};
+
+$this->newSocietyCardData = $this->card_infos;
+$applyDelta($this->newSocietyCardData, $newSocietyCardDelta);
+
+$this->card_infos2nd = $this->card_infos;
+$applyDelta($this->card_infos2nd, $card_infos2nd_delta);
+
 $addMissingFields = function(&$infos) {
     // Add potentially missing fields.
     foreach ($infos as $idx => $card) {
@@ -656,21 +896,51 @@ $addMissingFields = function(&$infos) {
     }
 };
 
-$this->card_infos2nd = $this->card_infos;
-// Override first edition data.
-foreach ($card_infos2nd_delta as $idx => $card) {
-    if (isset($this->card_infos2nd[$idx]) || isset($card['card_model'])) {
-        if (!isset($this->card_infos2nd[$idx])) {
-            $this->card_infos2nd[$idx] = $this->card_infos2nd[$card['card_model']];
-        }
-        foreach ($card as $field => $value) {
-            $this->card_infos2nd[$idx][$field] = $value;
-        }
-    } else {
-        $this->card_infos2nd[$idx] = $card;
-    }
-}
-// Do not add missing field before the copy for second edition, or some fields won't have a correct value.
+// Do not add missing field before the copy, or some fields won't have a correct value.
 $addMissingFields($this->card_infos);
+$addMissingFields($this->newSocietyCardData);
 $addMissingFields($this->card_infos2nd);
 
+$setWeights = function(&$data) {
+    foreach ($data as $idx => $card) {
+        // Cards are sorted per phase then per cost then per idx.
+        // So give the highest weight to phase then cost then idx.
+        $weight = 100 * $card['card_cost'] + $idx;
+        switch ($card['card_type']) {
+            case Phase::Worker:
+                // Nothing to do.
+                break;
+            case Phase::Building:
+                $weight += 10000;
+                break;
+            case Phase::Aristocrat:
+                $weight += 20000;
+                break;
+            case Phase::Trading:
+                $weight += 5000;
+                switch ($card['card_trade_type']) {
+                    case Phase::Worker:
+                        // Nothing to do.
+                        break;
+                    case Phase::Building:
+                        $weight += 10000;
+                        break;
+                    case Phase::Aristocrat:
+                        $weight += 20000;
+                        break;
+                    default:
+                        // Should never happen.
+                        break;
+                }
+                break;
+            default:
+                // Should never happen.
+                break;
+        }
+        $data[$idx]['weight'] = $weight;
+    }
+};
+
+$setWeights($this->card_infos);
+$setWeights($this->newSocietyCardData);
+$setWeights($this->card_infos2nd);
