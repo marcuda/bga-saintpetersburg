@@ -1,14 +1,24 @@
 {
     "103": {
         "name": "The New Society",
-        "values": [
-            {
+        "values": {
+            "0": {
                 "name": "No"
             },
-            {
+            "1": {
                 "name": "Yes"
             }
-        ]
+        },
+        "startcondition": {
+            "0": [
+                {
+                    "type": "maxplayers",
+                    "value": 4,
+                    "message": "The New Society is required to play with five players."
+                }
+            ],
+            "1": []
+        }
     },
     "100": {
         "name": "Show other player rubles",

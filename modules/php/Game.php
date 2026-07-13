@@ -16,6 +16,7 @@ declare(strict_types=1);
 namespace Bga\Games\SaintPetersburg;
 
 use Bga\GameFramework\Components\Deck;
+use Bga\GameFramework\NotificationMessage;
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\Actions\CheckAction;
@@ -27,6 +28,8 @@ class Game extends \Bga\GameFramework\Table
 {
     public Deck $cards;
 
+    public const string DISC_TOKEN = 'disc';
+
     // Full stack sizes for progression.
     private array $deck_size = [
         Phase::Worker->name => 31,
@@ -37,7 +40,7 @@ class Game extends \Bga\GameFramework\Table
     private array $card_infos;
     private array $newSocietyCardData;
     private array $card_infos2nd;
-    
+
     function __construct()
     {
         // Your global variables labels:
@@ -55,6 +58,7 @@ class Game extends \Bga\GameFramework\Table
             "starting_player_" . Phase::Building->name => 11,   // player_id holding Building token
             "starting_player_" . Phase::Aristocrat->name => 12, // player_id holding Aristocrat token
             "starting_player_" . Phase::Trading->name => 13,    // player_id holding Trading token
+            "starting_player_" . self::DISC_TOKEN => 14,        // player_id holding disc token
             "num_pass" => 16,              // number of players that have consecutively passed in this phase
             "current_phase" => 17,         // current phase number, always increasing
             "last_round" => 18,            // 1 if the end state has been triggered in the current round
@@ -121,15 +125,28 @@ class Game extends \Bga\GameFramework\Table
         foreach (Phase::cases() as $phase) {
             $starting_tokens[] = "starting_player_" . $phase->name;
         }
+        $num_players = count($players);
+        if ($num_players == 5) {
+            $starting_tokens[] = "starting_player_" . self::DISC_TOKEN;
+        }
         shuffle($starting_tokens);
 
         $player_ids = array_keys($players);
-        $num_players = count($players);
 
-        for ($i=0; $i<4; $i++) {
+        $nbTokens = count($starting_tokens);
+        for ($i=0; $i<$nbTokens; $i++) {
             $token = $starting_tokens[$i];
-            $player_id = $player_ids[$i % $num_players];
-            $this->setGameStateInitialValue($token, $player_id);
+            $playerId = $player_ids[$i % $num_players];
+            $this->setGameStateInitialValue($token, $playerId);
+            if ($token == ("starting_player_" . self::DISC_TOKEN)) {
+                // Player starting with disc token has two more rubles and two points.
+                $this->bga->playerScoreAux->inc($playerId, 2, new NotificationMessage(clienttranslate('${player_name} gains two rubles from the disc token'), [
+                    'player_name' => $this->getPlayerNameById($playerId)
+                ]));
+                $this->bga->playerScore->set($playerId, 2, new NotificationMessage(clienttranslate('${player_name} gains two points from the disc token'), [
+                    'player_name' => $this->getPlayerNameById($playerId)
+                ]));
+            }
         }
 
         // Init game statistics
@@ -298,6 +315,16 @@ class Game extends \Bga\GameFramework\Table
                 'current' => $token_player,
                 'next' => $token_player
             );
+        }
+        $nbPlayers = count($players);
+        if ($nbPlayers == 5) {
+            $phaseName = self::DISC_TOKEN;
+            $token = "starting_player_" . $phaseName;
+            $token_player = $this->getGameStateValue($token);
+            $tokens[$phaseName] = [
+                'current' => $token_player,
+                'next' => $token_player
+            ];
         }
         $result['tokens'] = $tokens;
 

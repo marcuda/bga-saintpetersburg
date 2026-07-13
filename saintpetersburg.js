@@ -224,23 +224,29 @@ define([
     function (dojo, declare) {
         'use strict';
 
-        // Board medium width in pixel:
+        // Board medium width in pixel.
         const BOARD_MEDIUM_WIDTH = 740;
-        // Board large width in pixel:
+        // Board large width in pixel.
         const BOARD_LARGE_WIDTH = 1400;
-        // Board maximum width in pixel:
+        // Board maximum width in pixel.
         const BOARD_MAX_WIDTH = 2712;
 
-        // Card width in pixel when out of board in first edition:
+        // Card width in pixel when out of board in first edition.
         const CARD_WIDTH_PX = 70;
-        // Card height in pixel when out of board in first edition:
+        // Card height in pixel when out of board in first edition.
         const CARD_HEIGHT_PX = 109;
-        // Card width in pixel when out of board in second edition:
+        // Card width in pixel when out of board in second edition.
         const CARD_WIDTH_PX_2ND = 73.18;
-        // Card height in pixel when out of board in second edition:
+        // Card height in pixel when out of board in second edition.
         const CARD_HEIGHT_PX_2ND = 112;
 
-        // Preference values:
+        // Card horizontal spacing on board in % of board width in first edition.
+        const CARD_HOR_STEP = 12.16;
+        // Card horizontal padding on board in % of board width in first edition.
+        const CARD_HOR_PADDING = 2.7;
+
+
+        // Preferences values.
         const PREF_PUBLISHER_MESSAGE = 100;
         const PREF_PM_ON = 0;
         const PREF_PM_OFF = 1;
@@ -310,6 +316,9 @@ define([
                 this.possible_moves = null;     // All possible moves for current player
                 this.constants = null;          // Constant values between client and server
                 this.is_trading = false;        // True if in client state for trading card
+                this.use10Columns = false;      // For first worker phase with five players.
+
+                // Callback for preferences changes.
                 this.bga.userPreferences.onChange = (prefId, prefValue) => this.onPreferenceChange(prefId, prefValue);
 
                 this.onSelectCard = this.onSelectCard.bind(this);
@@ -639,13 +648,19 @@ define([
                 if (this.debug) {
                     console.log('board_top', gamedatas.board_top);
                 }
+                let maxCol = 0;
                 for (const i in gamedatas.board_top) {
                     const card = gamedatas.board_top[i];
                     this.addCardOnBoard(0, card.location_arg, parseInt(card.type_arg));
+                    maxCol = Math.max(maxCol, card.location_arg);
                 }
                 for (const i in gamedatas.board_bottom) {
                     const card = gamedatas.board_bottom[i];
                     this.addCardOnBoard(1, card.location_arg, parseInt(card.type_arg));
+                    maxCol = Math.max(maxCol, card.location_arg);
+                }
+                if (maxCol > 7) {
+                    this.set10Columns();
                 }
 
                 // Observatory status
@@ -772,8 +787,8 @@ define([
                 document.getElementById("stp_discard_stock_container").style.display = 'none';
 
                 // % of board width:
-                let horStep = 12.16;
-                let hor_padding = 2.7;
+                let horStep = CARD_HOR_STEP;
+                let hor_padding = CARD_HOR_PADDING;
                 // % of board height:
                 let verStep = 25;
                 let ver_padding = 48.13;
@@ -786,7 +801,8 @@ define([
                 }
                 const cards = document.getElementById('stp_cards');
                 for (let y = 0; y < 2; y++) {
-                    for (let x = 0; x < 8; x++) {
+                    // 10 for first worker phase with five players.
+                    for (let x = 0; x < 10; x++) {
                         // Count right to left.
                         const left = (7 - x) * horStep + hor_padding;
                         const top = y * verStep + ver_padding;
@@ -810,6 +826,67 @@ define([
                         </div>`);
                 }
 
+            },
+
+            set10Columns: function() {
+                if (this.debug) {
+                    console.log('set10Columns', this.use10Columns);
+                }
+                this.use10Columns = true;
+                const cardWidh = parseInt(this.getCSSVariable('--stp-card-width-pc'));
+                const cardStep = cardWidh + 1;
+                for (let y = 0; y < 2; y++) {
+                    // 10 for first worker phase with five players.
+                    for (let x = 0; x < 10; x++) {
+                        // Count right to left.
+                        const left = (9 - x) * cardStep;
+                        const card = document.getElementById(`square_${x}_${y}`);
+                        card.style.left = left + '%';
+                    }
+                }
+            },
+
+            set8Columns: function() {
+                if (this.debug) {
+                    console.log('set8Columns', this.use10Columns);
+                }
+                this.use10Columns = false;
+                for (let y = 0; y < 2; y++) {
+                    // 10 for first worker phase with five players.
+                    for (let x = 0; x < 10; x++) {
+                        // Count right to left.
+                        const left = (7 - x) * CARD_HOR_STEP + CARD_HOR_PADDING;
+                        const square = document.getElementById(`square_${x}_${y}`);
+                        square.style.left = left + '%';
+                        const card = document.getElementById(this.getCardDiv(y, x));
+                        if (card !== null) {
+                            card.style.left = left + '%';
+                        }
+                    }
+                }
+            },
+
+            checkBoardColumns: function() {
+                if (this.debug) {
+                    console.log('checkBoardColumns', this.use10Columns);
+                }
+                if (this.use10Columns) {
+                    // We may be able to switch to 8 columns. Check if columns 8 and 9 are empty.
+                    for (let col = 8; col < 10; ++col) {
+                        let cardDiv = document.getElementById(this.getCardDiv(0, col));
+                        if (cardDiv === null) {
+                            // Check other row.
+                            cardDiv = document.getElementById(this.getCardDiv(1, col));
+                        }
+                        if (cardDiv !== null) {
+                            console.log('checkBoardColumns', cardDiv);
+                            // Can not switch to 8 columns.
+                            return;
+                        }
+                    }
+                    // Columns 8 and 9 are empty, can switch to 8 columns.
+                    this.set8Columns();
+                }
             },
 
             onPreferenceChange: function(prefId, prefValue) {
@@ -1656,7 +1733,7 @@ define([
                 const players = {};
 
                 // Clear existing tokens
-                dojo.query('.stp_token').removeClass('stp_token_Worker stp_token_Building stp_token_Aristocrat stp_token_Trading');
+                dojo.query('.stp_token').removeClass('stp_token_Worker stp_token_Building stp_token_Aristocrat stp_token_Trading stp_token_disc');
 
                 // Determine current and next player for each token
                 for (const phase in tokens) {
@@ -2604,6 +2681,7 @@ define([
                 this.setIncome(notif.args.player_id, notif.args.income);
                 // Board size might have to be adjusted to keep all current player bought cards visible.
                 this.adaptInterface();
+                this.checkBoardColumns();
             },
 
             /*
@@ -2652,8 +2730,9 @@ define([
                     // Other player - move card to player board and destroy
                     const anim = this.slideToObject(cardDivId,
                         this.bga.playerPanels.getElement(notif.args.player_id));
-                    dojo.connect(anim, 'onEnd', function (node) {
+                    dojo.connect(anim, 'onEnd', (node) => {
                         dojo.destroy(node);
+                        this.checkBoardColumns();
                     });
                     anim.play();
                 }
@@ -2668,6 +2747,7 @@ define([
                 const card_type = this.card_infos[notif.args.card_idx]['card_type'];
                 this.player_hand_backs[notif.args.player_id].push(card_type);
                 this.updateHandTooltip(notif.args.player_id);
+                this.checkBoardColumns();
             },
 
             /*
@@ -2745,7 +2825,7 @@ define([
                         this.resetTooltip(old_card, new_card);
                     }
                 }
-
+                this.checkBoardColumns();
             },
 
             /*
@@ -2875,6 +2955,7 @@ define([
                             } else {
                                 this.setAsLastDiscarded(discardedCardId);
                             }
+                            this.checkBoardColumns();
                         });
                         anim.play();
                     }

@@ -10,6 +10,7 @@
 declare(strict_types = 1);
 namespace Bga\Games\SaintPetersburg\States;
 
+use Bga\GameFramework\NotificationMessage;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\Games\SaintPetersburg\Game;
@@ -51,15 +52,37 @@ class NextPhase extends GameState
             $tokens = array();
             $players = $game->loadPlayersBasicInfos();
             $next_player = $game->createNextPlayerTable(array_keys($players));
+            $nbPlayers = count($players);
             foreach (Phase::cases() as $token_phase) {
                 $phaseName = $token_phase->name;
                 $token = "starting_player_" . $phaseName;
-                $player_id = $game->getGameStateValue($token);
-                $game->setGameStateValue($token, $next_player[$player_id]);
+                $currentId = $game->getGameStateValue($token);
+                $nextId = $next_player[$currentId];
+                if (5 == $nbPlayers) {
+                    // Two players shift.
+                    $nextId = $next_player[$nextId];
+                }
+                $game->setGameStateValue($token, $nextId);
                 $tokens[$phaseName] = array(
-                    'current' => $player_id,
-                    'next' => $next_player[$player_id]
+                    'current' => $currentId,
+                    'next' => $nextId
                 );
+            }
+            if (5 == $nbPlayers) {
+                $phaseName = Game::DISC_TOKEN;
+                $token = "starting_player_" . $phaseName;
+                $currentId = $game->getGameStateValue($token);
+                $nextId = $next_player[$currentId];
+                // Two players shift.
+                $nextId = $next_player[$nextId];
+                $game->setGameStateValue($token, $nextId);
+                $tokens[$phaseName] = array(
+                    'current' => $currentId,
+                    'next' => $nextId
+                );
+                $this->bga->playerScore->inc($nextId, 2, new NotificationMessage(clienttranslate('${player_name} gains two points from the disc token'), [
+                    'player_name' => $game->getPlayerNameById($nextId)
+                ]));
             }
             
             // Reset any used Observatory cards
@@ -90,7 +113,7 @@ class NextPhase extends GameState
         $num_cards = $this->shiftCardsRight();
         
         // Draw up to 8 new cards from current deck
-        $new_cards = $game->drawCards(8 - $num_cards, $num_cards, $phase);
+        $new_cards = $game->drawCards(max(8 - $num_cards, 0), $num_cards, $phase);
         
         // Check if deck was emptied to trigger final round
         if ($game->cards->countCardInLocation('deck_' . $phase->name) <= 0) {

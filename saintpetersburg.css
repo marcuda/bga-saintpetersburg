@@ -53,7 +53,8 @@
     --stp-board-size: 740px;
     /* Height to width board ratio, read by js. */
     --stp-board-height-to-width: 65.1179941%;
-    /* Right margin of board, overridden in js adaptInterface. */
+    /* Card width in % of board width, read by js. */
+    --stp-card-width-pc: 9.46%;
     /* Card width when out of board, overridden in js setup. */
     --stp-card-width-px: 70px;
     /* Card height when out of board, overridden in js setup. */
@@ -182,7 +183,7 @@
 
 /* Card sized stuff on board (dimensions in % of board size). */
 .stp_square, .stp_discard, .stp_card, .stp_deck {
-    width: 9.46%;
+    width: var(--stp-card-width-pc);
     height: 22.8%;
 }
 
@@ -445,10 +446,6 @@
     width: 32px;
     height: 32px;
     z-index: 99;
-    background-position: -128px -16px; /* empty */
-}
-
-.stp_2nd_edition .stp_token {
     visibility: hidden;
 }
 
@@ -471,37 +468,42 @@
 
 .stp_token_Worker {
     background-position: 0 -16px;
+    visibility: visible;
 }
 
 .stp_2nd_edition .stp_token_Worker {
     background-position: 0 100%;
-    visibility: visible;
 }
 
 .stp_token_Building {
     background-position: -32px -16px;
+    visibility: visible;
 }
 
 .stp_2nd_edition .stp_token_Building {
     background-position: 25% 100%;
-    visibility: visible;
 }
 
 .stp_token_Aristocrat {
     background-position: -64px -16px;
+    visibility: visible;
 }
 
 .stp_2nd_edition .stp_token_Aristocrat {
     background-position: 50% 100%;
-    visibility: visible;
 }
 
 .stp_token_Trading {
     background-position: -96px -16px;
+    visibility: visible;
 }
 
 .stp_2nd_edition .stp_token_Trading {
     background-position: 75% 100%;
+}
+
+.stp_token_disc {
+    background-position: -128px -16px;
     visibility: visible;
 }
 

@@ -62,7 +62,7 @@ class PlayerTurn extends CardState
      * @throws UserException When player hand is full or when player must buy a worker.
      */
     #[PossibleAction]
-    function actAddCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 7)] int $col, int $activePlayerId)
+    function actAddCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 9)] int $col, int $activePlayerId)
     {
         $game = $this->game;
         if ($game->opt2ndEdition() && $game->getGameStateValue('current_phase') == 0) {
@@ -82,7 +82,7 @@ class PlayerTurn extends CardState
      * @throws UserException When player does not have enough rubles.
      */
     #[PossibleAction]
-    function actBuyCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 7)] int $col, int $activePlayerId, int $trade_id = - 1)
+    function actBuyCard(#[IntParam(min: 0, max: 1)] int $row, #[IntParam(min: 0, max: 9)] int $col, int $activePlayerId, int $trade_id = - 1)
     {
         return $this->buyCard($row, $col, $activePlayerId, $trade_id);
     }
