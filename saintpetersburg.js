@@ -1145,15 +1145,8 @@ define([
                             break;
                         case 'client_selectCard': {
                             // Options: buy, add, discard?, cancel
-                            const buy_color = args.can_buy ? "blue" : "gray";
+                            this.addBuyButton(args, 'onBuyCard');
                             const add_color = args.can_add ? "blue" : "gray";
-                            let buy_text = _("Buy");
-                            if (args.is_trading) {
-                                buy_text += " (" + args.cost + " - ?)";
-                            } else {
-                                buy_text += " (" + args.cost + ")";
-                            }
-                            this.addActionButton("button_1", buy_text, "onBuyCard", null, false, buy_color);
                             if (!this.gamedatas.buyOnly) {
                                 this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
                             }
@@ -1165,14 +1158,7 @@ define([
                         }
                         case 'client_playCard': {
                             // Options: buy, cancel
-                            const buy_color = args.can_buy ? "blue" : "gray";
-                            let buy_text = _("Buy");
-                            if (args.is_trading) {
-                                buy_text += " (" + args.cost + " - ?)";
-                            } else {
-                                buy_text += " (" + args.cost + ")";
-                            }
-                            this.addActionButton("button_1", buy_text, "onPlayCard", null, false, buy_color);
+                            this.addBuyButton(args, 'onPlayCard');
                             this.addActionButton("button_2", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
                         }
@@ -1217,12 +1203,11 @@ define([
                             this.addActionButton("button_1", _("Cancel"), "onCancelCard", null, false, "red");
                             break;
                         case 'UseObservatory': {
-                            const possibleMoves = args._private.possibleMoves;
+                            const card = args._private.possibleMoves;
                             // Options: buy, add, cancel
-                            const buy_color = possibleMoves.can_buy ? "blue" : "gray";
-                            const add_color = possibleMoves.can_add ? "blue" : "gray";
-                            this.addActionButton("button_1", _("Buy") + " (" + possibleMoves.cost + ")", "onBuyCard", null, false, buy_color);
-                            this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, add_color);
+                            this.addBuyButton(card, 'onBuyCard');
+                            const addColor = card.can_add ? "blue" : "gray";
+                            this.addActionButton("button_2", _("Add to hand"), "onAddCard", null, false, addColor);
                             this.addActionButton("button_3", _("Discard"), "onDiscardCard");
                             break;
                         }
@@ -1242,6 +1227,14 @@ define([
                 script.
             
             */
+
+            addBuyButton: function(cardData, callback) {
+                // Options: buy, add, cancel
+                const buyColor = cardData.can_buy ? "blue" : "gray";
+                const buyText = dojo.string.substitute(cardData.is_trading ? _("Buy (${cost} - ?)") : _("Buy (${cost})"),
+                    {cost: cardData.cost});
+                this.addActionButton("button_1", buyText, callback, null, false, buyColor);
+            },
 
             /*
              * Update all income values for the player
