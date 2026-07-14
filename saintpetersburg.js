@@ -1611,6 +1611,8 @@ define([
                         disp[i] = 'inline-block';
                     }
 
+                    const handCountId = 'handcount_p' + player_id;
+                    const handIconId = 'handcount_icon_p' + player_id;
                     if (hand.length > 0) {
                         // Add detailed tooltip
                         const text = dojo.string.substitute(_("Cards in player hand (${nbCards}):"), {nbCards: hand.length});
@@ -1624,13 +1626,16 @@ define([
                                     <div class="stp_cardart_small" style="background-position: ${artx[3]}% ${arty[3]}%; display: ${disp[3]}"></div>
                                 </div>
                             </div>`;
-                        this.addTooltipHtml('handcount_p' + player_id, html)
-                        this.addTooltipHtml('handcount_icon_p' + player_id, html);
+                        this.addTooltipHtml(handCountId, html)
+                        this.addTooltipHtml(handIconId, html);
                     } else {
                         // No cards in hand - use standard tooltip
-                        this.addTooltip('handcount_p' + player_id, _("Number of cards in hand"), "");
-                        this.addTooltip('handcount_icon_p' + player_id, _("Number of cards in hand"), "");
+                        this.addTooltip(handCountId, _("Number of cards in hand"), "");
+                        this.addTooltip(handIconId, _("Number of cards in hand"), "");
                     }
+                    // For mobile devices, show tooltip on click:
+                    document.getElementById(handCountId).addEventListener("click", ()=>{this.bga.gameui.tooltips[handCountId].open(handCountId)});
+                    document.getElementById(handIconId).addEventListener("click", ()=>{this.bga.gameui.tooltips[handIconId].open(handIconId)});
                 }
             },
 
