@@ -1508,38 +1508,37 @@ define([
              * Generate HTML tooltip for given card
              */
             getCardTooltip: function (card_type_id, eff_cost) {
-                // Get card info and copy to modify
-                const card = dojo.clone(this.card_infos[card_type_id]);
-                const index = this.getCardArtIndex(card_type_id);
-                // Sprite index
-                const x = index % this.card_art_row_size;
-                const y = Math.floor(index / this.card_art_row_size);
-                card.artx = 100 * x / (this.card_art_row_size - 1);
-                card.arty = 100 * y / (this.card_art_col_size - 1);
+                const card = this.card_infos[card_type_id];
+                if (this.debug) {
+                    console.log('getCardTooltip', card_type_id, eff_cost, card);
+                }
 
-                // card type = <type> [(<worker type> | Trading card [- <worker type>])]
+                // card type = <type> [(<worker type> | [<worker type> – ]Trading card)]
+                let cardType;
                 if (card.card_type === "Worker") {
-                    card.card_type = _(card.card_type) + " (" + _(card.card_worker_type) + ")";
+                    cardType = dojo.string.substitute(_("Worker (${workerType})"), {workerType: _(card.card_worker_type)});
                 } else if (card.card_type === "Trading") {
-                    card.card_type = _(card.card_trade_type) + " (" + _("Trading card");
                     if (card.card_trade_type === "Worker") {
-                        card.card_type += " - " + _(card.card_worker_type);
+                        cardType = dojo.string.substitute(_("Worker (${workerType} – Trading card)"), {workerType: _(card.card_worker_type)});
+                    } else {
+                        cardType = dojo.string.substitute(_("${cardType} (Trading card)"), {cardType: _(card.card_trade_type)});
                     }
-                    card.card_type += ")";
                 } else {
-                    card.card_type = _(card.card_type);
+                    cardType = _(card.card_type);
                 }
 
                 // Cost and benefits
-                let txt = "<p>" + _("Cost") + ": " + card.card_cost + "</p>";
-                if (eff_cost > 0) {
-                    txt += "<p>" + _("Effective Cost") + ": " + eff_cost + "</p>";
+                let txt = "<p>" + dojo.string.substitute(_("Cost: ${cost} rubles"), {cost: card.card_cost}) + "</p>";
+                if (eff_cost > 0 && eff_cost !== card.card_cost) {
+                    txt += "<p>" + dojo.string.substitute(_("Effective cost: ${cost} rubles"), {cost: eff_cost}) + "</p>";
                 }
                 if (card.card_rubles > 0) {
-                    txt += "<p>+" + card.card_rubles + " " + _("rubles") + "</p>";
+                    txt += "<p>" + dojo.string.substitute(_("+${earned} rubles"), {earned: card.card_rubles}) + "</p>";
+                } else if (card.card_rubles < 0) {
+                    txt += "<p>" + _("-1 ruble (discard card if you can not pay)") + "</p>";
                 }
                 if (card.card_points > 0) {
-                    txt += "<p>+" + card.card_points + " " + _("points") + "</p>";
+                    txt += "<p>" + dojo.string.substitute(_("+${earned} points"), {earned: card.card_points}) + "</p>";
                 }
 
                 // Special function text
@@ -1551,12 +1550,9 @@ define([
                 <div class="stp_cardtooltip">
                     <h3>${_(card.card_name)}</h3>
                     <hr/>
-                    <b>${card.card_type}</b>\<br/>
+                    <b>${cardType}</b>\<br/>
                     ${txt}
-                    <div>
-                        <div class="stp_cardart" style="background-position: ${card.artx}% ${card.arty}%;"></div>
-                    </div>
-                    <i>${_('Cards in play')}: ${card.card_nbr}</i>
+                    <i>${dojo.string.substitute(_('Cards in play: ${nbCard}'), {nbCard: card.card_nbr})}</i>
                 </div>`;
             },
 
@@ -1783,7 +1779,7 @@ define([
                 }
 
                 // Update label with current phase and matching color
-                $('stp_phase_label').textContent = _('Current phase') + ': ' + _(phase);
+                $('stp_phase_label').textContent = dojo.string.substitute(_('Current phase: ${phase}'), {phase: _(phase)});
                 if (phase === 'Worker') {
                     dojo.style('stp_phase_label', 'color', 'green');
                 } else if (phase === 'Building') {
@@ -1979,7 +1975,7 @@ define([
                 let txt = "";
                 if (phase === this.current_phase) {
                     // Mark as active phase
-                    txt += "<b>" + _("Current phase") + ":</b> ";
+                    txt += "<b>" + _("Current phase") + "</b><br/>";
                 }
 
 

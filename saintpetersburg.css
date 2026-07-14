@@ -572,24 +572,6 @@
     cursor:pointer;
 }
 
-/* Class for card’s tooltip. */
-.stp_cardart {
-    display:inline-block;
-    background-image:url('img/cards.jpg');
-    background-size: 1000%;
-    width:255px;
-    height:397px;
-    margin:10px;
-    border:4px solid black;
-    border-radius:18px
-}
-
-.stp_2nd_edition .stp_cardart {
-    background-image:url('img/cards2.jpg');
-    width:130.68px;
-    height:200px;
-}
-
 /* Class of cards displayed for player hand in a tooltip */
 .stp_cardart_small {
     background-image: url('img/cards.jpg');
