@@ -8,14 +8,14 @@
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
  */
 declare(strict_types = 1);
-namespace Bga\Games\SaintPetersburg\States;
+namespace Bga\Games\SaintPetersburgExpansion\States;
 
 use Bga\GameFramework\NotificationMessage;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
-use Bga\Games\SaintPetersburg\Game;
-use Bga\Games\SaintPetersburg\Phase;
-use Bga\Games\SaintPetersburg\StateId;
+use Bga\Games\SaintPetersburgExpansion\Game;
+use Bga\Games\SaintPetersburgExpansion\Phase;
+use Bga\Games\SaintPetersburgExpansion\StateId;
 
 /**
  * This game state change the current phase.

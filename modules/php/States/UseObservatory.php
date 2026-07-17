@@ -8,14 +8,14 @@
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
  */
 declare(strict_types = 1);
-namespace Bga\Games\SaintPetersburg\States;
+namespace Bga\Games\SaintPetersburgExpansion\States;
 
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\UserException;
-use Bga\Games\SaintPetersburg\CardState;
-use Bga\Games\SaintPetersburg\Game;
-use Bga\Games\SaintPetersburg\StateId;
+use Bga\Games\SaintPetersburgExpansion\CardState;
+use Bga\Games\SaintPetersburgExpansion\Game;
+use Bga\Games\SaintPetersburgExpansion\StateId;
 
 /**
  * This active player state ask a player to buy add or discard a card drawn through observatory.

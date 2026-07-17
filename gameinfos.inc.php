@@ -13,7 +13,7 @@
 $gameinfos = array(
 
     // Name of the game in English (will serve as the basis for translation)
-    'game_name' => "Saint Petersburg", // NOI18N
+    'game_name' => "Saint Petersburg expansion", // NOI18N
 
     // Game publisher
     'publisher' => html_entity_decode('Hans im Gl&uuml;ck'),

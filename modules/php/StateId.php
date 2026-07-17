@@ -10,7 +10,7 @@
  */
 declare(strict_types=1);
 
-namespace Bga\Games\SaintPetersburg;
+namespace Bga\Games\SaintPetersburgExpansion;
 
 /**
  * Defines each state id of the state machine.

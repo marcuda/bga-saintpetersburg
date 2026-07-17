@@ -20,7 +20,7 @@
  */
 
 // Define constants
-use Bga\Games\SaintPetersburg\Phase;
+use Bga\Games\SaintPetersburgExpansion\Phase;
 
 if (!defined("CARD_PUB")) {
     // Special card types

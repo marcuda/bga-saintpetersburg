@@ -8,17 +8,17 @@
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
  */
 declare(strict_types = 1);
-namespace Bga\Games\SaintPetersburg\States;
+namespace Bga\Games\SaintPetersburgExpansion\States;
 
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\Actions\Types\IntParam;
 use Bga\GameFramework\Actions\Types\StringParam;
 use Bga\GameFramework\States\PossibleAction;
-use Bga\Games\SaintPetersburg\CardState;
-use Bga\Games\SaintPetersburg\Game;
-use Bga\Games\SaintPetersburg\Phase;
-use Bga\Games\SaintPetersburg\StateId;
+use Bga\Games\SaintPetersburgExpansion\CardState;
+use Bga\Games\SaintPetersburgExpansion\Game;
+use Bga\Games\SaintPetersburgExpansion\Phase;
+use Bga\Games\SaintPetersburgExpansion\StateId;
 
 /**
  * This active player state ask a player to play one turn.

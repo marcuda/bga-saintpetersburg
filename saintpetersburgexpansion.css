@@ -7,7 +7,7 @@
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * saintpetersburg.css
+ * saintpetersburgexpansion.css
  *
  * Saint Petersburg stylesheet
  *
@@ -17,8 +17,8 @@
     This is the CSS stylesheet of your game User Interface.
     
     Styles defined on this file will be applied to the HTML elements you define in your
-    HTML template (saintpetersburg_saintpetersburg.tpl), and to HTML elements you create dynamically
-    (in saintpetersburg.js).
+    HTML template (saintpetersburgexpansion_saintpetersburgexpansion.tpl), and to HTML elements you create dynamically
+    (in saintpetersburgexpansion.js).
     
     Usually, you are using CSS to:
     

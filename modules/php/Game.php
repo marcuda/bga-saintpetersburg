@@ -13,16 +13,16 @@
  */
 declare(strict_types=1);
 
-namespace Bga\Games\SaintPetersburg;
+namespace Bga\Games\SaintPetersburgExpansion;
 
 use Bga\GameFramework\Components\Deck;
 use Bga\GameFramework\NotificationMessage;
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\Actions\CheckAction;
-use Bga\Games\SaintPetersburg\States\NextPlayer;
-use Bga\Games\SaintPetersburg\States\ScorePhase;
-use Bga\Games\SaintPetersburg\States\PlayerTurn;
+use Bga\Games\SaintPetersburgExpansion\States\NextPlayer;
+use Bga\Games\SaintPetersburgExpansion\States\ScorePhase;
+use Bga\Games\SaintPetersburgExpansion\States\PlayerTurn;
 
 class Game extends \Bga\GameFramework\Table
 {

@@ -2,21 +2,21 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * SaintPetersburgExpansion implementation : © Dan Marcus <bga.marcuda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
  */
 declare(strict_types = 1);
-namespace Bga\Games\SaintPetersburg\States;
+namespace Bga\Games\SaintPetersburgExpansion\States;
 
 
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\UserException;
 use Bga\GameFramework\States\PossibleAction;
-use Bga\Games\SaintPetersburg\Game;
-use Bga\Games\SaintPetersburg\StateId;
+use Bga\Games\SaintPetersburgExpansion\Game;
+use Bga\Games\SaintPetersburgExpansion\StateId;
 
 /**
  * This active player state allow a player having the trading house to buy points.

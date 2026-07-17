@@ -8,13 +8,13 @@
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
  */
 declare(strict_types = 1);
-namespace Bga\Games\SaintPetersburg;
+namespace Bga\Games\SaintPetersburgExpansion;
 
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
-use Bga\Games\SaintPetersburg\States\NextPlayer;
+use Bga\Games\SaintPetersburgExpansion\States\NextPlayer;
 
 /**
  * Base state of states allowing to buy or add a card.

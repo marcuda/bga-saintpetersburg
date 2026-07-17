@@ -7,7 +7,7 @@
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * saintpetersburg.js
+ * saintpetersburgexpansion.js
  *
  * Saint Petersburg user interface.
  */
@@ -281,7 +281,7 @@ define([
         const DISCARDED_COL = 0;
         const MOVE_DISCARD_COL = 1;
 
-        return declare("bgagame.saintpetersburg", ebg.core.gamegui, {
+        return declare("bgagame.saintpetersburgexpansion", ebg.core.gamegui, {
             constructor: function () {
                 // Enabled console logs if true
                 this.debug = false;
@@ -2563,7 +2563,7 @@ define([
                 In this method, you associate each of your game notifications with your local method to handle it.
                 
                 Note: game notification names correspond to "notifyAllPlayers" and "notifyPlayer" calls in
-                      your saintpetersburg.game.php file.
+                      your saintpetersburgexpansion.game.php file.
             
             */
             setupNotifications: function () {
