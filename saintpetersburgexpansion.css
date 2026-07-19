@@ -17,8 +17,7 @@
     This is the CSS stylesheet of your game User Interface.
     
     Styles defined on this file will be applied to the HTML elements you define in your
-    HTML template (saintpetersburgexpansion_saintpetersburgexpansion.tpl), and to HTML elements you create dynamically
-    (in saintpetersburgexpansion.js).
+    JavaScript (in saintpetersburgexpansion.js).
     
     Usually, you are using CSS to:
     
@@ -55,10 +54,16 @@
     --stp-board-height-to-width: 65.1179941%;
     /* Card width in % of board width, read by js. */
     --stp-card-width-pc: 9.46%;
-    /* Card width when out of board, overridden in js setup. */
+    /* Card height in % of board height, read by js. */
+    --stp-card-height-pc: 22.8%;
+    /* Card width in pixels for stock, overridden in js setBoardSize. */
     --stp-card-width-px: 70px;
-    /* Card height when out of board, overridden in js setup. */
+    /* Card height in pixels for stock, overridden in js setBoardSize. */
     --stp-card-height-px: 109px;
+    /* Card width in pixels for hand tooltip, overridden in js setBoardSize. */
+    --stp-card-width-tooltip-px: 70px;
+    /* Card height in pixels for hand tooltip, overridden in js setBoardSize. */
+    --stp-card-height-tooltip-px: 109px;
     /* My hand width, overridden in js adaptInterface. */
     --stp-my-hand-width: 100%;
     /* My hand height, overridden in js adaptInterface. */
@@ -184,13 +189,19 @@
 /* Card sized stuff on board (dimensions in % of board size). */
 .stp_square, .stp_discard, .stp_card, .stp_deck {
     width: var(--stp-card-width-pc);
-    height: 22.8%;
+    height: var(--stp-card-height-pc);
 }
 
 /* Card sized stuff out of board (dimensions in pixels). */
-.stp_maskcard, .stp_clickcard, .stp_cardart_small {
+.stp_maskcard, .stp_clickcard {
     width: var(--stp-card-width-px);
     height: var(--stp-card-height-px);
+}
+
+/* Card size in hand tooltip. */
+.stp_cardart_small {
+    width: var(--stp-card-width-tooltip-px);
+    height: var(--stp-card-height-tooltip-px);
 }
 
 /* Card sized stuff on board in 2nd edition (dimensions in % of board size). */
@@ -254,7 +265,7 @@
     background-color: rgba(255, 228, 196, 0.5);
     filter: alpha(opacity=50); /* IE8 */
     display: none;
-    border-radius: 10px;
+    border-radius: 14.3% / 8.93%;
 }
 
 .stp_clickcard
@@ -283,7 +294,7 @@
 
 .stockitem {
     box-shadow: rgba(0,0,0,0.5) 2px 2px 5px;
-    border-radius: 10px;
+    border-radius: 14.3% / 8.93%;
     background-size: 1000%;
 }
 

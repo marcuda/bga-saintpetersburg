@@ -269,12 +269,19 @@ define([
         const PREF_BS_MEDIUM = 2;
         const PREF_BS_LARGE = 3;
 
-        const MY_HAND_MAX_WIDTH = 300;
-        const MY_HAND_MIN_WIDTH = 150;
-        const MY_HAND_MAX_HEIGHT = 260;
-        const MY_HAND_MIN_HEIGHT = 145;
-        const MY_HAND_PADDING = 20;
-        const MY_HAND_MARGIN = 10;
+        // Hand margin in pixels at each side when placed at side of board (in fact the opposite side will be in auto margin).
+        const HAND_MARGIN = 10;
+        // Hand padding in pixels for each side.
+        const HAND_PADDING = 10;
+        // Total hand margin and padding from one side to the other.
+        const HAND_MARGIN_PADDING = 2 * (HAND_MARGIN + HAND_PADDING);
+        // Hand extra width in pixels to ensure cards are correctly disposed.
+        const HAND_EXTRA_WIDTH = 5;
+
+        const PLAYER_TABLE_MARGIN = 10;
+        // Extra space in pixels used by BGA interface on top on screen and not measured in adaptInterface.
+        // 5px of top margin of left-side-wrapper and 5px of top margin of game_play_area.
+        const BGA_TOP_EXTRA_SPACE = 10;
 
         // Game logic constants
         // Fake column numbers to be used to handle discarded cards.
@@ -284,7 +291,7 @@ define([
         return declare("bgagame.saintpetersburgexpansion", ebg.core.gamegui, {
             constructor: function () {
                 // Enabled console logs if true
-                this.debug = false;
+                this.debug = true;
 
                 if (this.debug) {
                     console.log('Saint Petersburg constructor');
@@ -295,6 +302,11 @@ define([
                 this.cardwidth = CARD_WIDTH_PX;
                 // Standard card height for stock
                 this.cardheight = CARD_HEIGHT_PX;
+                this.cardRatio = CARD_HEIGHT_PX / CARD_WIDTH_PX;
+                // Empty player table height in pixels, will be computed in buildBoard.
+                this.emptyTableHeight = 0;
+                // Hand header height in pixels computed in buildBoard.
+                this.handHeaderHeight = 0;
                 this.card_art_row_size = 10;    // Number of cards per row in sprite for stock
                 this.card_art_col_size = 7;     // Number of cards per column in sprite for stock
                 this.player_rubles = []         // Counters for all player rubles
@@ -351,6 +363,7 @@ define([
                     this.card_art_col_size = 6;
                     this.cardwidth = CARD_WIDTH_PX_2ND;
                     this.cardheight = CARD_HEIGHT_PX_2ND;
+                    this.cardRatio = CARD_HEIGHT_PX_2ND / CARD_WIDTH_PX_2ND;
                 } else {
                     this.dontPreloadImage('board2.jpg');
                     this.dontPreloadImage('cardbacks2.jpg');
@@ -358,8 +371,10 @@ define([
                     this.dontPreloadImage('icons2.jpg');
                 }
 
-                document.documentElement.style.setProperty('--stp-card-width-px', this.cardwidth + 'px');
-                document.documentElement.style.setProperty('--stp-card-height-px', this.cardheight + 'px');
+                this.setCSSVariable('--stp-card-width-px', this.cardwidth + 'px');
+                this.setCSSVariable('--stp-card-height-px', this.cardheight + 'px');
+                this.setCSSVariable('--stp-card-width-tooltip-px', this.cardwidth + 'px');
+                this.setCSSVariable('--stp-card-height-tooltip-px', this.cardheight + 'px');
 
                 this.buildBoard(gamedatas);
 
@@ -698,6 +713,16 @@ define([
                 return getComputedStyle(document.documentElement).getPropertyValue(name);
             },
 
+            setCSSVariable: function(name, value) {
+                document.documentElement.style.setProperty(name, value);
+            },
+
+            getTotalHeight: function(nodeId) {
+                // document.getElementById(...).style.marginTop/Bottom are always empty, must use dojo.
+                return document.getElementById(nodeId).offsetHeight + parseInt(dojo.style($(nodeId), 'margin-top'))
+                    + parseInt(dojo.style($(nodeId), 'margin-bottom'));
+            },
+
             buildBoard: function (gameData) {
                 if (this.debug) {
                     console.log("buildBoard");
@@ -766,7 +791,7 @@ define([
                         </div>
                         <!-- Current player hand -->
                         <div id="stp_myhand_wrap" class="whiteblock">
-                            <h3>${_('My hand')}</h3>
+                            <h3 id="stp_hand_header">${_('My hand')}</h3>
                             <div id="stp_myhand"></div>
                         </div>
                     </div>
@@ -825,7 +850,8 @@ define([
                             <div id="stp_playertable_${playerId}"></div>
                         </div>`);
                 }
-
+                this.emptyTableHeight = document.getElementById(`stp_playertable_${this.gamedatas.players_in_order[0]}_wrap`).clientHeight;
+                this.handHeaderHeight = this.getTotalHeight('stp_hand_header');
             },
 
             set10Columns: function() {
@@ -833,13 +859,14 @@ define([
                     console.log('set10Columns', this.use10Columns);
                 }
                 this.use10Columns = true;
-                const cardWidh = parseInt(this.getCSSVariable('--stp-card-width-pc'));
-                const cardStep = cardWidh + 1;
+                const cardWidth = parseFloat(this.getCSSVariable('--stp-card-width-pc'));
+                const cardGap = 0.5;
+                const cardStep = cardWidth + cardGap;
                 for (let y = 0; y < 2; y++) {
                     // 10 for first worker phase with five players.
                     for (let x = 0; x < 10; x++) {
                         // Count right to left.
-                        const left = (9 - x) * cardStep;
+                        const left = cardGap + (9 - x) * cardStep;
                         const card = document.getElementById(`square_${x}_${y}`);
                         card.style.left = left + '%';
                     }
@@ -971,46 +998,82 @@ define([
             },
 
             setBoardWidth: function(boardWidth) {
+                const boardHeight = boardWidth * parseFloat(this.getCSSVariable('--stp-board-height-to-width')) / 100;
                 if (this.debug) {
-                    console.log('setBoardWidth', boardWidth);
+                    console.log('setBoardWidth, board size', boardWidth, boardHeight);
                 }
-                document.documentElement.style.setProperty('--stp-board-size', boardWidth + 'px');
+                this.setCSSVariable('--stp-board-size', boardWidth + 'px');
+
+                this.cardwidth = boardWidth * parseFloat(this.getCSSVariable('--stp-card-width-pc')) / 100;
+                this.cardheight = this.cardwidth * this.cardRatio;
+                if (this.debug) {
+                    console.log('setBoardWidth, card size', this.cardwidth, this.cardheight);
+                }
+                this.setCSSVariable('--stp-card-width-px', this.cardwidth + 'px');
+                this.setCSSVariable('--stp-card-height-px', this.cardheight + 'px');
+
+                if (typeof this.player_tables != "undefined") {
+                    for (const playerId in this.player_tables) {
+                        const board = this.player_tables[playerId];
+                        board.resizeItems(this.cardwidth, this.cardheight);
+                    }
+                    // There is no hand for a spectator.
+                    if (!this.bga.players.isCurrentPlayerSpectator()) {
+                        this.playerHand.resizeItems(this.cardwidth, this.cardheight);
+                    }
+                    if (this.discardStock !== null) {
+                        this.discardStock.resizeItems(this.cardwidth, this.cardheight);
+                    }
+                }
 
                 this.adaptMyHand();
             },
 
             adaptMyHand: function () {
+                // There is no hand for a spectator.
+                if (this.bga.players.isCurrentPlayerSpectator()) {
+                    return;
+                }
+                if (document.getElementById('stp_game_area') === null) {
+                    if (this.debug) {
+                        console.log('adaptMyHand: interface is not yet built.');
+                    }
+                    return;
+                }
                 // Adapt my hand depending on play area size:
                 const playArea = this.bga.gameArea.getElement();
                 const availWidth = playArea.clientWidth;
                 const boardWidth = parseInt(this.getCSSVariable('--stp-board-size'));
 
-                const boardHeightToWidthRatio = parseFloat(this.getCSSVariable('--stp-board-height-to-width')) / 100;
-                const boardHeight = boardWidth * boardHeightToWidthRatio;
+                const handMinWidth = 2 * (this.cardwidth + this.playerHand.item_margin) + HAND_EXTRA_WIDTH;
+                const handMaxWidth = 4 * (this.cardwidth + this.playerHand.item_margin) + HAND_EXTRA_WIDTH;
+                const handMinHeight = this.cardheight + this.handHeaderHeight;
 
-                const availWidthForMyHand = availWidth - boardWidth;
-                if (availWidthForMyHand >= MY_HAND_MAX_WIDTH + MY_HAND_PADDING + MY_HAND_MARGIN) {
-                    document.documentElement.style.setProperty('--stp-my-hand-width', MY_HAND_MAX_WIDTH + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-height', MY_HAND_MIN_HEIGHT + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-top', 'auto');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-left', MY_HAND_MARGIN + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-right', 'auto');
-                } else if ((availWidthForMyHand >= MY_HAND_MIN_WIDTH + MY_HAND_PADDING + MY_HAND_MARGIN) && boardHeight >= MY_HAND_MAX_HEIGHT) {
-                    document.documentElement.style.setProperty('--stp-my-hand-width', MY_HAND_MIN_WIDTH + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-height', MY_HAND_MAX_HEIGHT + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-top', 'auto');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-left', MY_HAND_MARGIN + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-right', 'auto');
+                const availWidthForMyHand = availWidth - boardWidth - HAND_MARGIN_PADDING;
+                if (availWidthForMyHand >= handMaxWidth) {
+                    this.setCSSVariable('--stp-my-hand-width', handMaxWidth + 'px');
+                    this.setCSSVariable('--stp-my-hand-height', handMinHeight + 'px');
+                    this.setCSSVariable('--stp-my-hand-margin-top', 'auto');
+                    this.setCSSVariable('--stp-my-hand-margin-left', HAND_MARGIN + 'px');
+                    this.setCSSVariable('--stp-my-hand-margin-right', 'auto');
+                } else if (availWidthForMyHand >= handMinWidth) {
+                    this.setCSSVariable('--stp-my-hand-width',  handMinWidth + 'px');
+                    const handHeight = 2 * (this.cardheight + this.playerHand.item_margin) + this.handHeaderHeight;
+                    this.setCSSVariable('--stp-my-hand-height', handHeight + 'px');
+                    this.setCSSVariable('--stp-my-hand-margin-top', 'auto');
+                    this.setCSSVariable('--stp-my-hand-margin-left', HAND_MARGIN + 'px');
+                    this.setCSSVariable('--stp-my-hand-margin-right', 'auto');
                 } else {
                     // Must put my hand below board.
-                    document.documentElement.style.setProperty('--stp-my-hand-width', '100%');
-                    document.documentElement.style.setProperty('--stp-my-hand-height', MY_HAND_MIN_HEIGHT + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-top', MY_HAND_MARGIN + 'px');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-left', 'unset');
-                    document.documentElement.style.setProperty('--stp-my-hand-margin-right', 'unset');
+                    this.setCSSVariable('--stp-my-hand-width', '100%');
+                    this.setCSSVariable('--stp-my-hand-height', handMinHeight + 'px');
+                    this.setCSSVariable('--stp-my-hand-margin-top', HAND_MARGIN + 'px');
+                    this.setCSSVariable('--stp-my-hand-margin-left', 'unset');
+                    this.setCSSVariable('--stp-my-hand-margin-right', 'unset');
                 }
+                this.playerHand.updateDisplay();
                 if (this.debug) {
-                    console.log('Available width for my hand: ', availWidthForMyHand);
+                    console.log('Available width for my hand, max, min: ', availWidthForMyHand, handMaxWidth, handMinWidth);
                 }
             },
 
@@ -1026,9 +1089,6 @@ define([
             },
 
             adaptInterface: function () {
-                if (this.debug) {
-                    console.log('adaptInterface');
-                }
                 if (this.bga.userPreferences.get(PREF_BOARD_SIZE) !== PREF_BS_AUTO) {
                     // Size is fixed, do nothing.
                     return;
@@ -1044,34 +1104,27 @@ define([
                 const playArea = this.bga.gameArea.getElement();
                 const availWidth = playArea.clientWidth;
 
-                const getTotalHeight = (nodeId) => {
-                    return document.getElementById(nodeId).offsetHeight + parseInt(dojo.style($(nodeId), 'margin-top'))
-                        + parseInt(dojo.style($(nodeId), 'margin-bottom'));
-                };
-
-                const availHeight = window.innerHeight - (getTotalHeight('topbar') + getTotalHeight('page-title'));
+                const availHeight = window.innerHeight - (this.getTotalHeight('topbar') + this.getTotalHeight('page-title')
+                    + BGA_TOP_EXTRA_SPACE);
                 if (this.debug) {
-                    console.log('Available space', availWidth, availHeight, this.interface_min_width);
+                    console.log('adaptInterface: available space', availWidth, availHeight, this.interface_min_width);
                 }
 
                 const boardHeightToWidthRatio = parseFloat(this.getCSSVariable('--stp-board-height-to-width')) / 100;
                 const playerTableHeight = document.getElementById(`stp_playertable_${this.gamedatas.players_in_order[0]}_wrap`).clientHeight;
 
-                const boardMaxHeight = availHeight - playerTableHeight;
+                const boardMaxHeight = (availHeight - (this.emptyTableHeight + PLAYER_TABLE_MARGIN * 2)) * 100 / (100 + parseFloat(this.getCSSVariable('--stp-card-height-pc')));
                 const boardMaxWidth = Math.min(BOARD_MAX_WIDTH, availWidth, Math.max(this.interface_min_width, boardMaxHeight / boardHeightToWidthRatio));
 
-                let myHandWidth = MY_HAND_MIN_WIDTH;
-                let myHandHeight = MY_HAND_MAX_HEIGHT;
-                if (boardMaxHeight < MY_HAND_MAX_HEIGHT + MY_HAND_PADDING) {
-                    myHandWidth = MY_HAND_MAX_WIDTH;
-                    myHandHeight = MY_HAND_MIN_HEIGHT;
-                }
                 let boardWidth = boardMaxWidth;
-                const boardMaxWidthWithHandAtSide = availWidth - (myHandWidth + MY_HAND_PADDING + MY_HAND_MARGIN);
-                const boardHeightWithHandAtSide = boardMaxWidthWithHandAtSide * boardHeightToWidthRatio;
-                if (boardMaxWidthWithHandAtSide >= this.interface_min_width && boardHeightWithHandAtSide >= (myHandHeight + MY_HAND_PADDING)) {
-                    // Set board width to a size allowing my hand at its side.
-                    boardWidth = Math.min(boardMaxWidth, boardMaxWidthWithHandAtSide);
+                // There is no hand for a spectator.
+                if (!this.bga.players.isCurrentPlayerSpectator()) {
+                    const boardMaxWidthWithHandAtSide = (availWidth - (HAND_MARGIN_PADDING + 2 * this.playerHand.item_margin + HAND_EXTRA_WIDTH))
+                        * 100 / (100 + 2 * parseFloat(this.getCSSVariable('--stp-card-width-pc')));
+                    if (boardMaxWidthWithHandAtSide >= this.interface_min_width) {
+                        // Set board width to a size allowing my hand at its side.
+                        boardWidth = Math.min(boardMaxWidth, boardMaxWidthWithHandAtSide);
+                    }
                 }
                 if (this.debug) {
                     console.log(`Player cards height: ${playerTableHeight}; board max height: ${boardMaxHeight}; board width: ${boardWidth}.`);
@@ -2680,8 +2733,6 @@ define([
 
                 this.player_aristocrats[notif.args.player_id].setValue(notif.args.aristocrats);
                 this.setIncome(notif.args.player_id, notif.args.income);
-                // Board size might have to be adjusted to keep all current player bought cards visible.
-                this.adaptInterface();
                 this.checkBoardColumns();
             },
 
