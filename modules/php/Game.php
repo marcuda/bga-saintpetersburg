@@ -1020,7 +1020,7 @@ class Game extends \Bga\GameFramework\Table
             return true;
         }
 
-        // Can play if Observatory can be used
+        // Can play if Observatory or Debtor’s Prison can be used
         $current_phase = Phase::fromRound((int)$this->getGameStateValue('current_phase'));
         if ($current_phase == Phase::Building) {
             $cards = $this->cards->getCardsOfTypeInLocation(
@@ -1028,6 +1028,13 @@ class Game extends \Bga\GameFramework\Table
             foreach ($cards as $card) {
                 $obs = $this->getObservatory((int)$card['id']);
                 if (!$obs['used']) {
+                    return true;
+                }
+            }
+            if ($this->cards->countCardsInLocation('discard') > 0 && $this->getGameStateValue('debtors_prison_used') == 0) {
+                $cards = $this->cards->getCardsOfTypeInLocation(
+                    Phase::Building->name, CARD_DEBTORS_PRISON, 'table', $player_id);
+                if (!empty($cards)) {
                     return true;
                 }
             }
