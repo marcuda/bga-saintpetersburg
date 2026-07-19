@@ -247,10 +247,6 @@ define([
 
 
         // Preferences values.
-        const PREF_PUBLISHER_MESSAGE = 100;
-        const PREF_PM_ON = 0;
-        const PREF_PM_OFF = 1;
-
         const PREF_CARDS_OVERLAP = 101;
         const PREF_CO_HORIZONTAL = 0;
         const PREF_CO_NONE = 1;
@@ -377,12 +373,6 @@ define([
                 this.setCSSVariable('--stp-card-height-tooltip-px', this.cardheight + 'px');
 
                 this.buildBoard(gamedatas);
-
-                if (this.bga.userPreferences.get(PREF_PUBLISHER_MESSAGE) === PREF_PM_ON) {
-                    // Show message from publisher player has not seen/acknowledged
-                    dojo.style('publisher_msg', 'display', 'block');
-                    dojo.connect($('button_publisher_ack'), 'onclick', this, 'ackPublisherMessage');
-                }
 
                 // Overlap duplicate cards if preferred
                 let duplicate_overlap = 0;
@@ -727,24 +717,7 @@ define([
                 if (this.debug) {
                     console.log("buildBoard");
                 }
-                const PUBLISHER_MSG = dojo.string.substitute(
-                    _('A word from ${publisherName}: the artwork for Saint Petersburg is being reworked and this temporary version will be replaced when the new artwork is ready.'),
-                    {publisherName: 'Hans im Glück'});
                 this.bga.gameArea.getElement().insertAdjacentHTML('beforeend', `
-                    <div id="publisher_msg" style="display: none; margin-bottom: 5px; margin-right: 10px">
-                        <div class="roundedbox" style="width: 100%;">
-                            <div class=roundedboxinner">
-                                <div class="stp_banner_msg">
-                                    <div class="stp_publisher_icon"></div>
-                                    &nbsp;
-                                    <span>${PUBLISHER_MSG}</span>
-                                    &nbsp;
-                                    <a id="button_publisher_ack" class="action-button bgabutton bgabutton_blue" href="#">${_('Okay, got it!')}</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div id="autopass_msg" style="display: none; margin-bottom: 5px; margin-right: 10px">
                         <div class="roundedbox" style="width: 100%;">
                             <div class=roundedboxinner">
@@ -1453,16 +1426,6 @@ define([
              */
             isButtonDisabled: function (button) {
                 return dojo.hasClass(button.id, 'bgabutton_gray');
-            },
-
-            /*
-             * Player clicks okay on note from publisher
-             */
-            ackPublisherMessage: function () {
-                // Remove message banner
-                dojo.style('publisher_msg', 'display', 'none');
-                // Save user preference to not show banner
-                this.bga.userPreferences.set(PREF_PUBLISHER_MESSAGE, PREF_PM_OFF);
             },
 
             /*

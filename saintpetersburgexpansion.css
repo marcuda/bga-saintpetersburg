@@ -602,14 +602,6 @@
     max-width:300px
 }
 
-.stp_publisher_icon {
-    background-image: url('img/publisher_small.png');
-    width: 50px;
-    height: 64px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
 .stp_banner_msg {
     display: inline-block;
     text-align: center;
