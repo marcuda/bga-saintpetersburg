@@ -408,7 +408,7 @@ define([
                     const id = parseInt(player_id);
                     this.bga.playerPanels.getElement(id).insertAdjacentHTML('beforeend', `
                         <div class="stp_board">
-                            <div id="rublecount_icon_p${id}" class="imgtext stp_icon stp_icon_ruble"></div>
+                            ₽&nbsp;
                             <span id="rublecount_p${id}">?</span>&nbsp;
                             <div id="aricount_icon_p${id}" class="imgtext stp_icon stp_icon_aricount"></div>
                             <span id="aricount_p${id}">0</span>&nbsp;

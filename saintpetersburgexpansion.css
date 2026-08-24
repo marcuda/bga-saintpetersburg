@@ -570,6 +570,10 @@
     position: relative;
 }
 
+html[data-theme=dark] .stp_icon > span {
+    color: #0d0d0d;
+}
+
 .stp_activecard {
     position:absolute;
     top:7px;
