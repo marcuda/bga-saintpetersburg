@@ -869,6 +869,12 @@ class Game extends \Bga\GameFramework\Table
                     continue;
                 }
             }
+            if ($p_card['type_arg'] == CARD_DEBTORS_PRISON) {
+                if ($this->getGameStateValue('debtors_prison_used')) {
+                    // Debtor’s prison card has been used.
+                    continue;
+                }
+            }
 
             $has_trade = true; // At least one valid card, ignoring cost
 
