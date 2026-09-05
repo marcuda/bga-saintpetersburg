@@ -662,7 +662,15 @@ class Game extends \Bga\GameFramework\Table
                 if ($card['type_arg'] == CARD_OBSERVATORY) {
                     // Observatory - do not score if used
                     $obs = $this->getObservatory((int)$card['id']);
-                    if ($obs['used']) continue;
+                    if ($obs['used']) {
+                        continue;
+                    }
+                }
+                if ($card['type_arg'] == CARD_DEBTORS_PRISON) {
+                    // Debtor’s prison - do not score if used
+                    if ($this->getGameStateValue('debtors_prison_used')) {
+                        continue;
+                    }
                 }
 
                 $card_info = $this->getCardInfo($card);
