@@ -376,10 +376,15 @@ class Game extends \Bga\GameFramework\Table
             ];
         }
 
-        $jesteredId = $this->getGameStateValue('jesterCard');
-        $result['jesteredType'] = ($jesteredId == -1)? -1: $this->cards->getCard($jesteredId)['type_arg'];
-        $banquetedId = $this->getGameStateValue('banquetCard');
-        $result['banquetedType'] = ($banquetedId == -1)? -1: $this->cards->getCard($banquetedId)['type_arg'];
+        if ($this->optBanquet()) {
+            $jesteredId = $this->getGameStateValue('jesterCard');
+            $result['jesteredType'] = ($jesteredId == -1) ? -1 : $this->cards->getCard($jesteredId)['type_arg'];
+            $banquetedId = $this->getGameStateValue('banquetCard');
+            $result['banquetedType'] = ($banquetedId == -1) ? -1 : $this->cards->getCard($banquetedId)['type_arg'];
+        } else {
+            $result['jesteredType'] = -1;
+            $result['banquetedType'] = -1;
+        }
 
         // Constant value for identifying card location or special cards.
         $result['constants'] = array(
@@ -688,8 +693,13 @@ class Game extends \Bga\GameFramework\Table
         $textileFactory = false;
 
         $cards = $this->cards->getCardsInLocation('table', $player_id);
-        $jesterCardId = $this->getGameStateValue('jesterCard');
-        $banquetCardId = $this->getGameStateValue('banquetCard');
+        if ($this->optBanquet()) {
+            $jesterCardId = $this->getGameStateValue('jesterCard');
+            $banquetCardId = $this->getGameStateValue('banquetCard');
+        } else {
+            $jesterCardId = -1;
+            $banquetCardId = -1;
+        }
         foreach ($cards as $card) {
             // Only cards from the current phase are scored
             if ($this->isCardType($card, $phase)) {
