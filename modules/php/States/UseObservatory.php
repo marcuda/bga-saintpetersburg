@@ -129,7 +129,7 @@ class UseObservatory extends CardState
         $game->setGameStateValue("activated_observatory", -1);
         $game->setGameStateValue("num_pass", 0);
         $this->bga->playerStats->inc('actions_taken', 1, $activePlayerId);
-        return NextPlayer::class;
+        return $game->getNextState();
     }
 
     /**

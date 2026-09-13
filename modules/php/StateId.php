@@ -27,5 +27,8 @@ enum StateId: int
     case TRADING_HOUSE_PLAYER = 17;
     case USE_TRADING_HOUSE = 18;
     case USE_DEBTORS_PRISON = 19;
+    case BLACK_MARKET = 20;
+    case PICKPOCKET = 21;
+    case STARTING_PLAYER = 22;
     case END_GAME = 99;
 }

@@ -20,6 +20,17 @@
             "1": []
         }
     },
+    "104": {
+        "name": "The Banquet",
+        "values": {
+            "0": {
+                "name": "No"
+            },
+            "1": {
+                "name": "Yes"
+            }
+        }
+    },
     "100": {
         "name": "Show other player rubles",
         "values": [

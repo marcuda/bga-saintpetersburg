@@ -15,6 +15,7 @@ use Bga\GameFramework\StateType;
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\UserException;
 use Bga\Games\SaintPetersburgExpansion\States\NextPlayer;
+use Bga\Games\SaintPetersburgExpansion\States\PlayerTurn;
 
 /**
  * Base state of states allowing to buy or add a card.
@@ -29,17 +30,18 @@ class CardState extends GameState
 
     /**
      * Player adds a card to their hand.
-     * @param int $row The board row or the observatory card type.
-     * @param int $col The board column (meaningless if row is the observatory card type).
+     * @param int $row The board row or the observatory card type or the discard row.
+     * @param int $col The board column or discarded card id (meaningless if row is the observatory card type).
      * @param int $activePlayerId The active player id.
-     * @return string The next state (NextPlayer).
+     * @return string The next state (NextPlayer or PlayerTurn).
      * @throws UserException When player hand is full.
      * @throws SystemException If no card exist at given location.
      */
     protected function addCard(int $row, int $col, int $activePlayerId): string
     {
+        $game = $this->game;
         // Verify player hand is not full
-        if ($this->game->isHandFull($activePlayerId)) {
+        if ($game->isHandFull($activePlayerId)) {
             throw new UserException(clienttranslate("Your hand is full"));
         }
 
@@ -49,16 +51,16 @@ class CardState extends GameState
         $notif = 'addCard';
         $msg = clienttranslate('${player_name} adds ${card_name} to their hand');
         $this->cardAction((int) $card['id'], - 1, $row, 0, $dest, $notif, $msg, $activePlayerId);
-        return NextPlayer::class;
+        return $game->getNextState();
     }
 
     /**
      * Player buys a card.
-     * @param int $row The board row or the observatory card type.
-     * @param int $col The board column (meaningless if row is the observatory card type).
+     * @param int $row The board row or the observatory card type or the discard row.
+     * @param int $col The board column or discarded card id (meaningless if row is the observatory card type).
      * @param int $activePlayerId The active player id.
      * @param int $trade_id The traded card id or -1 if no traded card.
-     * @return string The next state (NextPlayer).
+     * @return string The next state (NextPlayer or PlayerTurn).
      * @throws SystemException If no card exist at given location or trade is not possible.
      * @throws UserException When player does not have enough rubles.
      */
@@ -67,7 +69,13 @@ class CardState extends GameState
         $game = $this->game;
         $card = $this->getSelectedCard($row, $col);
         $card_id = (int) $card['id'];
-        
+
+        // Verify it is not a special card (0 cost)
+        $card_cost = $game->getCardCost($card_id, $row, $trade_id);
+        if (0 == $card_cost) {
+            throw new SystemException("Special card can not be bought");
+        }
+
         // Verify trade if needed
         if ($game->isTrading($card)) {
             $this->checkTrade($card, $trade_id, $activePlayerId);
@@ -76,7 +84,6 @@ class CardState extends GameState
         }
         
         // Verify player can pay cost
-        $card_cost = $game->getCardCost($card_id, $row, $trade_id);
         $rubles = $game->getRubles($activePlayerId);
         if ($card_cost > $rubles) {
             throw new UserException(clienttranslate("You do not have enough rubles"));
@@ -90,15 +97,15 @@ class CardState extends GameState
             $msg = clienttranslate('${player_name} buys ${card_name} for ${card_cost} Ruble(s)');
         }
         $this->cardAction($card_id, $trade_id, $row, $card_cost, $dest, $notif, $msg, $activePlayerId);
-        return NextPlayer::class;
+        return $game->getNextState();
     }
-    
+
     /**
      * Perform the appropriate action for the given card and destination.
      *
      * Reduces duplication of code in main card actions (buy/add/play).
      * @param int $card_id The card id.
-     * @param int $trade_id The traded card id or -1 if no trade.
+     * @param int $inflictedId The inflicted card id or -1.
      * @param int $card_row The card row.
      * @param int $card_cost The card cost.
      * @param string $dest The card destination.
@@ -106,8 +113,8 @@ class CardState extends GameState
      * @param string $msg The notification message.
      * @param int $playerId The player id.
      */
-    protected function cardAction(int $card_id, int $trade_id, int $card_row, int $card_cost, string $dest, string $notif,
-        string $msg, int $playerId): void
+    protected function cardAction(int $card_id, int $inflictedId, int $card_row, int $card_cost, string $dest, string $notif,
+                                  string $msg, int $playerId): void
     {
         $game = $this->game;
         $card = $game->cards->getCard($card_id);
@@ -115,28 +122,37 @@ class CardState extends GameState
         
         // Pay cost and take card
         $game->incRubles($playerId, - $card_cost);
-        $game->cards->moveCard($card_id, $dest, $playerId);
-        
+        $game->cards->moveCard($card_id, $dest, ($dest == 'discard') ? 0 : $playerId);
+
+        // Inflicted card should be discarded if it exists and the played card is not a special card (means the inflicted card is a
+        // displaced card) or the special card is discarded (means it is away with it and so the inflicted card is discarded too).
+        $discardInflicted = $inflictedId >= 0 && ($card_cost > 0 || $dest == 'discard');
+
         // Stats
         $this->bga->playerStats->inc('rubles_spent', $card_cost, $playerId);
-        if ($dest == 'table') {
+        if ($dest == 'table' && $card_cost > 0) {
             $this->bga->playerStats->inc('cards_bought', 1, $playerId);
-            if ($trade_id > 0) {
+            if ($discardInflicted) {
+                // If dest is table and inflicted card is discarded, it means that it was a trade.
                 $this->bga->playerStats->inc('cards_traded', 1, $playerId);
             }
         } else if ($dest == 'hand') {
             $this->bga->playerStats->inc('cards_added', 1, $playerId);
         }
-        
-        if ($trade_id > 0) {
-            // Discard displaced card
-            $game->cards->playCard($trade_id);
-            
+
+        if ($inflictedId >= 0) {
             // Get info for log
-            $trade = $game->cards->getCard($trade_id);
-            $trade_name = $game->getCardName($trade);
+            $inflictedCard = $game->cards->getCard($inflictedId);
+            $inflictedCardName = $game->getCardName($inflictedCard);
+            $inflictedIdx = $inflictedCard['type_arg'];
         } else {
-            $trade_name = '';
+            $inflictedCardName = '';
+            $inflictedIdx = -1;
+        }
+
+        if ($discardInflicted) {
+            // Discard inflicted card
+            $game->cards->playCard($inflictedId);
         }
         
         // Income
@@ -157,8 +173,9 @@ class CardState extends GameState
             'card_loc' => $card['location_arg'],
             'card_row' => $card_row,
             'card_cost' => $card_cost,
-            'trade_id' => $trade_id,
-            'trade_name' => $trade_name,
+            'trade_id' => $inflictedId,
+            'inflicted_idx' => $inflictedIdx,
+            'trade_name' => $inflictedCardName,
             'aristocrats' => $game->uniqueAristocrats($playerId),
             'income' => $income,
             'lastDiscarded' => $game->cards->getCardOnTop('discard')
@@ -218,8 +235,8 @@ class CardState extends GameState
     /**
      * Return the card at given board location.
      *
-     * @param int $row The board row or the observatory card type.
-     * @param int $col The board column (meaningless if row is the observatory card type).
+     * @param int $row The board row or the observatory card type or the discard row.
+     * @param int $col The board column or the discarded card id (meaningless if row is the observatory card type).
      * @return array A card.
      * @throws SystemException When given row value is invalid or no card exist at given location.
      */

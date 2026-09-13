@@ -19,11 +19,11 @@ use Bga\Games\SaintPetersburgExpansion\StateId;
 /**
  * This game state activate the next player.
  */
-class NextPlayer extends GameState
+class StartingPlayer extends GameState
 {
     function __construct(protected Game $game)
     {
-        parent::__construct($game, id: StateId::NEXT_PLAYER->value, type: StateType::GAME);
+        parent::__construct($game, id: StateId::STARTING_PLAYER->value, type: StateType::GAME);
     }
     
     /**
@@ -33,25 +33,16 @@ class NextPlayer extends GameState
     function onEnteringState()
     {
         $game = $this->game;
-        // Next player
-        $player_id = (int)$game->activeNextPlayer();
-        
-        // Count one turn when it gets back to the player that started this phase
-        $starting_player = $game->getGameStateValue('starting_player_pickpocket');
-        if ($starting_player < 0) {
-            $current_phase = Phase::fromRound((int)$game->getGameStateValue('current_phase'));
-            $starting_player = $game->getGameStateValue("starting_player_" . $current_phase->name);
-        }
-        if ($player_id == $starting_player) {
-            $this->bga->tableStats->inc('turns_number', 1);
-        }
-        
-        if ($game->dbGetAutoPass($player_id) || !$game->canPlay($player_id)) {
+        $currentRound = (int)$game->getGameStateValue('current_phase');
+        $phase = Phase::fromRound($currentRound);
+        $startingPlayer = (int)$game->getGameStateValue("starting_player_" . $phase->name);
+        $this->gamestate->changeActivePlayer($startingPlayer);
+        if ($game->dbGetAutoPass($startingPlayer) || !$game->canPlay($startingPlayer)) {
             // Player is auto passing or must pass since no available play
-            return $game->passPlayer($player_id, false);
+            return $game->passPlayer($startingPlayer, false);
         }
-        // Next player turn
-        $game->giveExtraTime($player_id);
+        // Player turn
+        $game->giveExtraTime($startingPlayer);
         return PlayerTurn::class;
     }
 }

@@ -38,6 +38,8 @@ class NextPhase extends GameState
         // Increment phase
         $currentRound = $game->incGameStateValue('current_phase', 1);
         $phase = Phase::fromRound($currentRound);
+        // Clear pickpocket starting player
+        $game->setGameStateValue('starting_player_pickpocket', -1);
         
         // Clear any automatic passing
         $game->DbQuery("UPDATE player SET autopass=0");
@@ -126,12 +128,9 @@ class NextPhase extends GameState
                 ));
             }
         }
-        
-        // Activate starting player (_not_ next player) for next phase
-        $starting_player = (int)$game->getGameStateValue("starting_player_" . $phase->name);
-        $this->gamestate->changeActivePlayer($starting_player);
+
         $this->bga->tableStats->inc('turns_number', 1);
-        
+        $starting_player = (int)$game->getGameStateValue("starting_player_" . $phase->name);
         $msg = clienttranslate('${phase} phase begins, starting with ${player_name}');
         $this->bga->notify->all('nextPhase', $msg, array(
             'i18n' => array('phase'),
@@ -140,7 +139,17 @@ class NextPhase extends GameState
             'phase_arg' => $phase->name, // non-translated arg used in client (i18n came late)
             'cards' => $new_cards
         ));
-        
+
+        $pickpocketPlayer = $this->getPickpocketPlayer();
+        if (!is_null($pickpocketPlayer)) {
+            // Pickpocket might choose to be first, activate it to give the choice.
+            $this->gamestate->changeActivePlayer($pickpocketPlayer);
+            return Pickpocket::class;
+        }
+
+        // Activate starting player (_not_ next player) for next phase
+        $this->gamestate->changeActivePlayer($starting_player);
+
         if ($game->canPlay($starting_player)) {
             $game->giveExtraTime($starting_player);
             return PlayerTurn::class;
@@ -155,7 +164,7 @@ class NextPhase extends GameState
      * Cards on the lower row go all the way to the end; those above to the
      * next open position left of any lower cards.
      */
-    function shiftCardsRight(): int
+    private function shiftCardsRight(): int
     {
         $game = $this->game;
         $num_cards = 0;
@@ -189,7 +198,7 @@ class NextPhase extends GameState
     /*
      * Move all cards on the board from the upper row to the lower
      */
-    function shiftCardsDown(): void
+    private function shiftCardsDown(): void
     {
         $game = $this->game;
         $board = $game->cards->getCardsInLocation(TOP_ROW);
@@ -209,7 +218,7 @@ class NextPhase extends GameState
     /*
      * Remove from the game all cards on the board lower row
      */
-    function discardBottomRow(): void
+    private function discardBottomRow(): void
     {
         $game = $this->game;
         $discard = array();
@@ -222,6 +231,23 @@ class NextPhase extends GameState
         $this->bga->notify->all('discard', "", array(
             'cards' => $discard
         ));
+    }
+
+    /**
+     * Gets the id of player owning the Pickpocket if any.
+     * @return int|null A player id or null.
+     */
+    private function getPickpocketPlayer(): ?int
+    {
+        $game = $this->game;
+        if ($game->optBanquet()) {
+            $cards = $game->cards->getCardsOfTypeInLocation($game->getCardInfos()[CARD_PICKPOCKET]['card_type']->name, CARD_PICKPOCKET, 'hand');
+            // Determine which player own the Pickpocket (only one possible).
+            foreach ($cards as $card) {
+                return (int)$card['location_arg'];
+            }
+        }
+        return null;
     }
 }
 

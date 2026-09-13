@@ -89,7 +89,7 @@ class ScorePhase extends GameState
         $players = $game->loadPlayersBasicInfos();
         $scores = array();
         foreach ($players as $player_id => $player) {
-            list($points, $rubles) = $game->computeScoring($player_id, $phase);
+            list($points, $rubles) = $game->computeScoring($player_id, $phase, true);
 
             if ($rubles < 0) {
                 // Player is losing money (Sycophant), check they can afford it:
@@ -103,20 +103,22 @@ class ScorePhase extends GameState
                     ++$balance;
                     ++$rubles;
                     if ($balance < 0) {
-                        $this->bga->notify->all('discard', '${player_name} can not pay Sycophant and must discard it.', [
-                            'player_id' => $player_id,
-                            'player_name' => $game->getPlayerNameById($player_id),
-                            'card_id' => $sycophant['id']
-                        ]);
+                        $this->bga->notify->all('tableDiscard',
+                            clienttranslate('${player_name} can not pay Sycophant and must discard it'), [
+                                'player_id' => $player_id,
+                                'player_name' => $game->getPlayerNameById($player_id),
+                                'card_id' => $sycophant['id']
+                            ]);
                     } else {
                         // Last discarded card, also update unique aristocrats and income.
-                        $this->bga->notify->all('tableDiscard', '${player_name} can not pay Sycophant and must discard it.', [
-                            'player_id' => $player_id,
-                            'player_name' => $game->getPlayerNameById($player_id),
-                            'card_id' => $sycophant['id'],
-                            'aristocrats' => $game->uniqueAristocrats($player_id),
-                            'income' => $game->getIncome($player_id)
-                        ]);
+                        $this->bga->notify->all('tableDiscard',
+                            clienttranslate('${player_name} can not pay Sycophant and must discard it'), [
+                                'player_id' => $player_id,
+                                'player_name' => $game->getPlayerNameById($player_id),
+                                'card_id' => $sycophant['id'],
+                                'aristocrats' => $game->uniqueAristocrats($player_id),
+                                'income' => $game->getIncome($player_id)
+                            ]);
                     }
                 }
             }
@@ -190,20 +192,32 @@ class ScorePhase extends GameState
                 'num_rubles' => $num_rubles,
             ));
             
-            // -5 per card left in hand
-            $num_hand = count($game->cards->getPlayerHand($player_id));
-            $points_hand = -5 * $num_hand;
+            // -5 per card left in hand (excepted special card)
+            $numStandardHandCards = count(array_filter($game->cards->getPlayerHand($player_id),
+                fn($card) => $game->getCardInfo($card)['card_cost'] > 0));
+            $points_hand = -5 * $numStandardHandCards;
             // set final score to report
             $scores[$player_id] = $this->bga->playerScore->inc($player_id, $points_hand, null);
             $this->bga->playerStats->set( 'points_hand_end', $points_hand, $player_id);
-            
-            $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} Points for ${num_hand} card(s) in hand');
+            $numCardInHand = count($game->cards->getPlayerHand($player_id));
+            if ($numCardInHand == $numStandardHandCards) {
+                if ($numStandardHandCards == 0) {
+                    $msg = clienttranslate('Final scoring: ${player_name} has no card left in hand');
+                } else {
+                    $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} points for ${num_hand} card(s) in hand');
+                }
+            } else if ($numStandardHandCards == 0) {
+                $msg = clienttranslate('Final scoring: ${player_name} only have special cards in hand and so does not lose points');
+            } else {
+                $msg = clienttranslate('Final scoring: ${player_name} loses ${points_hand} points for ${num_hand} standard card(s) in hand ignoring ${specialCards} special card(s)');
+            }
+
             $this->bga->notify->all('message', $msg, array(
                 'player_name' => $player['player_name'],
                 'points_hand' => $points_hand,
-                'num_hand' => $num_hand,
+                'num_hand' => $numStandardHandCards,
+                'specialCards' => $numCardInHand - $numStandardHandCards
             ));
-            
         }
         
         $this->bga->notify->all('newScores', "", array(

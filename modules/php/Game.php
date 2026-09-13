@@ -39,6 +39,8 @@ class Game extends \Bga\GameFramework\Table
     ];
     private array $card_infos;
     private array $newSocietyCardData;
+    private array $banquetCardData;
+    private array $newSocietyBanquetCardData;
     private array $card_infos2nd;
 
     function __construct()
@@ -59,6 +61,7 @@ class Game extends \Bga\GameFramework\Table
             "starting_player_" . Phase::Aristocrat->name => 12, // player_id holding Aristocrat token
             "starting_player_" . Phase::Trading->name => 13,    // player_id holding Trading token
             "starting_player_" . self::DISC_TOKEN => 14,        // player_id holding disc token
+            "starting_player_pickpocket" => 15,     // player_id having steal starting player for current phase
             "num_pass" => 16,              // number of players that have consecutively passed in this phase
             "current_phase" => 17,         // current phase number, always increasing
             "last_round" => 18,            // 1 if the end state has been triggered in the current round
@@ -68,6 +71,9 @@ class Game extends \Bga\GameFramework\Table
             "observatory_1_used" => 22,    // 1 if second Observatory has been used this round
             "activated_observatory" => 23, // index (0/1) of Observatory being actively used
             "debtors_prison_used" => 24,   // 1 if Debtor’s Prison has been used this round.
+            "doubleTurn" => 25,            // 1 if player is using double turn special card.
+            "jesterCard" => 26,            // 0 or id of card to which the jester is applied.
+            "banquetCard" => 27,            // 0 or id of card to which the banquet is applied.
 
             // Game options
             "show_player_rubles" => OPT_SHOW_RUBLES,
@@ -119,6 +125,10 @@ class Game extends \Bga\GameFramework\Table
         $this->setGameStateInitialValue("num_pass", 0);
         $this->setGameStateInitialValue("current_phase", 0);
         $this->setGameStateInitialValue("last_round", 0);
+        $this->setGameStateInitialValue("doubleTurn", 0);
+        $this->setGameStateInitialValue("jesterCard", -1);
+        $this->setGameStateInitialValue("banquetCard", -1);
+        $this->setGameStateInitialValue("starting_player_pickpocket", -1);
 
         // Player order for each phase
         $starting_tokens = array();
@@ -236,6 +246,7 @@ class Game extends \Bga\GameFramework\Table
 
         $result['version'] = $this->optEdition();
         $result['newSociety'] = $this->optNewSociety();
+        $result['banquet'] = $this->optBanquet();
         
         // !! We must only return information visible by this player!!
         $current_player_id = (int)$this->getCurrentPlayerId();
@@ -338,7 +349,9 @@ class Game extends \Bga\GameFramework\Table
 
         // Cards counts for each deck
         $result['decks'] = $this->cards->countCardsInLocations();
+
         $result['lastDiscarded'] = $this->cards->getCardOnTop('discard');
+        $result['beingPlayed'] = $this->cards->getCardOnTop('beingPlayed');
 
         // Full card info used for tooltips
         $result['card_infos'] = $this->getCardInfos();
@@ -363,7 +376,12 @@ class Game extends \Bga\GameFramework\Table
             ];
         }
 
-        // Constant value for identifying card location.
+        $jesteredId = $this->getGameStateValue('jesterCard');
+        $result['jesteredType'] = ($jesteredId == -1)? -1: $this->cards->getCard($jesteredId)['type_arg'];
+        $banquetedId = $this->getGameStateValue('banquetCard');
+        $result['banquetedType'] = ($banquetedId == -1)? -1: $this->cards->getCard($banquetedId)['type_arg'];
+
+        // Constant value for identifying card location or special cards.
         $result['constants'] = array(
             'top_row' => 0,
             'bottom_row' => 1,
@@ -371,7 +389,15 @@ class Game extends \Bga\GameFramework\Table
             'observatory' => ROW_OBSERVATORY,
             'prison' => ROW_DEBTORS_PRISON,
             'discardStock' => ROW_DISCARD_STOCK,
-            'discardRow' => ROW_DISCARD
+            'discardRow' => ROW_DISCARD,
+            'awayWithItBuilding' => CARD_AWAY_WITH_IT_BUILDING,
+            'awayWithItAristocrat' => CARD_AWAY_WITH_IT_ARISTOCRAT,
+            'blackMarket' => CARD_BLACK_MARKET,
+            'goldenDonkey' => CARD_GOLDEN_DONKEY,
+            'doubleTurn' => CARD_DOUBLE_TURN,
+            'pickpocket' => CARD_PICKPOCKET,
+            'jester' => CARD_JESTER,
+            'banquet' => CARD_BANQUET
         );
 
         $result['buyOnly'] = $this->opt2ndEdition() && $this->getGameStateValue('current_phase') == 0;
@@ -507,7 +533,14 @@ class Game extends \Bga\GameFramework\Table
     function getCardInfos(): array
     {
         if ($this->optNewSociety()) {
-            return $this->newSocietyCardData;
+            if ($this->optBanquet()) {
+                return $this->newSocietyBanquetCardData;
+            } else {
+                return $this->newSocietyCardData;
+            }
+        }
+        if ($this->optBanquet()) {
+            return $this->banquetCardData;
         }
         if ($this->opt2ndEdition()) {
             return $this->card_infos2nd;
@@ -556,38 +589,37 @@ class Game extends \Bga\GameFramework\Table
         $this->dump('$card_info', $card_info);
         $card_model = $card_info['card_model'];
 
-        // -1 if taken from the lower row
-        if ($row != 1) {
-            // Other locations (e.g. hand, Observatory, discard) give no discount
-            $row = 0;
-        }
-        $cost = $card_info['card_cost'] - $row;
-
-        $player_id = (int)$this->getActivePlayerId();
-        $player_cards = $this->cards->getCardsInLocation('table', $player_id);
-
-        foreach ($player_cards as $pcard) {
-            // -1 for each copy of same card already owned
-            $pcard_info = $this->getCardInfo($pcard);
-            if ($card_model == $pcard_info['card_model']) {
-                $cost--;
+        $cost = $card_info['card_cost'];
+        if ($cost != 0) {
+            // -1 if taken from the lower row
+            if ($row == 1) {
+                --$cost;
             }
 
-            if (isset($pcard_info['discount']) && array_any($pcard_info['discount'], fn(Phase $type) => $this->isCardType($card, $type))) {
-                // Player own a card granting a discount on this type of card.
-                $cost--;
+            $player_id = (int)$this->getActivePlayerId();
+            $player_cards = $this->cards->getCardsInLocation('table', $player_id);
+            foreach ($player_cards as $pcard) {
+                // -1 for each copy of same card already owned
+                $pcard_info = $this->getCardInfo($pcard);
+                if ($card_model == $pcard_info['card_model']) {
+                    $cost--;
+                }
+
+                if (isset($pcard_info['discount']) && array_any($pcard_info['discount'], fn(Phase $type) => $this->isCardType($card, $type))) {
+                    // Player own a card granting a discount on this type of card.
+                    $cost--;
+                }
             }
-        }
 
-        // Trading card: subtract the base cost (value, see Potjomkin's Village)
-        // of the displaced card
-        if ($trade_id > 0) {
-            $trade_info = $this->getCardInfoById($trade_id);
-            $cost -= $trade_info['card_value'];
+            // Trading card: subtract the value of the displaced card
+            if ($trade_id > 0) {
+                $trade_info = $this->getCardInfoById($trade_id);
+                $cost -= $trade_info['card_value'];
+            }
+            // Minimum cost is always 1
+            $cost = max($cost, 1);
         }
-
-        // Minimum cost is always 1
-        return max($cost, 1);
+        return $cost;
     }
 
     /*
@@ -596,9 +628,9 @@ class Game extends \Bga\GameFramework\Table
      */
     function isCardType(array $card, Phase $type): bool
     {
-        $card_info = $this->getCardInfo($card);
         $is_type = $card['type'] == $type->name;
-        $is_trade_type = ($card['type'] == Phase::Trading->name && $card_info['card_trade_type'] == $type);
+        $card_info = $this->getCardInfo($card);
+        $is_trade_type = $card['type'] == Phase::Trading->name && $card_info['card_cost'] > 0 && $card_info['card_trade_type'] == $type;
         return ($is_type || $is_trade_type);
     }
 
@@ -629,7 +661,7 @@ class Game extends \Bga\GameFramework\Table
     /*
      * Compute the scoring potential for a given player/phase
      */
-    function computeScoring(int $player_id, Phase $phase): array
+    function computeScoring(int $player_id, Phase $phase, bool $scoringState = false): array
     {
         $points = 0;
         $rubles = 0;
@@ -656,6 +688,8 @@ class Game extends \Bga\GameFramework\Table
         $textileFactory = false;
 
         $cards = $this->cards->getCardsInLocation('table', $player_id);
+        $jesterCardId = $this->getGameStateValue('jesterCard');
+        $banquetCardId = $this->getGameStateValue('banquetCard');
         foreach ($cards as $card) {
             // Only cards from the current phase are scored
             if ($this->isCardType($card, $phase)) {
@@ -674,8 +708,29 @@ class Game extends \Bga\GameFramework\Table
                 }
 
                 $card_info = $this->getCardInfo($card);
-                $points += $card_info['card_points'];
-                $rubles += $card_info['card_rubles'];
+
+                $cardPoints = $card_info['card_points'];
+                $cardRubles = $card_info['card_rubles'];
+                if ($card['id'] == $jesterCardId) {
+                    // Exchange rubles and points
+                    $cardPoints = $cardRubles;
+                    $cardRubles = $card_info['card_points'];
+                    if ($scoringState) {
+                        $this->setGameStateValue('jesterCard', -1);
+                        $this->discardSpecialCard(CARD_JESTER, $player_id);
+                    }
+                }
+                if ($card['id'] == $banquetCardId) {
+                    // Double scoring
+                    $cardPoints *= 2;
+                    $cardRubles *= 2;
+                    if ($scoringState) {
+                        $this->setGameStateValue('banquetCard', -1);
+                        $this->discardSpecialCard(CARD_BANQUET, $player_id);
+                    }
+                }
+                $points += $cardPoints;
+                $rubles += $cardRubles;
 
                 if (isset($card_info['rublePer'])) {
                     $perTypeBonus[$card_info['rublePer']->value]['rubles']++;
@@ -713,6 +768,22 @@ class Game extends \Bga\GameFramework\Table
         }
 
         return array($points, $rubles);
+    }
+
+    private function discardSpecialCard(int $typeArg, int $playerId)
+    {
+        $card = $this->getCardOnTable($typeArg);
+        // Discard it
+        $this->cards->playCard($card['id']);
+        $this->bga->notify->all('tableDiscard',
+            clienttranslate('${player_name} has scored a card with ${card_name} and so discard it'), [
+                'i18n' => ['card_name'],
+                'player_id' => $playerId,
+                'player_name' => $this->getPlayerNameById($playerId),
+                'card_name' => $this->getCardName($card),
+                'card_id' => $card['id'],
+                'income' => $this->getIncome($playerId)
+            ]);
     }
 
     /*
@@ -782,31 +853,44 @@ class Game extends \Bga\GameFramework\Table
     }
 
     /**
-     * Get the id of player owning the Guild Hall if any.
+     * Gets the id of player owning the Guild Hall if any.
      * @return int|null A player id or null.
      */
     function getGuildHallPlayer(): ?int
     {
-        $guildHall = $this->cards->getCardsOfTypeInLocation(Phase::Trading->name, CARD_GUILD_HALL, 'table');
+        $guildHall = $this->getCardOnTable(CARD_GUILD_HALL);
         // Determine which player own the Guild Hall (only one possible).
-        foreach ($guildHall as $card) {
-            return (int)$card['location_arg'];
+        if (is_null($guildHall)) {
+            return null;
+        }
+        return (int)$guildHall['location_arg'];
+    }
+
+    /**
+     * Gets a card located on table of given type arg.
+     * @return array|null The matching card or null.
+     */
+    function getCardOnTable(int $typeArg): ?array
+    {
+        $cards = $this->cards->getCardsOfTypeInLocation($this->getCardInfos()[$typeArg]['card_type']->name, $typeArg, 'table');
+        foreach ($cards as $card) {
+            return $card;
         }
         return null;
     }
 
     /**
-     * Get the id of player owning the Trading House if any.
+     * Gets the id of player owning the Trading House if any.
      * @return int|null A player id or null.
      */
     function getTradingHousePlayer(): ?int
     {
-        $tradingHouse = $this->cards->getCardsOfTypeInLocation(Phase::Building->name, CARD_TRADING_HOUSE, 'table');
+        $tradingHouse = $this->getCardOnTable(CARD_TRADING_HOUSE);
         // Determine which player own the Trading House (only one possible).
-        foreach ($tradingHouse as $card) {
-            return (int)$card['location_arg'];
+        if (is_null($tradingHouse)) {
+            return null;
         }
-        return null;
+        return (int)$tradingHouse['location_arg'];
     }
 
     function skipTradingHouse($playerId)
@@ -865,6 +949,8 @@ class Game extends \Bga\GameFramework\Table
             if ($card_info['card_trade_type'] == Phase::Worker
                 && $card_info['card_worker_type'] != $p_info['card_worker_type']
                 && $card_info['card_worker_type'] != WORKER_ALL
+                // Only Czar and Carpenter is a worker all in worker deck so next test is also invalidating trade of
+                // Czar Superstar.
                 && $p_info['card_worker_type'] != WORKER_ALL)
             {
                 // Not correct worker type.
@@ -897,27 +983,55 @@ class Game extends \Bga\GameFramework\Table
         return $has_trade;
     }
 
+    private function hasRublesAndPoints(array $card): bool
+    {
+        $info = $this->getCardInfo($card);
+        return $info['card_rubles'] > 0 && $info['card_points'] > 0;
+    }
+
     /*
      * Return info on possible moves the player can take for this specific card
      */
-    function getPossibleMoves(int $player_id, array $card, int $rubles, bool $hand_full=true, int $row=0): array
+    function getPossibleMoves(int $player_id, array $card, int $rubles, bool $hand_full=true, int $row=ROW_HAND): array
     {
         $cost = $this->getCardCost((int)$card['id'], $row);
-        $can_buy = $cost <= $rubles;
+        $cardType = $card['type_arg'];
+        // Must have enough rubles and the card should not be a special card (cost 0) or should already be in the player
+        // hand and not be the pickpocket (playable only at start of phase).
+        $can_buy = $cost <= $rubles && ($cost > 0 || (ROW_HAND == $row && $cardType != CARD_PICKPOCKET
+                    // and not be black market if discard is empty
+                    && ($cardType != CARD_BLACK_MARKET || $this->cards->countCardInLocation('discard') > 0)));
 
-        $is_trading = $this->isTrading($card);
+        // Only cards of the trading deck which are not a special card can be traded.
+        $is_trading = $this->isTrading($card) && $cost > 0;
         $has_trade = false;
-        $trades = array();
+        $trades = [];
         if ($is_trading) {
             $has_trade = $this->getTrades($card, $cost, $player_id, $trades);
             $can_buy = count($trades) > 0;
+        } else if ($can_buy) {
+            if (CARD_AWAY_WITH_IT_BUILDING == $cardType || CARD_AWAY_WITH_IT_ARISTOCRAT == $cardType) {
+                // Away with it requires to select another hand card to discard
+                foreach (array_filter($this->cards->getCardsInLocation('hand', $player_id),
+                    fn(array $handCard) => $card['id'] != $handCard['id']) as $discardableCard) {
+                    $trades[] = (int)$discardableCard['id'];
+                }
+                $can_buy = count($trades) > 0;
+            } else if (CARD_JESTER == $cardType || CARD_BANQUET == $cardType) {
+                // Jester and Banquet require to select a card on player table, use trades for that too
+                foreach (array_filter($this->cards->getCardsInLocation('table', $player_id), $this->hasRublesAndPoints(...)) as $inflictableCard) {
+                    $trades[] = (int)$inflictableCard['id'];
+                }
+                $can_buy = count($trades) > 0;
+            }
         }
 
         return array(
             'card_id' => $card['id'],
             'card_type' => $card['type_arg'],
             'card_name' => $this->getCardName($card),
-            'can_add' => !$hand_full,
+            // Can add to hand if hand is not full and the card is not a discarded special card
+            'can_add' => !$hand_full && ($cost > 0 || $row != ROW_DISCARD),
             'can_buy' => $can_buy,
             'cost' => $cost,
             'is_trading' => $is_trading,
@@ -948,7 +1062,7 @@ class Game extends \Bga\GameFramework\Table
         foreach (array(TOP_ROW, BOTTOM_ROW) as $row_loc) {
             $board = $this->cards->getCardsInLocation($row_loc);
             foreach ($board as $card) {
-                $col = $card['location_arg'];
+                $col = (int)$card['location_arg'];
                 $possible_moves[$row][$col] = $this->getPossibleMoves(
                     $player_id, $card, $rubles, $hand_full, $row);
             }
@@ -1009,7 +1123,7 @@ class Game extends \Bga\GameFramework\Table
         $board += count($this->cards->getCardsInLocation(BOTTOM_ROW));
 
         // If both options are set there is no private info in the game,
-        // then autopass can be more aggressive and validate every play
+        // then auto pass can be more aggressive and validate every play
         if ($this->optShowHands() && $this->optShowRubles()) {
             // Function used for player turn highlights all possible moves
             // Can play if any card available to buy or add
@@ -1054,8 +1168,29 @@ class Game extends \Bga\GameFramework\Table
             }
         }
 
+        if ($this->optBanquet()) {
+            // Can play if player owns a special card (all 0 cost cards are special cards)
+            $hand = $this->cards->getPlayerHand($player_id);
+            if (array_any($hand, fn($card) => $this->getCardInfo($card)['card_cost'] == 0)) {
+                return true;
+            }
+        }
+
         // No play available
         return false;
+    }
+
+    /**
+     * Gets the next state after a normal action.
+     * @return string the next state (NextPlayer or PlayerTurn in case of double turn)
+     */
+    public function getNextState(): string
+    {
+        if ($this->getGameStateValue('doubleTurn') == 1) {
+            $this->setGameStateValue("doubleTurn", 0);
+            return PlayerTurn::class;
+        }
+        return NextPlayer::class;
     }
 
     /*
@@ -1101,6 +1236,11 @@ class Game extends \Bga\GameFramework\Table
         return $this->bga->tableOptions->get(OPT_NEW_SOCIETY) == 1;
     }
 
+    function optBanquet(): bool
+    {
+        return $this->bga->tableOptions->get(OPT_BANQUET) == 1;
+    }
+
     //////////////////////////////////////////////////////////////////////////////
     //////////// Player actions common to several states.
     //////////// 
@@ -1112,9 +1252,12 @@ class Game extends \Bga\GameFramework\Table
      */
     function passPlayer(int $playerId, bool $canPlay): string
     {
-        // All players must pass in turn order to end current phase
-        // Increment global pass counter to track when this happens
-        $num_pass = $this->incGameStateValue('num_pass', 1);
+        // All players must pass in turn order to end current phase.
+        // Increment global pass counter to track when this happens (but not in the first turn of a double turn as the
+        // same player might pass two tines in a row).
+        if ($this->getGameStateValue('doubleTurn') != 1) {
+            $num_pass = $this->incGameStateValue('num_pass', 1);
+        }
         $this->bga->notify->all('pass', clienttranslate('${player_name} passes'),
             array(
                 'player_name' => $this->getPlayerNameById($playerId),
@@ -1136,7 +1279,7 @@ class Game extends \Bga\GameFramework\Table
             return ScorePhase::class;
         } else {
             // One or more players left to pass => next player.
-            return NextPlayer::class;
+            return $this->getNextState();
         }
     }
     

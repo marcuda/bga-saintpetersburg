@@ -91,8 +91,9 @@ class PlayerTurn extends CardState
      * Player plays a card from their hand.
      * @param int $card_id The card id.
      * @param int $activePlayerId The active player id.
-     * @param int $trade_id The traded card id or -1 if no traded card.
-     * @return mixed The next state (NextPlayer).
+     * @param int $trade_id The traded card id or the discarded card id if playing away with it or the inflicted card id
+     * if playing jester or banquet or -1.
+     * @return mixed The next state (NextPlayer, BlackMarket, PlayerTurn).
      * @throws SystemException When card is not valid or can not be traded.
      * @throws UserException When player doe not have enough rubles.
      */
@@ -105,19 +106,26 @@ class PlayerTurn extends CardState
             throw new SystemException("Impossible play from hand");
         }
 
+        $card_cost = $game->getCardCost($card_id, 0, $trade_id);
+        $specialCard = $card_cost == 0;
         // Verify trade if needed
-        if ($game->isTrading($card)) {
-            $this->checkTrade($card, $trade_id, $activePlayerId);
-        } else if ($trade_id > 0) {
-            throw new SystemException("Impossible play with trade");
+        if (!$specialCard) {
+            if ($game->isTrading($card)) {
+                $this->checkTrade($card, $trade_id, $activePlayerId);
+            } else if ($trade_id > 0) {
+                throw new SystemException("Impossible play with trade");
+            }
         }
 
         // Verify player can pay cost
-        $card_cost = $game->getCardCost($card_id, 0, $trade_id);
         $rubles = $game->getRubles($activePlayerId);
-        if ($card_cost > $rubles)
+        if ($card_cost > $rubles) {
             throw new UserException(clienttranslate("You do not have enough rubles"));
+        }
 
+        if ($specialCard) {
+            return $this->playSpecialCard($card, $activePlayerId, $trade_id);
+        }
         // Add card to player table
         $dest = 'table';
         $notif = 'playCard';
@@ -128,7 +136,72 @@ class PlayerTurn extends CardState
             $msg = clienttranslate('${player_name} plays ${card_name} from their hand for ${card_cost} Ruble(s)');
         }
         $this->cardAction($card_id, $trade_id, 0, $card_cost, $dest, $notif, $msg, $activePlayerId);
-        return NextPlayer::class;
+        return $game->getNextState();
+    }
+
+    private function playSpecialCard(array $card, int $activePlayerId, int $inflictedCardId): string
+    {
+        $game = $this->game;
+        if ($inflictedCardId >= 0) {
+            $inflictedCard = $game->cards->getCard($inflictedCardId);
+            if ($inflictedCard == null || $inflictedCard['location_arg'] != $activePlayerId) {
+                throw new SystemException("Impossible inflicted card");
+            }
+        } else {
+            $inflictedCard = null;
+        }
+        switch ($card['type_arg']) {
+            case CARD_AWAY_WITH_IT_BUILDING:
+            case CARD_AWAY_WITH_IT_ARISTOCRAT:
+                if ($inflictedCard == null || $inflictedCard['location'] != 'hand') {
+                    throw new SystemException("Impossible discard from hand");
+                }
+                $this->cardAction((int)$card['id'], $inflictedCardId, 0, 0, 'discard', 'playCard', clienttranslate(
+                    '${player_name} plays ${card_name} from their hand, discarding ${trade_name}'), $activePlayerId);
+                return $game->getNextState();
+            case CARD_BLACK_MARKET:
+                if ($game->cards->countCardsInLocation('discard') == 0) {
+                    throw new SystemException("Black market can not be played now");
+                }
+                $this->cardAction((int)$card['id'], $inflictedCardId, 0, 0, 'beingPlayed', 'playCard', clienttranslate(
+                    '${player_name} plays ${card_name} from their hand'), $activePlayerId);
+                return BlackMarket::class;
+            case CARD_GOLDEN_DONKEY:
+                $game->incRubles($activePlayerId, 5);
+                $this->bga->playerStats->inc('rubles_total', 5, $activePlayerId);
+                $this->cardAction((int)$card['id'], $inflictedCardId, 0, 0, 'discard', 'playCard', clienttranslate(
+                    '${player_name} plays ${card_name} from their hand, and gains 5 rubles'), $activePlayerId);
+                return $game->getNextState();
+            case CARD_DOUBLE_TURN:
+                $this->cardAction((int)$card['id'], $inflictedCardId, 0, 0, 'discard', 'playCard', clienttranslate(
+                    '${player_name} plays ${card_name} from their hand, and has two more turns to play'), $activePlayerId);
+                $game->setGameStateValue("doubleTurn", 1);
+                return PlayerTurn::class;
+            case CARD_PICKPOCKET:
+                throw new SystemException("Pickpocket can not be played now");
+            case CARD_JESTER:
+                return $this->applyCardToInflicted($card, $activePlayerId, $inflictedCard, 'jesterCard');
+            case CARD_BANQUET:
+                return $this->applyCardToInflicted($card, $activePlayerId, $inflictedCard, 'banquetCard');
+            default:
+                throw new SystemException("Unexpected special card: " . $card['type_arg']);
+        }
+    }
+
+    private function applyCardToInflicted(array $card, int $activePlayerId, array $inflictedCard, string $gameState): string
+    {
+        if ($inflictedCard == null || $inflictedCard['location'] != 'table') {
+            throw new SystemException("Special card can not be applied to this card");
+        }
+        $game = $this->game;
+        $inflictedCardInfo = $game->getCardInfo($inflictedCard);
+        if ($inflictedCardInfo['card_rubles'] == 0 || $inflictedCardInfo['card_points'] == 0) {
+            throw new SystemException("Special card can not be applied to this card");
+        }
+        $game->setGameStateValue($gameState, (int)$inflictedCard['id']);
+        $this->cardAction((int)$card['id'], (int)$inflictedCard['id'], 0, 0, 'table', 'playCard', clienttranslate(
+            '${player_name} plays ${card_name} from their hand, applying it to ${trade_name}'), $activePlayerId);
+        return $game->getNextState();
     }
 
     /**

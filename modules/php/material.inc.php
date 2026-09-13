@@ -29,7 +29,6 @@ if (!defined("CARD_PUB")) {
     define("CARD_WHARF", 10);
     define("CARD_PUB", 11);
     define("CARD_WAREHOUSE", 12);
-    define("CARD_VILLAGE", 13);
     define("CARD_MARKET", 14);
     define("CARD_OBSERVATORY", 15);
     define("CARD_FIREHOUSE", 17);
@@ -51,6 +50,15 @@ if (!defined("CARD_PUB")) {
     define("CARD_TEXTILE_FACTORY", 61);
     define("CARD_SYCOPHANT", 62);
     define("CARD_MAYOR", 66);
+    define("CARD_CZAR_SUPERSTAR", 67);
+    define("CARD_AWAY_WITH_IT_BUILDING", 70);
+    define("CARD_BLACK_MARKET", 71);
+    define("CARD_GOLDEN_DONKEY", 72);
+    define("CARD_DOUBLE_TURN", 73);
+    define("CARD_PICKPOCKET", 74);
+    define("CARD_JESTER", 75);
+    define("CARD_BANQUET", 76);
+    define("CARD_AWAY_WITH_IT_ARISTOCRAT", 77);
 
     // Worker types
     define("WORKER_ALL", clienttranslate("Any"));
@@ -60,6 +68,7 @@ if (!defined("CARD_PUB")) {
     define("WORKER_FUR", clienttranslate("Fur"));
     define("WORKER_SHIP", clienttranslate("Shipping"));
     define("WORKER_WHEAT", clienttranslate("Wheat"));
+    define("WORKER_CZAR", clienttranslate("Czar"));
 
     // Market goods
     define("MARKET_NONE", "None");
@@ -76,7 +85,7 @@ if (!defined("CARD_PUB")) {
     define("ROW_HAND", 33);
     define("ROW_OBSERVATORY", CARD_OBSERVATORY);
     define("ROW_DEBTORS_PRISON", CARD_DEBTORS_PRISON);
-    // Location for cards temporarily displayed in a stock component for Debtor’s Prison.
+    // Location for cards temporarily displayed in a stock component for Debtor’s Prison or Black Market.
     define("ROW_DISCARD_STOCK", 98);
     // Location of discarded card.
     define("ROW_DISCARD", 99);
@@ -224,7 +233,6 @@ $this->card_infos = array(
     CARD_PUB => array( 
         "card_name" => clienttranslate("Pub"),
         "card_type" => Phase::Building,
-        "card_trade_type" => Phase::Building,
         "card_cost" => 1,
         "card_rubles" => 0,
         "card_points" => 0,
@@ -234,17 +242,15 @@ $this->card_infos = array(
     CARD_WAREHOUSE => array(
         "card_name" => clienttranslate("Warehouse"),
         "card_type" => Phase::Building,
-        "card_trade_type" => Phase::Building,
         "card_cost" => 2,
         "card_rubles" => 0,
         "card_points" => 0,
         "card_nbr" => 1,
         "card_text" => clienttranslate("You can hold up to 4 cards in your hand")
     ),
-    CARD_VILLAGE => array(
+    13 => array(
         "card_name" => clienttranslate("Potjomkin's Village"),
         "card_type" => Phase::Building,
-        "card_trade_type" => Phase::Building,
         "card_cost" => 2,
         "card_value" => 6,
         "card_rubles" => 0,
@@ -753,6 +759,116 @@ $newSocietyCardDelta = array(
 );
 
 /*
+ * Card data delta of the Banquet expansion.
+ * array index = index of card sprite art (db type_arg, might be superseded by artIndex).
+ * card_name = printed name of card
+ * card_type = type of card (db type)
+ * card_trade_type = identifier of trading type (color)
+ * card_worker_type = type of worker for trading (green cards upper right symbol)
+ * card_cost = cost in upper left corner
+ * card_rubles = rubles gained during scoring
+ * card_points = points gained during scoring
+ * card_nbr = number of this card in deck
+ * card_text = explanation of any additional card effects (for tooltip)
+ * artIndex = index of card sprite art (db type_arg, supersede array index).
+ */
+$banquetCardDelta = [
+    CARD_CZAR_SUPERSTAR => [
+        "card_name" => clienttranslate("Czar - Superstar"),
+        "card_type" => Phase::Trading,
+        "card_trade_type" => Phase::Worker,
+        "card_worker_type" => WORKER_CZAR,
+        "card_cost" => 9,
+        "card_rubles" => 3,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Blue building and red aristocrat cards cost you 1 less ruble to buy"),
+        "discount" => [Phase::Building, Phase::Aristocrat]
+    ],
+    68 => [
+        "card_name" => clienttranslate("Potjemkin's Village"),
+        "card_type" => Phase::Building,
+        "card_cost" => 1,
+        "card_value" => 4,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Costs 1 ruble to buy but worth 4 when displaced by a trading card")
+    ],
+    69 => [
+        "card_name" => clienttranslate("Potjemkin's Village"),
+        "card_type" => Phase::Building,
+        "card_cost" => 3,
+        "card_value" => 8,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Costs 3 rubles to buy but worth 8 when displaced by a trading card")
+    ],
+    CARD_AWAY_WITH_IT_BUILDING => [
+        "card_name" => clienttranslate("Away with it!"),
+        "card_type" => Phase::Building,
+        "card_cost" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Discard another card from your hand")
+    ],
+    CARD_BLACK_MARKET => [
+        "card_name" => clienttranslate("Black Market"),
+        "card_type" => Phase::Aristocrat,
+        "card_cost" => 0,
+        "card_nbr" => 2,
+        "card_text" => clienttranslate("Search the discard pile and take a card from it (not a special card), which then must be paid for or put into your hand")
+    ],
+    CARD_GOLDEN_DONKEY => [
+        "card_name" => clienttranslate("Golden Donkey"),
+        "card_type" => Phase::Trading,
+        "card_cost" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Take 5 rubles")
+    ],
+    CARD_DOUBLE_TURN => [
+        "card_name" => clienttranslate("Double Turn"),
+        "card_type" => Phase::Trading,
+        "card_cost" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Take two more actions")
+    ],
+    CARD_PICKPOCKET => [
+        "card_name" => clienttranslate("Pickpocket"),
+        "card_type" => Phase::Trading,
+        "card_cost" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Be the starting player")
+    ],
+    CARD_JESTER => [
+        "card_name" => clienttranslate("Jester"),
+        "card_type" => Phase::Trading,
+        "card_cost" => 0,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Exchange non-zero rubles and points at the next scoring of a card")
+    ],
+    CARD_BANQUET => [
+        "card_name" => clienttranslate("Banquet"),
+        "card_type" => Phase::Trading,
+        "card_cost" => 0,
+        "card_rubles" => 0,
+        "card_points" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Double non-zero rubles and points at the next scoring of a card")
+    ],
+    CARD_AWAY_WITH_IT_ARISTOCRAT => [
+        "card_name" => clienttranslate("Away with it!"),
+        "card_type" => Phase::Aristocrat,
+        "card_cost" => 0,
+        "card_nbr" => 1,
+        "card_text" => clienttranslate("Discard another card from your hand"),
+        "artIndex" => CARD_AWAY_WITH_IT_BUILDING
+    ],
+];
+
+/*
  * Card infos delta of the 2nd edition
  * array index = index of card sprite art (db type_arg)
  * card_model = index of card to use as model (all undefined fields are to be taken in the model)
@@ -878,6 +994,14 @@ $applyDelta = function(&$data, $delta) {
 $this->newSocietyCardData = $this->card_infos;
 $applyDelta($this->newSocietyCardData, $newSocietyCardDelta);
 
+$this->banquetCardData = $this->card_infos;
+$applyDelta($this->banquetCardData, $banquetCardDelta);
+
+$this->newSocietyBanquetCardData = $this->newSocietyCardData;
+$applyDelta($this->newSocietyBanquetCardData, $banquetCardDelta);
+$this->newSocietyBanquetCardData[CARD_DEBTORS_PRISON]["card_text"] =
+    clienttranslate("During blue actions you may search the discard pile and take a card from it (not a special card), which then must be paid for or put into your hand or discarded. The prison then cannot be scored or used until the next round.");
+
 $this->card_infos2nd = $this->card_infos;
 $applyDelta($this->card_infos2nd, $card_infos2nd_delta);
 
@@ -899,48 +1023,57 @@ $addMissingFields = function(&$infos) {
 // Do not add missing field before the copy, or some fields won't have a correct value.
 $addMissingFields($this->card_infos);
 $addMissingFields($this->newSocietyCardData);
+$addMissingFields($this->banquetCardData);
+$addMissingFields($this->newSocietyBanquetCardData);
 $addMissingFields($this->card_infos2nd);
 
 $setWeights = function(&$data) {
     foreach ($data as $idx => $card) {
         // Cards are sorted per phase then per cost then per idx.
-        // So give the highest weight to phase then cost then idx.
-        $weight = 100 * $card['card_cost'] + $idx;
+        $weight = 0;
         switch ($card['card_type']) {
             case Phase::Worker:
                 // Nothing to do.
                 break;
             case Phase::Building:
-                $weight += 10000;
+                $weight = 10000;
                 break;
             case Phase::Aristocrat:
-                $weight += 20000;
+                $weight = 20000;
                 break;
             case Phase::Trading:
-                $weight += 5000;
-                switch ($card['card_trade_type']) {
-                    case Phase::Worker:
-                        // Nothing to do.
-                        break;
-                    case Phase::Building:
-                        $weight += 10000;
-                        break;
-                    case Phase::Aristocrat:
-                        $weight += 20000;
-                        break;
-                    default:
-                        // Should never happen.
-                        break;
+                $weight = 5000;
+                if ($card['card_cost'] > 0) {
+                    switch ($card['card_trade_type']) {
+                        case Phase::Worker:
+                            // Nothing to do.
+                            break;
+                        case Phase::Building:
+                            $weight += 10000;
+                            break;
+                        case Phase::Aristocrat:
+                            $weight += 20000;
+                            break;
+                        default:
+                            // Should never happen.
+                            break;
+                    }
                 }
                 break;
             default:
                 // Should never happen.
                 break;
         }
+        // Multiply idx by 2 so that banquet and jester can be inserted between two idx (to be applied on a card). Max
+        // idx is 77, 77 × 2 is 154 so multiply cost per 160 to avoid unwanted overlaps in weights. Max cost is 25,
+        // 25 × 160 is 4000 so 5000 used above is enough to avoid unwanted overlaps in weights.
+        $weight += 160 * $card['card_cost'] + (2 * $idx) + 1;
         $data[$idx]['weight'] = $weight;
     }
 };
 
 $setWeights($this->card_infos);
 $setWeights($this->newSocietyCardData);
+$setWeights($this->banquetCardData);
+$setWeights($this->newSocietyBanquetCardData);
 $setWeights($this->card_infos2nd);

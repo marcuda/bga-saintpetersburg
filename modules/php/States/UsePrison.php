@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * Saint Petersburg implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg The New Society implementation: © Nicolas Delaporte <nicolas.delaporte+bga@neutralite.org>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -12,15 +12,14 @@ namespace Bga\Games\SaintPetersburgExpansion\States;
 
 use Bga\GameFramework\SystemException;
 use Bga\GameFramework\States\PossibleAction;
-use Bga\GameFramework\UserException;
-use Bga\Games\SaintPetersburgExpansion\CardState;
+use Bga\Games\SaintPetersburgExpansion\PickFromDiscardState;
 use Bga\Games\SaintPetersburgExpansion\Game;
 use Bga\Games\SaintPetersburgExpansion\StateId;
 
 /**
  * This active player state ask a player to choose a card from discard and then buy add or discard it.
  */
-class UsePrison extends CardState
+class UsePrison extends PickFromDiscardState
 {
     function __construct(protected Game $game)
     {
@@ -30,73 +29,10 @@ class UsePrison extends CardState
     }
 
     /**
-     * Get the state arguments to be sent to client.
-     * Player want to pick a card with debtor’s prison.
-     * Return discarded cards details and possible actions.
-     * @param int $activePlayerId The active player id.
-     * @return array All possible moves.
-     * @throws SystemException If the debtor’s prison can not be used..
-     */
-    function getArgs(int $activePlayerId): array
-    {
-        $game = $this->game;
-        // Get cards pickable with debtor’s prison:
-        $cards = $game->cards->getCardsInLocation('discard');
-        if ($cards == null || count($cards) < 1) {
-            throw new SystemException("Impossible debtor’s prison state.");
-        }
-
-        $rubles = $game->getRubles($activePlayerId);
-        $hand_full = $game->isHandFull($activePlayerId);
-        $moves = [];
-        foreach ($cards as $card) {
-            $moves[$card['id']] = $game->getPossibleMoves($activePlayerId, $card, $rubles, $hand_full);
-        }
-
-        return [
-            '_private' => [
-                $activePlayerId => [
-                    'possibleMoves' => $moves
-                ]
-            ],
-            'player_id' => $activePlayerId
-        ];
-    }
-
-    /**
-     * Player adds a card to their hand.
-     * @param int $cardId A discarded card id to add to player hand.
-     * @param int $activePlayerId The active player id.
-     * @return mixed The next state (NextPlayer).
-     * @throws SystemException When the card is not discarded.
-     * @throws UserException When player hand is full.
-     */
-    #[PossibleAction]
-    function actAddCard(int $cardId, int $activePlayerId)
-    {
-        return $this->addCard(ROW_DISCARD, $cardId, $activePlayerId);
-    }
-
-    /**
-     * Player buys a card.
-     * @param int $cardId A discarded card id to buy.
-     * @param int $activePlayerId The active player id.
-     * @param int $trade_id The traded card id or -1 if no traded card.
-     * @return mixed The next state (NextPlayer).
-     * @throws SystemException When the card is not discarded or trade is not possible.
-     * @throws UserException When player does not have enough rubles.
-     */
-    #[PossibleAction]
-    function actBuyCard(int $cardId, int $activePlayerId, int $trade_id = - 1)
-    {
-        return $this->buyCard(ROW_DISCARD, $cardId, $activePlayerId, $trade_id);
-    }
-
-    /**
      * Player discards the card drawn with debtor’s prison
      * @param int $cardId A discarded card id to discard.
      * @param int $activePlayerId The active player id.
-     * @return mixed The next state (NextPlayer).
+     * @return mixed The next state (NextPlayer or PlayerTurn).
      * @throws SystemException When the card can not be discarded.
      */
     #[PossibleAction]
@@ -128,7 +64,7 @@ class UsePrison extends CardState
         // Reset pass counter.
         $game->setGameStateValue("num_pass", 0);
         $this->bga->playerStats->inc('actions_taken', 1, $activePlayerId);
-        return NextPlayer::class;
+        return $game->getNextState();
     }
 
     /**

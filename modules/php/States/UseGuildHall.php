@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * SaintPetersburgExpansion implementation : © Dan Marcus <bga.marcuda@gmail.com>
+ * Saint Petersburg The New Society implementation: © Nicolas Delaporte <nicolas.delaporte+bga@neutralite.org>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See https://en.boardgamearena.com/#!doc/Studio for more information.
@@ -41,7 +41,7 @@ class UseGuildHall extends GameState
      */
     function getArgs(): array
     {
-        return ['toto'];
+        return [''];
     }
 
     /**
