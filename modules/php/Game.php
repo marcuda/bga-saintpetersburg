@@ -30,13 +30,6 @@ class Game extends \Bga\GameFramework\Table
 
     public const string DISC_TOKEN = 'disc';
 
-    // Full stack sizes for progression.
-    private array $deck_size = [
-        Phase::Worker->name => 31,
-        Phase::Building->name => 28,
-        Phase::Aristocrat->name => 27,
-        Phase::Trading->name => 30
-    ];
     private array $card_infos;
     private array $newSocietyCardData;
     private array $banquetCardData;
@@ -434,7 +427,7 @@ class Game extends \Bga\GameFramework\Table
             $deck = 'deck_' . $phase->name;
             if (key_exists($deck, $counts)) {
                 $count = $counts[$deck];
-                $percent = $count / $this->deck_size[$phase->name];
+                $percent = $count / $this->countCardsOfType($phase);
                 $val = max($val, 91 * (1 - $percent));
                 if ($count == 0) {
                     $oneStackEmpty = true;
@@ -457,6 +450,11 @@ class Game extends \Bga\GameFramework\Table
     //////////////////////////////////////////////////////////////////////////////
     //////////// Utility functions
     ////////////    
+
+    private function countCardsOfType(Phase $phase): int
+    {
+        return count($this->cards->getCardsOfType($phase->name));
+    }
 
     /*
      * Return an array of players in natural turn order starting
